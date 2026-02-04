@@ -49,7 +49,7 @@ enum GameConstants {
 
     // MARK: - Reglas de evaluación
 
-    /// Indica si debe mostrarse el resultado `MAL` cuando no hay BIEN ni REGULAR.
-    /// Regla explícita del juego: solo mostrar `MAL` si el conteo de BIEN y REGULAR es 0.
-    static let showBadResultOnlyWhenNoMatches: Bool = true
+    /// Indica si debe mostrarse el resultado `Poor` cuando no hay Good ni Fair.
+    /// Regla explícita del juego: solo mostrar `Poor` si el conteo de Good y Fair es 0.
+    static let showPoorResultOnlyWhenNoMatches: Bool = true
 }

@@ -11,7 +11,7 @@ import Foundation
 ///
 /// # Responsabilidad
 /// - Verifica que el input cumpla **todas** las reglas del dominio.
-/// - No evalúa resultados (BIEN / REGULAR / MAL).
+/// - No evalúa resultados (Good / Fair / Poor).
 /// - No conoce persistencia ni UI.
 ///
 /// Este validador se usa **antes** de evaluar o persistir un intento.

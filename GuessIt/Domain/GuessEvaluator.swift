@@ -8,9 +8,9 @@
 import Foundation
 
 /// Evalúa un intento contra el número secreto y calcula los conteos de:
-/// - BIEN: dígito y posición correctos.
-/// - REGULAR: dígito correcto, posición incorrecta.
-/// - MAL: solo se considera cuando BIEN + REGULAR == 0 (según regla del juego).
+/// - Good: dígito y posición correctos.
+/// - Fair: dígito correcto, posición incorrecta.
+/// - Poor: solo se considera cuando Good + Fair == 0 (según regla del juego).
 ///
 /// # Importante
 /// - Este componente asume que el input ya fue validado por `GuessValidator`.
@@ -20,21 +20,21 @@ struct GuessEvaluator {
     /// Resultado de la evaluación de un intento.
     struct Evaluation: Equatable, Sendable {
         /// Cantidad de dígitos en posición correcta.
-        let bien: Int
+        let good: Int
 
         /// Cantidad de dígitos correctos pero en posición incorrecta.
-        let regular: Int
+        let fair: Int
 
-        /// Indica si corresponde mostrar `MAL` según la regla del juego.
-        /// Regla: solo si BIEN + REGULAR == 0.
-        let isMal: Bool
+        /// Indica si corresponde mostrar `Poor` según la regla del juego.
+        /// Regla: solo si Good + Fair == 0.
+        let isPoor: Bool
     }
 
     /// Evalúa un intento contra el secreto.
     /// - Parameters:
     ///   - secret: Número secreto (por ejemplo: "50317").
     ///   - guess: Intento del usuario (por ejemplo: "57310").
-    /// - Returns: `Evaluation` con conteos de BIEN/REGULAR y bandera de MAL.
+    /// - Returns: `Evaluation` con conteos de Good/Fair y bandera de Poor.
     static func evaluate(secret: String, guess: String) -> Evaluation {
         // Nota: no validamos aquí para mantener responsabilidad única.
         // Aun así, precondiciones ayudan a detectar errores de integración temprano.
@@ -44,8 +44,8 @@ struct GuessEvaluator {
         let secretChars = Array(secret)
         let guessChars = Array(guess)
 
-        // 1) BIEN: posiciones donde el dígito coincide exactamente.
-        var bienCount = 0
+        // 1) Good: posiciones donde el dígito coincide exactamente.
+        var goodCount = 0
         var secretRemainder: [Character] = []
         var guessRemainder: [Character] = []
 
@@ -54,15 +54,15 @@ struct GuessEvaluator {
 
         for index in 0..<GameConstants.secretLength {
             if secretChars[index] == guessChars[index] {
-                bienCount += 1
+                goodCount += 1
             } else {
-                // Guardamos lo que NO matcheó para calcular REGULAR.
+                // Guardamos lo que NO matcheó para calcular Fair.
                 secretRemainder.append(secretChars[index])
                 guessRemainder.append(guessChars[index])
             }
         }
 
-        // 2) REGULAR: dígitos correctos pero en posición incorrecta.
+        // 2) Fair: dígitos correctos pero en posición incorrecta.
         // Implementación robusta por frecuencia para funcionar incluso si en el futuro permitimos repetidos.
         var frequency: [Character: Int] = [:]
         frequency.reserveCapacity(secretRemainder.count)
@@ -71,22 +71,22 @@ struct GuessEvaluator {
             frequency[ch, default: 0] += 1
         }
 
-        var regularCount = 0
+        var fairCount = 0
         for ch in guessRemainder {
             if let current = frequency[ch], current > 0 {
-                regularCount += 1
+                fairCount += 1
                 frequency[ch] = current - 1
             }
         }
 
-        let shouldShowMal = GameConstants.showBadResultOnlyWhenNoMatches
-            ? (bienCount + regularCount == 0)
+        let shouldShowPoor = GameConstants.showPoorResultOnlyWhenNoMatches
+            ? (goodCount + fairCount == 0)
             : false
 
         return Evaluation(
-            bien: bienCount,
-            regular: regularCount,
-            isMal: shouldShowMal
+            good: goodCount,
+            fair: fairCount,
+            isPoor: shouldShowPoor
         )
     }
 }

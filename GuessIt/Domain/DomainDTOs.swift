@@ -7,15 +7,35 @@
 
 import Foundation
 
-/// DTOs del dominio del juego.
+// MARK: - Errores de dominio
+
+/// Errores tipados del dominio del juego.
 ///
-/// # Responsabilidad
-/// - Definen los **contratos de entrada y salida** del `GameActor`.
-/// - No contienen lógica de negocio.
-/// - Son inmutables, simples y seguros para concurrencia.
-///
-/// Estos tipos permiten desacoplar:
-/// UI ↔ Dominio ↔ Persistencia.
+/// # Por qué
+/// En vez de devolver "datos vacíos" cuando algo no se puede ejecutar,
+/// preferimos expresar el motivo explícitamente.
+/// Esto protege invariantes y simplifica la UI.
+/// - Note: el `errorDescription` es seguro para mostrar al usuario.
+enum GameDomainError: LocalizedError, Equatable, Sendable {
+
+    /// Se intentó enviar un guess cuando la partida no está en progreso.
+    case gameNotInProgress(currentState: GameState)
+
+    var errorDescription: String? {
+        switch self {
+        case .gameNotInProgress(let currentState):
+            switch currentState {
+            case .won:
+                return "La partida ya terminó (ganaste). Reiniciá para jugar de nuevo."
+            case .abandoned:
+                return "La partida fue abandonada. Reiniciá para jugar de nuevo."
+            case .inProgress:
+                // Este caso no debería ocurrir si el dominio está bien cableado.
+                return "La partida está en progreso."
+            }
+        }
+    }
+}
 
 // MARK: - Resultado de evaluación de un intento
 
@@ -23,14 +43,15 @@ import Foundation
 /// Representa el resultado lógico del dominio, no cómo se muestra visualmente.
 struct AttemptFeedback: Equatable, Sendable {
 
-    /// Cantidad de dígitos BIEN (posición y valor correctos).
-    let bien: Int
+    /// Cantidad de dígitos Good (posición y valor correctos).
+    let good: Int
 
-    /// Cantidad de dígitos REGULAR (valor correcto, posición incorrecta).
-    let regular: Int
+    /// Cantidad de dígitos Fair (valor correcto, posición incorrecta).
+    let fair: Int
 
-    /// Indica si el resultado fue MAL (sin BIEN ni REGULAR).
-    let isMal: Bool
+    /// Indica si el resultado fue Poor (sin Good ni Fair).
+    /// Regla: solo si Good + Fair == 0.
+    let isPoor: Bool
 }
 
 // MARK: - Resultado de envío de intento

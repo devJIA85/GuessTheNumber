@@ -10,24 +10,68 @@ import SwiftData
 
 @main
 struct GuessItApp: App {
+
     // MARK: - SwiftData
+
     /// Instancia única del contenedor para toda la vida de la app.
-    /// Nota: `ModelContainer` no es `Sendable`, por eso lo mantenemos aislado al `MainActor`.
-    @MainActor
-    private let modelContainer: ModelContainer = ModelContainerFactory.make(isInMemory: false)
+    /// Nota: `ModelContainer` no es `Sendable`, por eso lo creamos una sola vez y lo inyectamos en SwiftUI.
+    private let modelContainer: ModelContainer
+
+    // MARK: - Composition Root
+
+    /// Environment de alto nivel (actores y dependencias).
+    /// `@State` asegura que SwiftUI preserve la instancia a través de recomposiciones.
+    @State private var appEnvironment: AppEnvironment
+
+    // MARK: - Init
+
+    init() {
+        let container = ModelContainerFactory.make(isInMemory: false)
+        self.modelContainer = container
+        _appEnvironment = State(initialValue: AppEnvironment(modelContainer: container))
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            GameView()
+                // Inyectamos el environment propio de la app.
+                .environment(\.appEnvironment, appEnvironment)
         }
-        // Inyectamos el contenedor en el Environment de SwiftUI.
+        // Inyectamos el contenedor SwiftData a toda la jerarquía.
         .modelContainer(modelContainer)
     }
 }
 
+// MARK: - AppEnvironment in SwiftUI Environment
+
+/// Key para exponer `AppEnvironment` en `EnvironmentValues`.
+///
+/// - Why: permite acceso en cualquier vista sin pasar dependencias por init.
+private struct AppEnvironmentKey: EnvironmentKey {
+    @MainActor static let defaultValue: AppEnvironment = {
+        // Precondición: este default solo debería usarse en casos extremos.
+        // En runtime y previews siempre lo inyectamos explícitamente desde `GuessItApp`.
+        let container = ModelContainerFactory.make(isInMemory: true)
+        return AppEnvironment(modelContainer: container)
+    }()
+}
+
+extension EnvironmentValues {
+    /// Acceso tipado al `AppEnvironment`.
+    var appEnvironment: AppEnvironment {
+        get { self[AppEnvironmentKey.self] }
+        set { self[AppEnvironmentKey.self] = newValue }
+    }
+}
+
 // MARK: - Previews
+
 #Preview("Root - InMemory SwiftData") {
     // Previews: usamos in-memory para no ensuciar la base local.
-    ContentView()
-        .modelContainer(ModelContainerFactory.make(isInMemory: true))
+    let container = ModelContainerFactory.make(isInMemory: true)
+    let env = AppEnvironment(modelContainer: container)
+
+    return GameView()
+        .environment(\.appEnvironment, env)
+        .modelContainer(container)
 }

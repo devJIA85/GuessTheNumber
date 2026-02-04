@@ -5,8 +5,6 @@
 //  Created by Juan Ignacio Antolini on 03/02/2026.
 //
 
-import Foundation
-import SwiftUI
 import SwiftData
 
 /// Factoría centralizada para construir el `ModelContainer`.
@@ -21,10 +19,12 @@ enum ModelContainerFactory {
     /// Construye un `ModelContainer` listo para usarse.
     /// - Parameter isInMemory: `true` para previews/tests (no escribe en disco), `false` para ejecución real.
     static func make(isInMemory: Bool) -> ModelContainer {
-        // TODO: Reemplazar `Item.self` por el listado final de modelos del juego (Game, Attempt, DigitNote, etc.).
+        // Listado final de modelos del juego.
         // Mantener este listado en un solo lugar evita inconsistencias y errores sutiles.
         let schema = Schema([
-            Item.self
+            Game.self,
+            Attempt.self,
+            DigitNote.self
         ])
 
         // `isStoredInMemoryOnly` permite un store efímero (ideal para Previews) o persistente (ejecución real).
