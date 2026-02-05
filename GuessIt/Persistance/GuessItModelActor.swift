@@ -26,8 +26,9 @@ actor GuessItModelActor {
     /// Devuelve la partida en progreso si existe.
     /// - Returns: el `Game` activo o `nil` si no hay.
     func fetchInProgressGame() throws -> Game? {
+        let inProgressRawValue = GameState.inProgress.rawValue
         let descriptor = FetchDescriptor<Game>(
-            predicate: #Predicate<Game> { $0.state.rawValue == GameState.inProgress.rawValue },
+            predicate: #Predicate<Game> { $0.state.rawValue == inProgressRawValue },
             sortBy: [SortDescriptor(\Game.createdAt, order: .reverse)]
         )
 
