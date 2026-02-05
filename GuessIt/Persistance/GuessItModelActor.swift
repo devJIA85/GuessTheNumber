@@ -25,14 +25,14 @@ actor GuessItModelActor {
 
     /// Devuelve la partida en progreso si existe.
     /// - Returns: el `Game` activo o `nil` si no hay.
+    /// - Note: filtramos en código porque SwiftData no puede usar .rawValue en predicados.
     func fetchInProgressGame() throws -> Game? {
-        let inProgressRawValue = GameState.inProgress.rawValue
         let descriptor = FetchDescriptor<Game>(
-            predicate: #Predicate<Game> { $0.state.rawValue == inProgressRawValue },
             sortBy: [SortDescriptor(\Game.createdAt, order: .reverse)]
         )
 
-        return try modelContext.fetch(descriptor).first
+        let allGames = try modelContext.fetch(descriptor)
+        return allGames.first { $0.state == .inProgress }
     }
 
     /// Crea una partida nueva y la deja lista para jugar.
