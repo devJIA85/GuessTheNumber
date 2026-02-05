@@ -23,12 +23,12 @@ struct GameView: View {
 
     // MARK: - SwiftData
 
-    /// Buscamos la partida en progreso (si existe) para mostrar estado e historial.
-    /// Nota: la creación de partida la dispara el `GameActor` al primer submit.
+    /// Buscamos las partidas recientes ordenadas por fecha de creación.
+    /// - Note: filtramos en código (no en el predicado) porque SwiftData tiene limitaciones
+    ///   con enums en predicados en runtime.
     @Query(
-        filter: #Predicate<Game> { $0.state.rawValue == "inProgress" },
         sort: [SortDescriptor(\Game.createdAt, order: .reverse)]
-    ) private var inProgressGames: [Game]
+    ) private var allGames: [Game]
 
     // MARK: - UI State
 
@@ -45,11 +45,31 @@ struct GameView: View {
         NavigationStack {
             List {
                 statusSection
-                GuessInputView(guessText: $guessText) { normalized in
-                    submit(normalized)
+                
+                // Input: solo habilitado si hay partida en progreso
+                if let game = currentGame {
+                    if game.state == .inProgress {
+                        GuessInputView(guessText: $guessText) { normalized in
+                            submit(normalized)
+                        }
+                    } else {
+                        disabledInputSection
+                    }
+                } else {
+                    GuessInputView(guessText: $guessText) { normalized in
+                        submit(normalized)
+                    }
                 }
-                if let game = inProgressGames.first {
+                
+                // Sección de victoria (solo si ganó)
+                if let game = currentGame, game.state == .won {
+                    victorySection(for: game)
+                }
+                
+                // Contenido de la partida
+                if let game = currentGame {
                     attemptsSection(for: game)
+                    DigitBoardView(game: game, isReadOnly: game.state != .inProgress)
                 } else {
                     emptyStateSection
                 }
@@ -69,6 +89,14 @@ struct GameView: View {
                 }
             )
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        HistoryView()
+                    } label: {
+                        Label("Historial", systemImage: "clock.arrow.circlepath")
+                    }
+                }
+
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Task {
@@ -130,6 +158,61 @@ struct GameView: View {
         }
     }
 
+    /// Sección que reemplaza el input cuando la partida ya terminó.
+    /// - Why: evitamos que el usuario intente enviar más intentos en una partida finalizada.
+    private var disabledInputSection: some View {
+        Section("Tu intento") {
+            Text("La partida ya terminó. Creá una nueva para seguir jugando.")
+                .foregroundStyle(.secondary)
+                .font(.subheadline)
+        }
+    }
+
+    /// Sección de victoria con resumen y CTA para nueva partida.
+    /// - Why: proporciona feedback claro al ganar y ofrece un camino evidente
+    ///   para continuar jugando sin tener que buscar el botón de reinicio.
+    private func victorySection(for game: Game) -> some View {
+        Section {
+            VStack(alignment: .center, spacing: 16) {
+                Text("¡Ganaste! 🎉")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("Secreto:")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(game.secret)
+                            .fontDesign(.monospaced)
+                            .fontWeight(.semibold)
+                    }
+                    
+                    HStack {
+                        Text("Intentos:")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("\(game.attempts.count)")
+                            .fontWeight(.semibold)
+                    }
+                }
+                
+                Button {
+                    startNewGame()
+                } label: {
+                    Label("Nueva partida", systemImage: "plus.circle.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .frame(maxWidth: .infinity)
+        } header: {
+            Text("Resultado")
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Ganaste. Secreto: \(game.secret). Intentos: \(game.attempts.count).")
+    }
+
     /// Historial de intentos persistidos de la partida actual.
     private func attemptsSection(for game: Game) -> some View {
         Section("Intentos") {
@@ -148,9 +231,16 @@ struct GameView: View {
 
     // MARK: - Helpers
 
+    /// La partida actual (en progreso o recién ganada).
+    /// - Why: unifica el acceso a la partida activa en toda la vista.
+    /// - Note: filtramos abandonadas porque no son relevantes para la vista principal.
+    private var currentGame: Game? {
+        allGames.first { $0.state != .abandoned }
+    }
+
     /// Texto de estado, basado en la partida persistida.
     private var statusText: String {
-        guard let game = inProgressGames.first else {
+        guard let game = currentGame else {
             return "Sin partida"
         }
 
@@ -161,6 +251,20 @@ struct GameView: View {
             return "Ganada"
         case .abandoned:
             return "Abandonada"
+        }
+    }
+
+    /// Inicia una nueva partida.
+    /// - Why: resetea el juego y limpia el estado UI local.
+    private func startNewGame() {
+        Task {
+            do {
+                try await env.gameActor.resetGame()
+                lastResult = nil
+                guessText = ""
+            } catch {
+                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            }
         }
     }
 

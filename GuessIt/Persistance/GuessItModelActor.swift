@@ -127,6 +127,24 @@ actor GuessItModelActor {
         try modelContext.save()
     }
 
+    /// Resetea todas las notas de dígitos de una partida a `.unknown`.
+    ///
+    /// - Parameter game: partida cuyo tablero se quiere limpiar.
+    /// - Important: Este método mantiene la invariante de que siempre deben existir 10 notas.
+    func resetDigitNotes(in game: Game) throws {
+        // Validamos la invariante: debe haber exactamente 10 notas (0–9).
+        guard game.digitNotes.count == 10 else {
+            fatalError("Invariante rota: se esperan 10 DigitNotes, se encontraron \(game.digitNotes.count)")
+        }
+
+        // Reseteamos todas las marcas a desconocido.
+        for note in game.digitNotes {
+            note.mark = .unknown
+        }
+
+        try modelContext.save()
+    }
+
     // MARK: - Helpers
 
     /// Construye las 10 notas iniciales (0–9) con `.unknown`.
