@@ -26,7 +26,7 @@ struct GameView: View {
     /// Buscamos la partida en progreso (si existe) para mostrar estado e historial.
     /// Nota: la creación de partida la dispara el `GameActor` al primer submit.
     @Query(
-        filter: #Predicate<Game> { $0.state.rawValue == GameState.inProgress.rawValue },
+        filter: #Predicate<Game> { $0.state.rawValue == "inProgress" },
         sort: [SortDescriptor(\Game.createdAt, order: .reverse)]
     ) private var inProgressGames: [Game]
 
