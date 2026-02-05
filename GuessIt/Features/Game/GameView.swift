@@ -26,7 +26,7 @@ struct GameView: View {
     /// Buscamos la partida en progreso (si existe) para mostrar estado e historial.
     /// Nota: la creación de partida la dispara el `GameActor` al primer submit.
     @Query(
-        filter: #Predicate<Game> { $0.state == .inProgress },
+        filter: #Predicate<Game> { $0.state.rawValue == GameState.inProgress.rawValue },
         sort: [SortDescriptor(\Game.createdAt, order: .reverse)]
     ) private var inProgressGames: [Game]
 
@@ -45,7 +45,9 @@ struct GameView: View {
         NavigationStack {
             List {
                 statusSection
-                inputSection
+                GuessInputView(guessText: $guessText) { normalized in
+                    submit(normalized)
+                }
                 if let game = inProgressGames.first {
                     attemptsSection(for: game)
                 } else {
@@ -120,23 +122,6 @@ struct GameView: View {
         }
     }
 
-    /// Sección para ingresar un guess y enviarlo.
-    private var inputSection: some View {
-        Section("Tu intento") {
-            TextField("Ingresá un número de 5 dígitos", text: $guessText)
-                .keyboardType(.numberPad)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-
-            Button {
-                submit()
-            } label: {
-                Text("Probar")
-            }
-            .disabled(guessText.isEmpty)
-        }
-    }
-
     /// Sección que se muestra cuando no hay partida en progreso todavía.
     private var emptyStateSection: some View {
         Section {
@@ -155,28 +140,7 @@ struct GameView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(sortedAttempts) { attempt in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(attempt.guess)
-                                .font(.headline)
-                            Spacer()
-                            if attempt.isRepeated {
-                                Text("Repetido")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-
-                        HStack(spacing: 12) {
-                            Text("GOOD: \(attempt.good)")
-                            Text("FAIR: \(attempt.fair)")
-                            if attempt.isPoor {
-                                Text("POOR")
-                            }
-                        }
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    }
+                    AttemptRowView(attempt: attempt)
                 }
             }
         }
@@ -202,12 +166,10 @@ struct GameView: View {
 
     /// Envía el guess al actor del dominio.
     /// - Note: hacemos `Task` porque cruzamos aislamiento de actor.
-    private func submit() {
-        let trimmed = guessText.trimmingCharacters(in: .whitespacesAndNewlines)
-
+    private func submit(_ guess: String) {
         Task {
             do {
-                let result = try await env.gameActor.submitGuess(trimmed)
+                let result = try await env.gameActor.submitGuess(guess)
                 lastResult = result
                 guessText = ""
 
