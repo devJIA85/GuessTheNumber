@@ -20,6 +20,7 @@ import Testing
 /// - Victoria automática cuando se adivina el secreto
 /// - Detección de intentos repetidos
 /// - Validación de input
+@Suite(.serialized)
 struct GameActorIntegrationTests {
 
     // MARK: - Helpers

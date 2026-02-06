@@ -21,6 +21,7 @@ import Testing
 /// - Reutilización de partidas existentes
 /// - Reset de tablero
 /// - Transiciones de estado (won, abandoned)
+@Suite(.serialized)
 struct GuessItModelActorTests {
 
     // MARK: - Helpers

@@ -201,7 +201,15 @@ actor GuessItModelActor {
     // MARK: - Snapshots para UI (Historial y Detalle)
     
     /// Obtiene snapshots de todas las partidas terminadas para el historial.
-    /// - Returns: Lista de snapshots ordenados por fecha de finalización (más reciente primero).
+    ///
+    /// # Garantías
+    /// - **Filtros**: Solo incluye partidas con estado `.won` o `.abandoned`.
+    /// - **Orden**: Ordenadas por `finishedAt` descendente (más reciente primero).
+    ///   Las partidas con `finishedAt == nil` usan `createdAt` como fallback.
+    /// - **Completitud**: Incluye `attemptsCount` calculado en el momento de la consulta.
+    ///
+    /// - Returns: Lista de snapshots ordenados y filtrados.
+    /// - Note: Este método no expone el secreto de las partidas.
     func fetchFinishedGameSummaries() throws -> [GameSummarySnapshot] {
         let descriptor = FetchDescriptor<Game>(
             sortBy: [
@@ -227,6 +235,15 @@ actor GuessItModelActor {
     }
     
     /// Obtiene un snapshot completo de una partida para vista de detalle.
+    ///
+    /// # Garantías
+    /// - **Orden de intentos**: Ordenados por `createdAt` descendente (más reciente primero).
+    /// - **Orden de digitNotes**: Siempre ordenadas 0–9, garantizado por el sort explícito.
+    /// - **Invariante**: El snapshot siempre contiene exactamente 10 digitNotes (una por dígito).
+    /// - **Campo opcional `secret`**:
+    ///   - `nil` si la partida no está ganada (estado `.inProgress` o `.abandoned`).
+    ///   - Contiene el secreto solo si el estado es `.won`.
+    ///
     /// - Parameter gameID: Identificador de la partida.
     /// - Returns: Snapshot con toda la información necesaria para renderizar el detalle.
     /// - Throws: `ModelActorError.gameNotFound` si no existe la partida.
@@ -253,7 +270,12 @@ actor GuessItModelActor {
                 )
             }
         
-        // Mapear notas de dígitos a snapshots (ordenadas por dígito)
+        // Mapear notas de dígitos a snapshots (ordenadas por dígito 0–9)
+        // Validamos la invariante: debe haber exactamente 10 notas.
+        guard game.digitNotes.count == 10 else {
+            fatalError("Invariante rota: se esperan 10 DigitNotes, se encontraron \(game.digitNotes.count)")
+        }
+        
         let digitNoteSnapshots = game.digitNotes
             .sorted { $0.digit < $1.digit }
             .map { note in
@@ -263,6 +285,9 @@ actor GuessItModelActor {
                     mark: note.mark
                 )
             }
+        
+        // Verificación final: las notas deben estar en orden 0–9
+        assert(digitNoteSnapshots.map { $0.digit } == Array(0...9), "DigitNotes deben estar ordenadas 0–9")
         
         return GameDetailSnapshot(
             id: game.persistentID,
