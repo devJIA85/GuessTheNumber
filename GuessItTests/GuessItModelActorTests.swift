@@ -7,7 +7,7 @@
 
 import Foundation
 import Testing
-import SwiftData
+@preconcurrency import SwiftData
 @testable import GuessIt
 
 /// Tests de persistencia para `GuessItModelActor`.
@@ -21,7 +21,6 @@ import SwiftData
 /// - Reutilización de partidas existentes
 /// - Reset de tablero
 /// - Transiciones de estado (won, abandoned)
-@MainActor
 struct GuessItModelActorTests {
 
     // MARK: - Helpers
@@ -110,23 +109,24 @@ struct GuessItModelActorTests {
         // Arrange: crear partida y modificar algunas marcas
         let modelActor = makeTestModelActor()
         let game = try await modelActor.fetchOrCreateInProgressGame()
+        let gameID = game.persistentID
 
         // Modificar algunas marcas
-        try await modelActor.setDigitMark(digit: 0, mark: .good, in: game)
-        try await modelActor.setDigitMark(digit: 5, mark: .fair, in: game)
-        try await modelActor.setDigitMark(digit: 9, mark: .poor, in: game)
+        try await modelActor.setDigitMark(digit: 0, mark: .good, gameID: gameID)
+        try await modelActor.setDigitMark(digit: 5, mark: .fair, gameID: gameID)
+        try await modelActor.setDigitMark(digit: 9, mark: .poor, gameID: gameID)
 
-        // Verificar que se modificaron
-        let modifiedGame = try await modelActor.fetchInProgressGame()!
-        let hasModified = modifiedGame.digitNotes.contains { $0.mark != .unknown }
+        // Verificar que se modificaron usando snapshot
+        let modifiedSnapshot = try await modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        let hasModified = modifiedSnapshot.digitNotes.contains { $0.mark != .unknown }
         #expect(hasModified, "Algunas marcas deben estar modificadas antes del reset")
 
         // Act: resetear tablero
-        try await modelActor.resetDigitNotes(in: game)
+        try await modelActor.resetDigitNotes(gameID: gameID)
 
-        // Assert: todas vuelven a .unknown
-        let resetGame = try await modelActor.fetchInProgressGame()!
-        let allUnknown = resetGame.digitNotes.allSatisfy { $0.mark == .unknown }
+        // Assert: todas vuelven a .unknown usando snapshot
+        let resetSnapshot = try await modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        let allUnknown = resetSnapshot.digitNotes.allSatisfy { $0.mark == .unknown }
         #expect(allUnknown, "Todas las marcas deben volver a .unknown después del reset")
     }
 
@@ -141,7 +141,7 @@ struct GuessItModelActorTests {
         #expect(game.finishedAt == nil, "Precondición: finishedAt debe ser nil")
 
         // Act: marcar como ganada
-        try await modelActor.markGameWon(game)
+        try await modelActor.markGameWon(gameID: game.persistentID)
 
         // Assert: estado y fecha actualizados
         // Como la partida ahora está ganada, verificamos directamente el objeto modificado
@@ -162,7 +162,7 @@ struct GuessItModelActorTests {
         let game = try await modelActor.fetchOrCreateInProgressGame()
 
         // Act: marcar como abandonada
-        try await modelActor.markGameAbandoned(game)
+        try await modelActor.markGameAbandoned(gameID: game.persistentID)
 
         // Assert
         #expect(game.state == .abandoned, "El estado debe ser .abandoned")
@@ -180,7 +180,7 @@ struct GuessItModelActorTests {
 
         // Act: registrar intento
         let attempt = try await modelActor.recordAttempt(
-            in: game,
+            gameID: game.persistentID,
             guess: "12345",
             good: 2,
             fair: 1,
@@ -209,7 +209,7 @@ struct GuessItModelActorTests {
         let game = try await modelActor.fetchOrCreateInProgressGame()
 
         _ = try await modelActor.recordAttempt(
-            in: game,
+            gameID: game.persistentID,
             guess: "12345",
             good: 1,
             fair: 1,
@@ -218,7 +218,7 @@ struct GuessItModelActorTests {
 
         // Act: registrar mismo guess de nuevo
         let repeatedAttempt = try await modelActor.recordAttempt(
-            in: game,
+            gameID: game.persistentID,
             guess: "12345",
             good: 1,
             fair: 1,

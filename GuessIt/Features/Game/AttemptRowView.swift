@@ -7,16 +7,46 @@
 
 import SwiftUI
 
+/// Protocolo que abstrae los datos de un intento para display.
+/// Permite que AttemptRowView funcione tanto con @Model como con snapshots.
+protocol AttemptDisplayable {
+    var guess: String { get }
+    var good: Int { get }
+    var fair: Int { get }
+    var isPoor: Bool { get }
+    var isRepeated: Bool { get }
+}
+
+/// Attempt conforma AttemptDisplayable naturalmente (ya tiene las propiedades).
+extension Attempt: AttemptDisplayable {}
+
+/// AttemptSnapshot conforma AttemptDisplayable naturalmente (ya tiene las propiedades).
+extension AttemptSnapshot: AttemptDisplayable {}
+
 /// Fila de UI para mostrar un intento persistido.
 ///
 /// # Por qué existe
 /// - Mantiene `GameView` más limpio.
 /// - Reutilizable en otras pantallas (por ejemplo, History).
 /// - Centraliza el layout del intento (guess + GOOD/FAIR/POOR + repetido).
+///
+/// # Uso
+/// - Acepta tanto objetos `Attempt` (SwiftData) como `AttemptSnapshot` (Sendable).
+/// - Usa el protocolo `AttemptDisplayable` para abstraer la fuente de datos.
 struct AttemptRowView: View {
 
-    /// Intento persistido (SwiftData) a renderizar.
-    let attempt: Attempt
+    /// Datos del intento a renderizar.
+    private let data: AttemptDisplayable
+    
+    /// Inicializa con un objeto Attempt (SwiftData).
+    init(attempt: Attempt) {
+        self.data = attempt
+    }
+    
+    /// Inicializa con un snapshot Sendable.
+    init(snapshot: AttemptSnapshot) {
+        self.data = snapshot
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -32,12 +62,12 @@ struct AttemptRowView: View {
     /// Encabezado con el valor ingresado y el badge de repetido si aplica.
     private var header: some View {
         HStack {
-            Text(attempt.guess)
+            Text(data.guess)
                 .font(.headline)
 
             Spacer()
 
-            if attempt.isRepeated {
+            if data.isRepeated {
                 Text("Repetido")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -48,10 +78,10 @@ struct AttemptRowView: View {
     /// Métricas GOOD/FAIR y POOR si corresponde.
     private var metrics: some View {
         HStack(spacing: 12) {
-            Text("GOOD: \(attempt.good)")
-            Text("FAIR: \(attempt.fair)")
+            Text("GOOD: \(data.good)")
+            Text("FAIR: \(data.fair)")
 
-            if attempt.isPoor {
+            if data.isPoor {
                 Text("POOR")
             }
         }
@@ -65,15 +95,15 @@ struct AttemptRowView: View {
     /// - Why: evita que el usuario tenga que interpretar etiquetas visuales.
     private var accessibilityLabel: String {
         var parts: [String] = []
-        parts.append("Intento \(attempt.guess)")
-        parts.append("GOOD \(attempt.good)")
-        parts.append("FAIR \(attempt.fair)")
+        parts.append("Intento \(data.guess)")
+        parts.append("GOOD \(data.good)")
+        parts.append("FAIR \(data.fair)")
 
-        if attempt.isPoor {
+        if data.isPoor {
             parts.append("POOR")
         }
 
-        if attempt.isRepeated {
+        if data.isRepeated {
             parts.append("repetido")
         }
 

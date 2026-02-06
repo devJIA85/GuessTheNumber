@@ -12,8 +12,6 @@ import SwiftData
 /// # Por qué existe
 /// - DRY: un único lugar para la configuración del esquema y del store.
 /// - Previews/Tests: permite crear contenedores `inMemory` sin tocar disco.
-/// - Concurrencia: `ModelContainer` no es `Sendable`; lo creamos y consumimos desde el `MainActor`.
-@MainActor
 enum ModelContainerFactory {
 
     /// Construye un `ModelContainer` listo para usarse.

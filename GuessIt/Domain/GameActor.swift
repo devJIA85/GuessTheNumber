@@ -22,7 +22,7 @@ actor GameActor {
     // MARK: - Dependencias
 
     /// Actor de persistencia (SwiftData). Es el único que toca `ModelContext`.
-    private let modelActor: GuessItModelActor
+    let modelActor: GuessItModelActor
 
     // MARK: - Init
 
@@ -36,8 +36,9 @@ actor GameActor {
     /// Retorna el estado actual de la partida en progreso.
     /// - Note: el estado vive en SwiftData, por eso esto es `async`.
     func currentState() async throws -> GameState {
-        let game = try await modelActor.fetchOrCreateInProgressGame()
-        return game.state
+        let gameID = try await modelActor.fetchOrCreateInProgressGameID()
+        let gameData = try await modelActor.fetchGameData(gameID: gameID)
+        return gameData.state
     }
 
     /// Reinicia la partida.
@@ -46,8 +47,8 @@ actor GameActor {
     /// - Si hay una partida en progreso, la marca como abandonada.
     /// - Crea una partida nueva.
     func resetGame() async throws {
-        if let existing = try await modelActor.fetchInProgressGame() {
-            try await modelActor.markGameAbandoned(existing)
+        if let existingID = try await modelActor.fetchInProgressGameID() {
+            try await modelActor.markGameAbandoned(gameID: existingID)
         }
         _ = try await modelActor.createNewGame()
     }
@@ -55,9 +56,9 @@ actor GameActor {
     /// Envía un intento del usuario.
     ///
     /// Flujo:
-    /// 1) Obtiene (o crea) la partida en progreso desde SwiftData.
+    /// 1) Obtiene la partida en progreso desde SwiftData (NO crea si no existe).
     /// 2) Valida input (`GuessValidator`).
-    /// 3) Evalúa (`GuessEvaluator`) usando `game.secret`.
+    /// 3) Evalúa (`GuessEvaluator`) usando el secreto.
     /// 4) Persiste `Attempt` vía `recordAttempt`.
     /// 5) Si `good == secretLength`, marca la partida como ganada.
     ///
@@ -66,18 +67,23 @@ actor GameActor {
     /// - Throws: Errores tipados del dominio (validación o estado de partida).
     func submitGuess(_ guess: String) async throws -> SubmitGuessResult {
         // 1) Fuente de verdad: partida persistida.
-        let game = try await modelActor.fetchOrCreateInProgressGame()
+        // NO usamos fetchOrCreate porque queremos validar que hay una partida activa.
+        guard let gameID = try await modelActor.fetchInProgressGameID() else {
+            throw GameDomainError.gameNotInProgress(currentState: .abandoned)
+        }
+        
+        let gameData = try await modelActor.fetchGameData(gameID: gameID)
 
         // Si la partida no está activa, rechazamos el intento con un error tipado.
-        guard game.state == .inProgress else {
-            throw GameDomainError.gameNotInProgress(currentState: game.state)
+        guard gameData.state == .inProgress else {
+            throw GameDomainError.gameNotInProgress(currentState: gameData.state)
         }
 
         // 2) Validar input.
         try GuessValidator.validate(guess)
 
         // 3) Evaluar usando el secreto persistido.
-        let evaluation = GuessEvaluator.evaluate(secret: game.secret, guess: guess)
+        let evaluation = GuessEvaluator.evaluate(secret: gameData.secret, guess: guess)
         let feedback = AttemptFeedback(
             good: evaluation.good,
             fair: evaluation.fair,
@@ -86,7 +92,7 @@ actor GameActor {
 
         // 4) Persistir intento evaluado.
         _ = try await modelActor.recordAttempt(
-            in: game,
+            gameID: gameID,
             guess: guess,
             good: feedback.good,
             fair: feedback.fair,
@@ -95,10 +101,13 @@ actor GameActor {
 
         // 5) Transicionar estado (persistido).
         if evaluation.good == GameConstants.secretLength {
-            try await modelActor.markGameWon(game)
+            try await modelActor.markGameWon(gameID: gameID)
         }
 
-        return SubmitGuessResult(guess: guess, feedback: feedback, gameState: game.state)
+        // 6) Obtener el estado actualizado
+        let updatedGameData = try await modelActor.fetchGameData(gameID: gameID)
+
+        return SubmitGuessResult(guess: guess, feedback: feedback, gameState: updatedGameData.state)
     }
 
     // MARK: - Debug (opcional)
@@ -106,7 +115,8 @@ actor GameActor {
     /// Devuelve el secreto actual (solo para debug/tests).
     /// - Warning: no exponer esto en UI de producción.
     func debugSecret() async throws -> String {
-        let game = try await modelActor.fetchOrCreateInProgressGame()
-        return game.secret
+        let gameID = try await modelActor.fetchOrCreateInProgressGameID()
+        let gameData = try await modelActor.fetchGameData(gameID: gameID)
+        return gameData.secret
     }
 }

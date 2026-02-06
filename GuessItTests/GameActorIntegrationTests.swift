@@ -6,7 +6,7 @@
 //
 
 import Testing
-import SwiftData
+@preconcurrency import SwiftData
 @testable import GuessIt
 
 /// Tests de integración para `GameActor`.
@@ -20,7 +20,6 @@ import SwiftData
 /// - Victoria automática cuando se adivina el secreto
 /// - Detección de intentos repetidos
 /// - Validación de input
-@MainActor
 struct GameActorIntegrationTests {
 
     // MARK: - Helpers
@@ -39,25 +38,19 @@ struct GameActorIntegrationTests {
 
     /// Crea un GameActor con un secreto predefinido para tests deterministas.
     /// - Why: permite validar lógica de evaluación sin depender de randomness.
-    private func makeTestGameActorWithSecret(_ secret: String) async throws -> (GameActor, Game) {
+    private func makeTestGameActorWithSecret(_ secret: String) async throws -> (GameActor, GameIdentifier) {
         let container = makeTestContainer()
         let modelActor = GuessItModelActor(modelContainer: container)
         
-        // Crear partida usando el modelActor para evitar problemas de aislamiento
-        // Primero creamos una partida normal
+        // Crear partida y actualizar su secreto a través del modelActor
         let game = try await modelActor.createNewGame()
+        let gameID = game.persistentID
         
-        // Luego modificamos su secreto para el test (acceso directo al objeto)
-        // Esto es seguro porque estamos en un test con contenedor in-memory
-        game.secret = secret
-        
-        // Guardar el cambio
-        try await Task { @MainActor in
-            try container.mainContext.save()
-        }.value
+        // Actualizar el secreto de forma segura a través del actor
+        try await modelActor.updateSecret(gameID: gameID, secret: secret)
         
         let gameActor = GameActor(modelActor: modelActor)
-        return (gameActor, game)
+        return (gameActor, gameID)
     }
 
     // MARK: - Tests de submitGuess
@@ -65,7 +58,7 @@ struct GameActorIntegrationTests {
     @Test("submitGuess persiste intento y devuelve feedback correcto")
     func testSubmitGuessPersistsAttemptAndReturnsFeedback() async throws {
         // Arrange: crear actor con secreto conocido
-        let (gameActor, game) = try await makeTestGameActorWithSecret("01234")
+        let (gameActor, gameID) = try await makeTestGameActorWithSecret("01234")
 
         // Act: enviar guess válido pero incorrecto
         // Secreto: "01234", Guess: "12340"
@@ -78,10 +71,11 @@ struct GameActorIntegrationTests {
         #expect(result.feedback.fair == 5, "Los 5 dígitos están presentes pero mal ubicados")
         #expect(result.feedback.isPoor == false, "No es POOR porque hay matches")
 
-        // Assert: intento persistido
-        #expect(game.attempts.count == 1, "Debe haber 1 intento registrado")
+        // Assert: intento persistido - verificar a través del snapshot
+        let snapshot = try await gameActor.modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        #expect(snapshot.attempts.count == 1, "Debe haber 1 intento registrado")
         
-        let attempt = game.attempts.first!
+        let attempt = snapshot.attempts.first!
         #expect(attempt.guess == "12340")
         #expect(attempt.good == 0)
         #expect(attempt.fair == 5)
@@ -92,8 +86,9 @@ struct GameActorIntegrationTests {
     @Test("submitGuess marca partida como ganada cuando se adivina el secreto")
     func testSubmitGuessMarksGameWonWhenGuessMatchesSecret() async throws {
         // Arrange: secreto conocido
-        let (gameActor, game) = try await makeTestGameActorWithSecret("01234")
-        #expect(game.state == .inProgress, "Precondición: partida en progreso")
+        let (gameActor, gameID) = try await makeTestGameActorWithSecret("01234")
+        let initialGameData = try await gameActor.modelActor.fetchGameData(gameID: gameID)
+        #expect(initialGameData.state == .inProgress, "Precondición: partida en progreso")
 
         // Act: adivinar el secreto exacto
         let result = try await gameActor.submitGuess("01234")
@@ -104,28 +99,31 @@ struct GameActorIntegrationTests {
         #expect(result.feedback.isPoor == false, "No es POOR")
 
         // Assert: partida marcada como ganada
-        #expect(game.state == .won, "La partida debe estar marcada como ganada")
-        #expect(game.finishedAt != nil, "finishedAt debe estar establecido")
-
-        // Verificar que el intento se registró
-        #expect(game.attempts.count == 1)
-        #expect(game.attempts.first?.guess == "01234")
+        let gameData = try await gameActor.modelActor.fetchGameData(gameID: gameID)
+        #expect(gameData.state == .won, "La partida debe estar marcada como ganada")
+        
+        // Verificar que el intento se registró y finishedAt está establecido
+        let snapshot = try await gameActor.modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        #expect(snapshot.finishedAt != nil, "finishedAt debe estar establecido")
+        #expect(snapshot.attempts.count == 1)
+        #expect(snapshot.attempts.first?.guess == "01234")
     }
 
     @Test("submitGuess marca intento como repetido cuando se envía el mismo guess")
     func testSubmitGuessMarksRepeatedAttempt() async throws {
         // Arrange: secreto que no se adivina en primer intento
-        let (gameActor, game) = try await makeTestGameActorWithSecret("01234")
+        let (gameActor, gameID) = try await makeTestGameActorWithSecret("01234")
 
         // Act: enviar mismo guess dos veces
         _ = try await gameActor.submitGuess("56789")
         _ = try await gameActor.submitGuess("56789")
 
-        // Assert: segundo intento marcado como repetido
-        #expect(game.attempts.count == 2, "Debe haber 2 intentos")
+        // Assert: segundo intento marcado como repetido - usar snapshot
+        let snapshot = try await gameActor.modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        #expect(snapshot.attempts.count == 2, "Debe haber 2 intentos")
         
         // Ordenar los intentos por fecha para tener orden consistente
-        let sortedAttempts = game.attempts.sorted { $0.createdAt < $1.createdAt }
+        let sortedAttempts = snapshot.attempts.sorted { $0.createdAt < $1.createdAt }
         guard sortedAttempts.count == 2 else {
             Issue.record("Expected 2 attempts, got \(sortedAttempts.count)")
             return
@@ -141,31 +139,32 @@ struct GameActorIntegrationTests {
     @Test("submitGuess rechaza intento cuando partida no está en progreso")
     func testSubmitGuessRejectsWhenGameNotInProgress() async throws {
         // Arrange: partida ganada
-        let (gameActor, game) = try await makeTestGameActorWithSecret("01234")
+        let (gameActor, gameID) = try await makeTestGameActorWithSecret("01234")
         let firstResult = try await gameActor.submitGuess("01234") // Ganar
         
-        // Verificar que ganó
-        #expect(game.state == .won, "La partida debe estar marcada como ganada")
+        // Verificar que ganó - usar snapshot
+        let gameData = try await gameActor.modelActor.fetchGameData(gameID: gameID)
+        #expect(gameData.state == .won, "La partida debe estar marcada como ganada")
         #expect(firstResult.feedback.good == 5, "Debe haber adivinado el secreto")
         #expect(firstResult.gameState == .won, "El resultado debe indicar victoria")
 
-        // Act & Assert: intentar enviar otro guess crea una nueva partida
-        // porque fetchOrCreateInProgressGame() crea una si no hay una en progreso.
-        // Esto es comportamiento válido del sistema: el usuario puede seguir jugando
-        // después de ganar (se crea automáticamente una nueva partida).
-        let secondResult = try await gameActor.submitGuess("56789")
-        #expect(secondResult.gameState == .inProgress, "Nueva partida debe estar en progreso")
+        // Act & Assert: intentar enviar otro guess debe lanzar error
+        // porque ahora submitGuess NO auto-crea partidas (comportamiento correcto).
+        await #expect(throws: GameDomainError.self) {
+            try await gameActor.submitGuess("56789")
+        }
         
-        // Verificar que la primera partida sigue marcada como ganada
-        #expect(game.state == .won, "La partida original debe seguir ganada")
+        // Verificar que la partida sigue marcada como ganada - usar snapshot
+        let finalGameData = try await gameActor.modelActor.fetchGameData(gameID: gameID)
+        #expect(finalGameData.state == .won, "La partida debe seguir ganada")
     }
 
     // MARK: - Tests de Validación
 
     @Test("submitGuess rechaza guess con longitud incorrecta")
     func testSubmitGuessRejectsInvalidLength() async throws {
-        // Arrange
-        let gameActor = makeTestGameActor()
+        // Arrange: crear partida para que submitGuess pueda validar
+        let (gameActor, _) = try await makeTestGameActorWithSecret("01234")
 
         // Act & Assert: guess muy corto
         await #expect(throws: GuessValidator.ValidationError.self) {
@@ -180,8 +179,8 @@ struct GameActorIntegrationTests {
 
     @Test("submitGuess rechaza guess con caracteres no numéricos")
     func testSubmitGuessRejectsNonNumericCharacters() async throws {
-        // Arrange
-        let gameActor = makeTestGameActor()
+        // Arrange: crear partida para que submitGuess pueda validar
+        let (gameActor, _) = try await makeTestGameActorWithSecret("01234")
 
         // Act & Assert
         await #expect(throws: GuessValidator.ValidationError.self) {
@@ -195,8 +194,8 @@ struct GameActorIntegrationTests {
 
     @Test("submitGuess rechaza guess con dígitos repetidos")
     func testSubmitGuessRejectsDuplicateDigits() async throws {
-        // Arrange
-        let gameActor = makeTestGameActor()
+        // Arrange: crear partida para que submitGuess pueda validar
+        let (gameActor, _) = try await makeTestGameActorWithSecret("01234")
 
         // Act & Assert
         await #expect(throws: GuessValidator.ValidationError.self) {
@@ -213,21 +212,26 @@ struct GameActorIntegrationTests {
     @Test("resetGame marca partida actual como abandonada y crea nueva")
     func testResetGameMarksCurrentAsAbandonedAndCreatesNew() async throws {
         // Arrange: crear partida y hacer algunos intentos
-        let (gameActor, firstGame) = try await makeTestGameActorWithSecret("01234")
-        let firstSecret = firstGame.secret
+        let (gameActor, firstGameID) = try await makeTestGameActorWithSecret("01234")
+        let firstGameData = try await gameActor.modelActor.fetchGameData(gameID: firstGameID)
+        let firstSecret = firstGameData.secret
         _ = try await gameActor.submitGuess("56789")
         _ = try await gameActor.submitGuess("12345")
         
-        #expect(firstGame.state == .inProgress)
-        // Verificar que los intentos se registraron (al menos debe haber attempts)
-        #expect(firstGame.attempts.count >= 2, "Debe haber al menos 2 intentos")
+        // Verificar estado inicial usando snapshot
+        let initialSnapshot = try await gameActor.modelActor.fetchGameDetailSnapshot(gameID: firstGameID)
+        let initialGameData = try await gameActor.modelActor.fetchGameData(gameID: firstGameID)
+        #expect(initialGameData.state == .inProgress)
+        #expect(initialSnapshot.attempts.count >= 2, "Debe haber al menos 2 intentos")
 
         // Act: resetear juego
         try await gameActor.resetGame()
 
-        // Assert: primera partida abandonada
-        #expect(firstGame.state == .abandoned, "La partida anterior debe estar abandonada")
-        #expect(firstGame.finishedAt != nil, "finishedAt debe estar establecido")
+        // Assert: primera partida abandonada - usar snapshot
+        let abandonedGameData = try await gameActor.modelActor.fetchGameData(gameID: firstGameID)
+        #expect(abandonedGameData.state == .abandoned, "La partida anterior debe estar abandonada")
+        let abandonedSnapshot = try await gameActor.modelActor.fetchGameDetailSnapshot(gameID: firstGameID)
+        #expect(abandonedSnapshot.finishedAt != nil, "finishedAt debe estar establecido")
 
         // Assert: nueva partida creada y activa
         let newSecret = try await gameActor.debugSecret()
@@ -303,7 +307,7 @@ struct GameActorIntegrationTests {
     @Test("submitGuess maneja múltiples intentos consecutivos correctamente")
     func testSubmitGuessHandlesMultipleConsecutiveAttempts() async throws {
         // Arrange
-        let (gameActor, game) = try await makeTestGameActorWithSecret("01234")
+        let (gameActor, gameID) = try await makeTestGameActorWithSecret("01234")
 
         // Act: enviar varios intentos
         let result1 = try await gameActor.submitGuess("56789")
@@ -317,12 +321,14 @@ struct GameActorIntegrationTests {
         #expect(result3.gameState == .inProgress)
         #expect(result4.gameState == .inProgress)
 
-        // Assert: todos registrados
-        #expect(game.attempts.count == 4, "Debe haber 4 intentos registrados")
-        #expect(game.state == .inProgress, "Partida aún en progreso")
+        // Assert: todos registrados - usar snapshot
+        let snapshot = try await gameActor.modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        let gameData = try await gameActor.modelActor.fetchGameData(gameID: gameID)
+        #expect(snapshot.attempts.count == 4, "Debe haber 4 intentos registrados")
+        #expect(gameData.state == .inProgress, "Partida aún en progreso")
 
         // Verificar que están ordenados por fecha
-        let sortedAttempts = game.attempts.sorted { $0.createdAt < $1.createdAt }
+        let sortedAttempts = snapshot.attempts.sorted { $0.createdAt < $1.createdAt }
         #expect(sortedAttempts.count == 4, "Debe haber 4 intentos ordenados")
         
         // Verificar que los guesses están en el orden correcto
@@ -335,13 +341,14 @@ struct GameActorIntegrationTests {
     @Test("submitGuess mantiene consistencia entre resultado y persistencia")
     func testSubmitGuessMaintainsConsistencyBetweenResultAndPersistence() async throws {
         // Arrange
-        let (gameActor, game) = try await makeTestGameActorWithSecret("01234")
+        let (gameActor, gameID) = try await makeTestGameActorWithSecret("01234")
 
         // Act
         let result = try await gameActor.submitGuess("12340")
 
         // Assert: el resultado devuelto coincide con lo persistido
-        let attempt = game.attempts.first!
+        let snapshot = try await gameActor.modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        let attempt = snapshot.attempts.first!
         #expect(result.feedback.good == attempt.good, "GOOD debe coincidir")
         #expect(result.feedback.fair == attempt.fair, "FAIR debe coincidir")
         #expect(result.feedback.isPoor == attempt.isPoor, "isPoor debe coincidir")

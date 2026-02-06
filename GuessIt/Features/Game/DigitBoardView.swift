@@ -100,7 +100,7 @@ struct DigitBoardView: View {
     private func setMark(_ mark: DigitMark, forDigit digit: Int) {
         Task {
             do {
-                try await env.modelActor.setDigitMark(digit: digit, mark: mark, in: game)
+                try await env.modelActor.setDigitMark(digit: digit, mark: mark, gameID: game.persistentID)
             } catch {
                 // MVP: si falla el guardado, no rompemos UI.
                 // Más adelante lo llevamos a un alert/toast.
@@ -113,7 +113,7 @@ struct DigitBoardView: View {
     private func resetBoard() {
         Task {
             do {
-                try await env.modelActor.resetDigitNotes(in: game)
+                try await env.modelActor.resetDigitNotes(gameID: game.persistentID)
             } catch {
                 // MVP: si falla el guardado, no rompemos UI.
                 assertionFailure("No se pudo resetear el tablero: \(error)")

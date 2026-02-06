@@ -12,46 +12,62 @@ import SwiftData
 ///
 /// # Rol
 /// - Muestra todas las partidas con estado `.won` o `.abandoned`.
-/// - Permite navegar al detalle de cada partida (cuando exista `GameDetailView`).
+/// - Permite navegar al detalle de cada partida usando su identificador.
 /// - Es una pantalla de solo lectura: no persiste datos directamente.
 ///
 /// # Fuente de verdad
-/// - Los datos vienen 100% de SwiftData con `@Query`.
-/// - El ordenamiento prioriza `finishedAt`, con fallback a `createdAt`.
+/// - Los datos vienen de `GuessItModelActor` como snapshots Sendable.
+/// - No cruza objetos @Model entre vistas (respeta aislamiento de SwiftData).
 struct HistoryView: View {
 
-    // MARK: - SwiftData
-
-    /// Consulta todas las partidas ordenadas por fecha de finalización.
-    /// - Note: filtramos en código porque SwiftData tiene limitaciones con enums
-    ///   en predicados en runtime.
-    @Query(
-        sort: [
-            SortDescriptor(\Game.finishedAt, order: .reverse),
-            SortDescriptor(\Game.createdAt, order: .reverse)
-        ]
-    ) private var allGames: [Game]
+    // MARK: - Dependencies
     
-    /// Partidas terminadas (ganadas o abandonadas).
-    /// - Why: excluimos `.inProgress` porque esta vista es solo para historial.
-    private var finishedGames: [Game] {
-        allGames.filter { $0.state != .inProgress }
-    }
+    @Environment(\.appEnvironment) private var env
+    
+    // MARK: - Estado de carga
+    
+    /// Estado de carga de los datos con snapshots de partidas terminadas.
+    @State private var state: LoadState<[GameSummarySnapshot]> = .loading
 
     var body: some View {
         NavigationStack {
             Group {
-                if finishedGames.isEmpty {
+                switch state {
+                case .loading:
+                    loadingView
+                case .loaded(let games):
+                    historyListView(games: games)
+                case .empty:
                     emptyStateView
-                } else {
-                    historyListView
+                case .failure(let error):
+                    failureView(error: error)
                 }
             }
             .navigationTitle("Historial")
+            .task {
+                await loadGames()
+            }
+        }
+    }
+    
+    // MARK: - Data Loading
+    
+    /// Carga las partidas terminadas desde el actor.
+    private func loadGames() async {
+        do {
+            let games = try await env.modelActor.fetchFinishedGameSummaries()
+            state = games.isEmpty ? LoadState.empty : LoadState.loaded(games)
+        } catch {
+            state = LoadState.failure(error)
         }
     }
 
-    // MARK: - Empty State
+    // MARK: - Views
+    
+    /// Vista de carga.
+    private var loadingView: some View {
+        ProgressView("Cargando historial...")
+    }
 
     /// Vista cuando no hay partidas terminadas todavía.
     private var emptyStateView: some View {
@@ -67,57 +83,44 @@ struct HistoryView: View {
         }
         .padding()
     }
+    
+    /// Vista de error con opción de reintentar.
+    private func failureView(error: Error) -> some View {
+        VStack(spacing: 16) {
+            Text("No se pudo cargar el historial.")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+            
+            Button("Reintentar") {
+                Task {
+                    await loadGames()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+    }
 
-    // MARK: - List
-
-    /// Lista de partidas terminadas usando el componente reutilizable.
-    private var historyListView: some View {
+    /// Lista de partidas terminadas usando snapshots.
+    private func historyListView(games: [GameSummarySnapshot]) -> some View {
         List {
-            ForEach(finishedGames, id: \.id) { game in
+            ForEach(games) { snapshot in
                 NavigationLink {
-                    GameDetailView(game: game)
+                    GameDetailView(gameID: snapshot.id)
                 } label: {
-                    GameSummaryRowView(game: game)
+                    GameSummaryRowView(snapshot: snapshot)
                 }
             }
         }
     }
 }
 
-#Preview("HistoryView - Empty") {
-    // Preview sin partidas terminadas
-    let container = try! ModelContainer(
-        for: Game.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
-
+#Preview("HistoryView") {
+    // Preview con entorno configurado
+    let container = ModelContainerFactory.make(isInMemory: true)
+    let env = AppEnvironment(modelContainer: container)
+    
     HistoryView()
+        .environment(\.appEnvironment, env)
         .modelContainer(container)
-}
-
-#Preview("HistoryView - With Games") {
-    // Preview con partidas de ejemplo
-    do {
-        let container = try ModelContainer(
-            for: Game.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-
-        // Crear partidas de ejemplo
-        let wonGame = Game(secret: "12345", digitNotes: [])
-        wonGame.state = .won
-        wonGame.finishedAt = Date().addingTimeInterval(-86400) // Ayer
-
-        let abandonedGame = Game(secret: "67890", digitNotes: [])
-        abandonedGame.state = .abandoned
-        abandonedGame.finishedAt = Date().addingTimeInterval(-172800) // Hace 2 días
-
-        container.mainContext.insert(wonGame)
-        container.mainContext.insert(abandonedGame)
-
-        return HistoryView()
-            .modelContainer(container)
-    } catch {
-        return Text("Error: \(error.localizedDescription)")
-    }
 }

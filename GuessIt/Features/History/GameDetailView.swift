@@ -6,38 +6,107 @@
 //
 
 import SwiftUI
+import SwiftData
 
 /// Pantalla de detalle de una partida terminada.
 ///
 /// # Rol
 /// - Muestra el resumen completo de una partida cerrada (won o abandoned).
-/// - Reutiliza componentes existentes (AttemptRowView, DigitBoardView).
+/// - Carga datos usando snapshots Sendable (no cruza objetos @Model).
 /// - Vista de solo lectura: no persiste ni muta datos.
 ///
 /// # Fuente de verdad
-/// - Recibe un `Game` ya cargado desde `HistoryView`.
-/// - No usa @Query: todo el estado viene del parámetro `game`.
+/// - Recibe un `GameIdentifier` y carga el snapshot desde `GuessItModelActor`.
+/// - No usa @Query ni objetos @Model: respeta aislamiento de SwiftData.
 struct GameDetailView: View {
 
     // MARK: - Input
 
-    /// La partida a mostrar en detalle.
-    let game: Game
+    /// Identificador de la partida a mostrar.
+    let gameID: GameIdentifier
+    
+    // MARK: - Dependencies
+    
+    @Environment(\.appEnvironment) private var env
+    
+    // MARK: - Estado de carga
+    
+    /// Estado de carga del detalle de la partida.
+    @State private var state: LoadState<GameDetailSnapshot> = .loading
 
     var body: some View {
-        List {
-            headerSection
-            attemptsSection
-            digitBoardSection
+        Group {
+            switch state {
+            case .loading:
+                ProgressView("Cargando detalle...")
+            case .loaded(let snapshot):
+                detailContent(snapshot: snapshot)
+            case .empty:
+                // Este caso no debería ocurrir en la práctica (una partida siempre existe si llegamos aquí)
+                emptyStateView
+            case .failure(let error):
+                failureView(error: error)
+            }
         }
         .navigationTitle("Detalle de partida")
         .navigationBarTitleDisplayMode(.inline)
+        .task(id: gameID) {
+            await loadGameDetail()
+        }
+    }
+    
+    // MARK: - Data Loading
+    
+    /// Carga el detalle de la partida desde el actor.
+    private func loadGameDetail() async {
+        do {
+            let snapshot = try await env.modelActor.fetchGameDetailSnapshot(gameID: gameID)
+            state = LoadState.loaded(snapshot)
+        } catch {
+            state = LoadState.failure(error)
+        }
+    }
+    
+    /// Vista de error con opción de reintentar.
+    private func failureView(error: Error) -> some View {
+        VStack(spacing: 16) {
+            Text("No se pudo cargar la partida.")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+            
+            Button("Reintentar") {
+                Task {
+                    await loadGameDetail()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+    }
+    
+    /// Vista cuando no se encuentra la partida.
+    private var emptyStateView: some View {
+        VStack(spacing: 12) {
+            Text("No se encontró la partida.")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+    }
+    
+    /// Contenido principal del detalle.
+    private func detailContent(snapshot: GameDetailSnapshot) -> some View {
+        List {
+            headerSection(snapshot: snapshot)
+            attemptsSection(snapshot: snapshot)
+            digitBoardSection(snapshot: snapshot)
+        }
     }
 
     // MARK: - Header
 
     /// Sección superior con resumen de la partida.
-    private var headerSection: some View {
+    private func headerSection(snapshot: GameDetailSnapshot) -> some View {
         Section {
             VStack(alignment: .leading, spacing: 12) {
                 // Estado de la partida
@@ -48,7 +117,7 @@ struct GameDetailView: View {
                     
                     Spacer()
                     
-                    Text(stateText)
+                    Text(stateText(for: snapshot.state))
                         .font(.headline)
                 }
 
@@ -60,7 +129,7 @@ struct GameDetailView: View {
                     
                     Spacer()
                     
-                    Text(displayDate, format: .dateTime.year().month().day().hour().minute())
+                    Text(displayDate(for: snapshot), format: .dateTime.year().month().day().hour().minute())
                         .font(.subheadline)
                 }
 
@@ -72,12 +141,12 @@ struct GameDetailView: View {
                     
                     Spacer()
                     
-                    Text("\(game.attempts.count)")
+                    Text("\(snapshot.attempts.count)")
                         .font(.subheadline)
                 }
 
                 // Número secreto (solo si está ganada, para no spoilear)
-                if game.state == .won {
+                if let secret = snapshot.secret {
                     HStack {
                         Text("Número secreto")
                             .font(.subheadline)
@@ -85,7 +154,7 @@ struct GameDetailView: View {
                         
                         Spacer()
                         
-                        Text(game.secret)
+                        Text(secret)
                             .font(.headline)
                             .fontDesign(.monospaced)
                     }
@@ -95,41 +164,35 @@ struct GameDetailView: View {
             Text("Resumen")
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(headerAccessibilityLabel)
+        .accessibilityLabel(headerAccessibilityLabel(for: snapshot))
     }
 
     // MARK: - Attempts
 
     /// Sección con la lista completa de intentos.
-    /// - Note: los intentos se muestran en orden descendente (más reciente primero)
-    ///   para mantener consistencia con la vista principal del juego.
-    private var attemptsSection: some View {
+    /// - Note: los intentos ya vienen ordenados del snapshot (más reciente primero).
+    private func attemptsSection(snapshot: GameDetailSnapshot) -> some View {
         Section {
-            if sortedAttempts.isEmpty {
+            if snapshot.attempts.isEmpty {
                 Text("No hay intentos registrados.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(sortedAttempts) { attempt in
-                    AttemptRowView(attempt: attempt)
+                ForEach(snapshot.attempts) { attemptSnapshot in
+                    AttemptRowView(snapshot: attemptSnapshot)
                 }
             }
         } header: {
-            Text("Intentos (\(game.attempts.count))")
+            Text("Intentos (\(snapshot.attempts.count))")
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Intentos, lista de \(game.attempts.count) elementos")
-    }
-
-    /// Intentos ordenados por fecha de creación (más reciente primero).
-    private var sortedAttempts: [Attempt] {
-        game.attempts.sorted { $0.createdAt > $1.createdAt }
+        .accessibilityLabel("Intentos, lista de \(snapshot.attempts.count) elementos")
     }
 
     // MARK: - Digit Board
 
     /// Sección con el tablero final de dígitos (modo solo lectura).
-    private var digitBoardSection: some View {
-        DigitBoardView(game: game, isReadOnly: true)
+    private func digitBoardSection(snapshot: GameDetailSnapshot) -> some View {
+        DigitBoardSnapshotView(digitNotes: snapshot.digitNotes)
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Tablero final de dígitos")
     }
@@ -137,8 +200,8 @@ struct GameDetailView: View {
     // MARK: - Helpers
 
     /// Texto del estado de la partida.
-    private var stateText: String {
-        switch game.state {
+    private func stateText(for state: GameState) -> String {
+        switch state {
         case .won:
             return "Ganada"
         case .abandoned:
@@ -153,60 +216,37 @@ struct GameDetailView: View {
     ///
     /// - Why: priorizamos `finishedAt` porque representa cuándo terminó realmente.
     ///   Si no existe (casos edge), usamos `createdAt` como fallback.
-    private var displayDate: Date {
-        game.finishedAt ?? game.createdAt
+    private func displayDate(for snapshot: GameDetailSnapshot) -> Date {
+        snapshot.finishedAt ?? snapshot.createdAt
     }
 
     /// Label de accesibilidad para el header.
-    private var headerAccessibilityLabel: String {
-        let state = stateText.lowercased()
-        let date = displayDate.formatted(.dateTime.year().month().day().hour().minute())
-        let attempts = game.attempts.count
+    private func headerAccessibilityLabel(for snapshot: GameDetailSnapshot) -> String {
+        let state = stateText(for: snapshot.state).lowercased()
+        let date = displayDate(for: snapshot).formatted(.dateTime.year().month().day().hour().minute())
+        let attempts = snapshot.attempts.count
         return "Detalle de partida, \(state), fecha \(date), \(attempts) intentos."
     }
 }
 
-#Preview("GameDetailView - Won") {
-    // Preview de una partida ganada
+#Preview("GameDetailView") {
+    // Preview con entorno configurado
+    let container = ModelContainerFactory.make(isInMemory: true)
+    let env = AppEnvironment(modelContainer: container)
+    
+    // Crear una partida de ejemplo para el preview
     let game = Game(secret: "12345", digitNotes: [])
     game.state = .won
-    game.finishedAt = Date().addingTimeInterval(-86400) // Ayer
-    
-    // Agregar notas de dígitos
+    game.finishedAt = Date().addingTimeInterval(-86400)
     game.digitNotes = (0...9).map { digit in
         DigitNote(digit: digit, mark: .unknown, game: game)
     }
-    
-    // Agregar algunos intentos de ejemplo
-    let attempt1 = Attempt(guess: "54321", good: 1, fair: 2, isPoor: false, isRepeated: false, game: game)
-    let attempt2 = Attempt(guess: "12340", good: 4, fair: 0, isPoor: false, isRepeated: false, game: game)
-    let attempt3 = Attempt(guess: "12345", good: 5, fair: 0, isPoor: false, isRepeated: false, game: game)
-    
-    game.attempts.append(contentsOf: [attempt1, attempt2, attempt3])
+    container.mainContext.insert(game)
+    try? container.mainContext.save()
     
     return NavigationStack {
-        GameDetailView(game: game)
-    }
-}
-
-#Preview("GameDetailView - Abandoned") {
-    // Preview de una partida abandonada
-    let game = Game(secret: "67890", digitNotes: [])
-    game.state = .abandoned
-    game.finishedAt = Date().addingTimeInterval(-172800) // Hace 2 días
-    
-    // Agregar notas de dígitos
-    game.digitNotes = (0...9).map { digit in
-        DigitNote(digit: digit, mark: .unknown, game: game)
-    }
-    
-    // Agregar algunos intentos de ejemplo
-    let attempt1 = Attempt(guess: "12345", good: 0, fair: 1, isPoor: false, isRepeated: false, game: game)
-    let attempt2 = Attempt(guess: "98765", good: 1, fair: 0, isPoor: false, isRepeated: false, game: game)
-    
-    game.attempts.append(contentsOf: [attempt1, attempt2])
-    
-    return NavigationStack {
-        GameDetailView(game: game)
+        GameDetailView(gameID: game.persistentID)
+            .environment(\.appEnvironment, env)
+            .modelContainer(container)
     }
 }

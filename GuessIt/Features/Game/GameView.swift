@@ -75,6 +75,16 @@ struct GameView: View {
                 }
             }
             .navigationTitle("Guess It")
+            .task {
+                // Asegurar que siempre hay una partida en progreso al abrir la app
+                if currentGame == nil {
+                    do {
+                        try await env.gameActor.resetGame()
+                    } catch {
+                        errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                    }
+                }
+            }
             .alert(
                 "Error",
                 isPresented: Binding(
