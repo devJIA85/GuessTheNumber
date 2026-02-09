@@ -23,6 +23,36 @@ import SwiftData
 struct HintPromptBuilderTests {
     
     let builder = HintPromptBuilder()
+
+    // MARK: - Helpers de input
+
+    /// Crea un HintInput mínimo para tests sin depender de persistencia real.
+    /// - Why: necesitamos un PersistentIdentifier válido para construir HintInput.
+    private func makeInput(attempts: [HintAttempt]) -> HintInput {
+        let gameID = makeInMemoryGameID()
+        return HintInput(
+            gameID: gameID,
+            attempts: attempts,
+            digitNotes: []
+        )
+    }
+
+    /// Genera un PersistentIdentifier usando un container in-memory.
+    /// - Why: SwiftData no expone un init público para PersistentIdentifier.
+    private func makeInMemoryGameID() -> PersistentIdentifier {
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(
+            for: Game.self,
+            Attempt.self,
+            DigitNote.self,
+            configurations: configuration
+        )
+        let context = ModelContext(container)
+        let game = Game(secret: "00000", digitNotes: [])
+        context.insert(game)
+        try? context.save()
+        return game.persistentID
+    }
     
     // MARK: - Guardrails: 5 dígitos consecutivos
     
@@ -145,12 +175,38 @@ struct HintPromptBuilderTests {
         #expect(builder.isOutputSafe("Recordá que POOR descarta todos los dígitos de ese intento."))
     }
     
-    // MARK: - Construcción de prompt (sin depender de PersistentIdentifier mock)
+    // MARK: - Guardrail extra: dígito + posición
     
-    /// Nota sobre tests de makePrompt:
-    /// Estos tests fueron removidos temporalmente porque requieren crear un PersistentIdentifier mock,
-    /// lo cual no es posible con la API pública de SwiftData.
-    ///
-    /// Los tests de guardrails (isOutputSafe) son los críticos y están completamente cubiertos arriba.
-    /// La construcción del prompt es verificable manualmente o con tests de integración.
+    @Test("isOutputSafe bloquea patrones de dígito + posición")
+    func testIsOutputSafeBlocksDigitPlusPositionPatterns() {
+        #expect(!builder.isOutputSafe("Poné el 7 en la posición 3."))
+        #expect(!builder.isOutputSafe("El dígito 4 va en la 2da."))
+        #expect(!builder.isOutputSafe("Pos 5: usa el 9."))
+        #expect(!builder.isOutputSafe("En el lugar 1 va el 0."))
+    }
+    
+    // MARK: - Construcción de prompt (formato táctico)
+    
+    @Test("makePrompt incluye el formato táctico requerido")
+    func testMakePromptTacticalFormatContainsRequiredHeadings() {
+        let input = makeInput(attempts: [])
+        let prompt = builder.makePrompt(input: input)
+        #expect(prompt.contains("Diagnóstico:"))
+        #expect(prompt.contains("Próximo intento:"))
+        #expect(prompt.contains("Por qué:"))
+    }
+    
+    @Test("makePrompt incluye resumen táctico derivado cuando hay intentos")
+    func testPromptIncludesDerivedStatsSectionWhenAttemptsExist() {
+        let attempts = [
+            HintAttempt(guess: "01234", good: 1, fair: 1, isPoor: false, isRepeated: false),
+            HintAttempt(guess: "56789", good: 0, fair: 2, isPoor: false, isRepeated: false),
+            HintAttempt(guess: "98765", good: 2, fair: 0, isPoor: false, isRepeated: true)
+        ]
+        let input = makeInput(attempts: attempts)
+        let prompt = builder.makePrompt(input: input)
+        #expect(prompt.contains("Resumen táctico (derivado"))
+        #expect(prompt.contains("Mejor hit (GOOD+FAIR): 2"))
+        #expect(prompt.contains("Repetidos: 1"))
+    }
 }

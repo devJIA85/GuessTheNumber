@@ -53,6 +53,30 @@ struct HintPromptBuilder: Sendable {
     
     // MARK: - Prompt Construction
     
+    /// Métricas derivadas de intentos para orientar la pista sin resolver el secreto.
+    /// - Why: aportan precisión táctica con información agregada y segura.
+    private struct DerivedStats {
+        let bestHit: Int
+        let bestAttemptIndex: Int
+        let last3Trend: String
+        let repeatedCount: Int
+        let poorStreak: Int
+        let newDigitsRate: Int
+        
+        /// Bloque listo para el prompt con métricas resumidas.
+        /// - Why: guía al modelo con datos concretos sin mencionar dígitos ni posiciones.
+        var asPromptBlock: String {
+            """
+            Resumen táctico (derivado, sin resolver):
+            - Mejor hit (GOOD+FAIR): \(bestHit) (intento \(bestAttemptIndex))
+            - Tendencia últimos 3: \(last3Trend)
+            - Repetidos: \(repeatedCount)
+            - Racha POOR: \(poorStreak)
+            - Nuevos en último intento vs anterior: \(newDigitsRate)
+            """
+        }
+    }
+    
     /// Construye un prompt estructurado para el modelo de IA.
     ///
     /// # Estrategia del prompt
@@ -92,6 +116,11 @@ struct HintPromptBuilder: Sendable {
                 attemptsText += "\(index + 1). \(attempt.guess) → GOOD: \(attempt.good), FAIR: \(attempt.fair)\(poor)\(repeated)\n"
             }
             sections.append(attemptsText)
+            
+            if let stats = derivedStats(from: input.attempts) {
+                // Métricas seguras: resumen táctico sin inferir posiciones ni revelar dígitos concretos.
+                sections.append(stats.asPromptBlock)
+            }
         }
         
         // 3. Marcas de dígitos
@@ -123,24 +152,25 @@ struct HintPromptBuilder: Sendable {
         sections.append("""
         
         Tu tarea:
-        Proporciona UNA pista estratégica breve (1-4 líneas), textual y no determinista.
+        Proporciona UNA pista táctica, breve (1-4 líneas), textual y no determinista.
         
-        Varía el tipo de respuesta. Elegí UNO de estos enfoques (alterná entre ellos cuando puedas):
-        - Estrategia de posicionamiento: si hay FAIR, sugerí permutar posiciones en lugar de sumar nuevos dígitos.
-        - Estrategia de descarte: si hay POOR o dígitos descartados, enfocá el próximo intento en confirmar posiciones.
-        - Estrategia de confirmación: si un dígito aparece consistente como FAIR o GOOD, sugerí fijarlo y variar los demás.
-        - Estrategia de exploración controlada: cambiar solo un dígito respecto al intento anterior para aislar resultados.
+        Formato OBLIGATORIO (máx 4 líneas):
+        - Diagnóstico: ...
+        - Próximo intento: ...
+        - Por qué: ...
+        - Evita: ... (opcional)
         
         LO QUE PUEDES hacer:
-        - Sugerir estrategias generales (permutar posiciones, probar nuevos dígitos, confirmar posiciones conocidas).
-        - Recordar patrones del feedback (si hay FAIR, explorar permutaciones; si hay GOOD, fijar esas posiciones).
-        - Sugerir reducir el espacio de búsqueda usando la información actual.
+        - Dar instrucciones accionables sin mencionar dígitos concretos ni posiciones.
+        - Recomendar experimentos controlados (p. ej., reusar parte del mejor intento y variar pocas piezas).
+        - Basarte en el resumen táctico para priorizar el siguiente movimiento.
         
         LO QUE NO PUEDES hacer:
         - NO revelar el secreto ni dar 5 dígitos consecutivos.
         - NO decir "el número es..." o "la respuesta es...".
         - NO proporcionar un único intento específico como solución final.
         - NO usar lenguaje de solver ni enumerar combinaciones.
+        - NO mencionar dígito + posición (ej: "7 en la posición 3").
         
         Responde SOLO con la pista, sin preámbulos ni explicaciones adicionales.
         
@@ -148,6 +178,56 @@ struct HintPromptBuilder: Sendable {
         """)
         
         return sections.joined(separator: "\n\n")
+    }
+    
+    /// Calcula métricas tácticas derivadas de los intentos.
+    /// - Why: son señales agregadas que no revelan dígitos ni posiciones concretas.
+    private func derivedStats(from attempts: [HintAttempt]) -> DerivedStats? {
+        guard !attempts.isEmpty else {
+            return nil
+        }
+        
+        let hits = attempts.map { $0.good + $0.fair }
+        let bestHit = hits.max() ?? 0
+        let bestAttemptIndex = (hits.firstIndex(of: bestHit) ?? 0) + 1
+        
+        let repeatedCount = attempts.filter { $0.isRepeated }.count
+        
+        let poorStreak = attempts.reversed().prefix(while: { $0.isPoor }).count
+        
+        let last3Trend: String
+        if hits.count >= 3 {
+            let lastThree = Array(hits.suffix(3))
+            if lastThree[0] < lastThree[1] && lastThree[1] < lastThree[2] {
+                last3Trend = "subiendo"
+            } else if lastThree[0] > lastThree[1] && lastThree[1] > lastThree[2] {
+                last3Trend = "bajando"
+            } else {
+                last3Trend = "mixto"
+            }
+        } else {
+            last3Trend = "insuficiente"
+        }
+        
+        let newDigitsRate: Int
+        if attempts.count >= 2 {
+            let last = attempts[attempts.count - 1].guess
+            let previous = attempts[attempts.count - 2].guess
+            let lastSet = Set(last)
+            let previousSet = Set(previous)
+            newDigitsRate = lastSet.subtracting(previousSet).count
+        } else {
+            newDigitsRate = 0
+        }
+        
+        return DerivedStats(
+            bestHit: bestHit,
+            bestAttemptIndex: bestAttemptIndex,
+            last3Trend: last3Trend,
+            repeatedCount: repeatedCount,
+            poorStreak: poorStreak,
+            newDigitsRate: newDigitsRate
+        )
     }
     
     // MARK: - Output Validation (Guardrails)
@@ -158,7 +238,8 @@ struct HintPromptBuilder: Sendable {
     /// 1. **No revelar 5 dígitos consecutivos**: detecta patrones tipo "12345" que podrían ser el secreto.
     /// 2. **No múltiples candidatos**: detecta cuando aparecen 2 o más números de 5 dígitos (listas de soluciones).
     /// 3. **No frases de respuesta directa**: detecta "el número es", "la respuesta es", "es 12345", etc.
-    /// 4. **No lenguaje tipo solver**: detecta frases que enumeren combinaciones o candidatos posibles.
+    /// 4. **No dígito + posición**: evita instrucciones demasiado directas (ej: "7 en la posición 3").
+    /// 5. **No lenguaje tipo solver**: detecta frases que enumeren combinaciones o candidatos posibles.
     ///
     /// # Por qué estos guardrails
     /// - Los modelos de IA pueden "escapar" de las instrucciones del prompt si no hay validación.
@@ -209,7 +290,22 @@ struct HintPromptBuilder: Sendable {
             }
         }
         
-        // Guardrail 4: detectar lenguaje tipo solver / enumeración de candidatos
+        // Guardrail 4: bloquear patrones de dígito + posición (demasiado directos)
+        // Por qué: evita que la IA indique ubicaciones específicas, que actúan como "resolver".
+        let digitPositionPatterns = [
+            #"\b\d\b.{0,12}\b(pos(ición|icion)|pos|lugar)\s*(\d|1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b"#,
+            #"\b(pos(ición|icion)|pos|lugar)\s*(\d|1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b.{0,12}\b\d\b"#,
+            #"\b\d\b.{0,12}\b(en\s+la|en\s+el)\s+(1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b"#,
+            #"\b(en\s+la|en\s+el)\s+(1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b.{0,12}\b\d\b"#
+        ]
+        
+        for pattern in digitPositionPatterns {
+            if let _ = lowercased.range(of: pattern, options: .regularExpression) {
+                return false
+            }
+        }
+        
+        // Guardrail 5: detectar lenguaje tipo solver / enumeración de candidatos
         // Por qué: estas frases indican que el modelo está intentando resolver el juego
         // en lugar de dar pistas estratégicas, o puede revelar el secreto por reducción
         // Nota: removimos algunas frases genéricas para reducir falsos positivos
@@ -218,12 +314,23 @@ struct HintPromptBuilder: Sendable {
             "lista de números",
             "posibles números son",
             "las opciones son:",
+            "las opciones son",
+            "las opciones son limitadas",
             "todas las combinaciones",
             "enumerar números",
+            "voy a enumerar las opciones",
+            "los candidatos principales",
+            "posibles números incluyen",
+            "los posibles números incluyen",
             "prueba estas:",
+            "prueba estas soluciones",
             "probá estas:",
+            "probá estas opciones",
+            "probá estas soluciones",
             "intentá estas:",
+            "intentá estas combinaciones",
             "intenta estas:",
+            "intenta estas combinaciones",
             "cualquier orden de estos"
         ]
         

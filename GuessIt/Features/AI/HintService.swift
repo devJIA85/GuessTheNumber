@@ -125,8 +125,25 @@ actor HintService {
             
             try Task.checkCancellation()
             
-            // 3. Generar texto con engine
-            let rawText = try await engine.generate(prompt: prompt)
+            // 3. Generar texto con engine (con fallback si Apple Intelligence dispara guardrails)
+            let usedEngine: any HintEngine
+            let rawText: String
+            do {
+                rawText = try await engine.generate(prompt: prompt)
+                usedEngine = engine
+            } catch {
+                // Si falla Apple Intelligence por guardrails, usamos fallback para no dejar al usuario sin pista.
+                if error is CancellationError {
+                    throw error
+                }
+                if engine is AppleHintEngine {
+                    let fallbackEngine = FallbackHintEngine()
+                    rawText = try await fallbackEngine.generate(prompt: prompt)
+                    usedEngine = fallbackEngine
+                } else {
+                    throw error
+                }
+            }
             
             try Task.checkCancellation()
             
@@ -138,7 +155,7 @@ actor HintService {
             }
             
             // 5. Telemetría: registrar engine usado y limpiar último error
-            lastEngineUsed = engineName(engine)
+            lastEngineUsed = engineName(usedEngine)
             lastErrorDescription = nil
             
             // 6. Retornar resultado

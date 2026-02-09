@@ -33,24 +33,61 @@ struct VictorySplashView: View {
     let attempts: Int
     let onNewGame: () -> Void
 
+    @State private var isVisible = false
+    @State private var glowPulse = false
+
     var body: some View {
         ZStack {
-            Color.black.opacity(0.35)
+            // Backdrop más presente para separar el estado de victoria del juego activo.
+            Color.black.opacity(0.45)
                 .ignoresSafeArea()
 
-            VStack(spacing: AppTheme.Spacing.medium) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(Color.appActionPrimary)
+            VStack(spacing: AppTheme.Spacing.large) {
+                ZStack {
+                    // Halo animado para dar sensación de celebración sin ser invasivo.
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    Color.appActionPrimary.opacity(glowPulse ? 0.35 : 0.2),
+                                    Color.clear
+                                ],
+                                center: .center,
+                                startRadius: 10,
+                                endRadius: 80
+                            )
+                        )
+                        .frame(width: 140, height: 140)
+                        .scaleEffect(glowPulse ? 1.05 : 0.95)
+                        .animation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true), value: glowPulse)
 
-                Text("¡Ganaste!")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color.appTextPrimary)
+                    Circle()
+                        .fill(Color.appSurfaceCard)
+                        .frame(width: 72, height: 72)
+                        .overlay(
+                            Circle()
+                                .strokeBorder(Color.appBorderSubtle, lineWidth: 1)
+                        )
+
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 30, weight: .semibold))
+                        .foregroundStyle(Color.appActionPrimary)
+                }
 
                 VStack(spacing: AppTheme.Spacing.xSmall) {
+                    Text("¡Ganaste!")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.appTextPrimary)
+
+                    Text("Excelente lectura del feedback")
+                        .font(.caption)
+                        .foregroundStyle(Color.appTextSecondary)
+                }
+
+                VStack(spacing: AppTheme.Spacing.small) {
                     HStack {
-                        Text("Secreto:")
+                        Text("Secreto")
                             .foregroundStyle(Color.appTextSecondary)
                         Spacer()
                         Text(secret)
@@ -59,13 +96,18 @@ struct VictorySplashView: View {
                     }
 
                     HStack {
-                        Text("Intentos:")
+                        Text("Intentos")
                             .foregroundStyle(Color.appTextSecondary)
                         Spacer()
                         Text("\(attempts)")
                             .fontWeight(.semibold)
                     }
                 }
+                .padding(AppTheme.Spacing.medium)
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
+                        .fill(Color.appBackgroundSecondary.opacity(0.6))
+                )
 
                 Button {
                     onNewGame()
@@ -79,16 +121,25 @@ struct VictorySplashView: View {
             .padding(AppTheme.Spacing.large)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .fill(Color.appSurfaceCard)
+                    .fill(.ultraThinMaterial)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
                     .strokeBorder(Color.appBorderSubtle, lineWidth: 1)
             )
             .padding(.horizontal, AppTheme.Spacing.large)
+            .scaleEffect(isVisible ? 1.0 : 0.96)
+            .opacity(isVisible ? 1.0 : 0.0)
+            // Entrada suave para evitar el efecto "pop" pobre.
+            .animation(.spring(response: 0.45, dampingFraction: 0.85), value: isVisible)
         }
         // Marca la vista como modal para bloquear interacción debajo.
         .accessibilityAddTraits(.isModal)
+        .onAppear {
+            // Animación de entrada y halo activo para enfatizar la victoria.
+            isVisible = true
+            glowPulse = true
+        }
     }
 }
 

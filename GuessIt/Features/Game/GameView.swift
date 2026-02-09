@@ -56,6 +56,10 @@ struct GameView: View {
     /// - Esta info se carga cada vez que se abre el sheet de pista.
     /// - Se actualiza con cada generación de pista.
     @State private var hintDebugInfo: HintDebugInfo? = nil
+    
+    /// Historial de pistas generadas en la partida actual (memoria local).
+    /// - Why: permite mostrar pistas anteriores sin persistirlas en SwiftData.
+    @State private var hintHistory: [HintHistoryEntry] = []
 
     /// Estado observable de la splash de victoria.
     /// - Why: permite coordinar presentación + haptic sin persistencia.
@@ -151,12 +155,12 @@ struct GameView: View {
                 }
                 if newValue == .inProgress {
                     // Reiniciamos la pista para evitar contaminación entre partidas o estados.
-                    resetHintState()
+                    resetHintUIState()
                 }
             }
             .onChange(of: currentGame?.id) { _, _ in
                 // Cambió la partida activa: limpiamos estado de pista para comenzar desde cero.
-                resetHintState()
+                resetHintUIState()
             }
             .alert(
                 "Error",
@@ -186,6 +190,8 @@ struct GameView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     if let game = currentGame, game.state == .inProgress {
                         Button {
+                            // Reiniciamos estado para forzar una nueva generación en cada apertura.
+                            prepareHintPresentation()
                             isHintPresented = true
                         } label: {
                             Label("Pista", systemImage: "lightbulb")
@@ -287,9 +293,9 @@ struct GameView: View {
     private func attemptsCard(for game: Game) -> some View {
         AppCard(title: "Intentos", style: .compact) {
             let sortedAttempts = game.attempts.sorted { $0.createdAt > $1.createdAt }
-            let maxVisibleAttempts = 4
-            // Mostramos solo los últimos intentos para ganar densidad y evitar scroll vertical.
-            let visibleAttempts = Array(sortedAttempts.prefix(maxVisibleAttempts))
+            let maxVisibleAttempts = 5
+            // Limitamos la altura para que se vean ~5 intentos y el resto quede scrolleable.
+            let maxVisibleHeight = CGFloat(maxVisibleAttempts) * 44
 
             if sortedAttempts.isEmpty {
                 Text("Todavía no hay intentos.")
@@ -299,20 +305,24 @@ struct GameView: View {
                     .padding(.vertical, AppTheme.Spacing.xSmall)
                     // Damos altura mínima para que la tarjeta no se vea “encogida” sin intentos.
             } else {
-                VStack(spacing: AppTheme.Spacing.xSmall) {
-                    ForEach(visibleAttempts) { attempt in
-                        AttemptRowView(attempt: attempt)
-                            .padding(AppTheme.Spacing.small)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(Color.appBackgroundSecondary)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .strokeBorder(Color.appBorderSubtle.opacity(0.5), lineWidth: 0.5)
-                            )
+                ScrollView {
+                    VStack(spacing: AppTheme.Spacing.xSmall) {
+                        ForEach(sortedAttempts) { attempt in
+                            AttemptRowView(attempt: attempt)
+                                .padding(AppTheme.Spacing.small)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(Color.appBackgroundSecondary)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .strokeBorder(Color.appBorderSubtle.opacity(0.5), lineWidth: 0.5)
+                                )
+                        }
                     }
                 }
+                // Fijamos altura aproximada para mostrar 4 intentos y permitir scroll interno.
+                .frame(maxHeight: maxVisibleHeight)
             }
         }
     }
@@ -353,12 +363,15 @@ struct GameView: View {
     /// Inicia una nueva partida.
     /// - Why: resetea el juego y limpia el estado UI local.
     private func startNewGame() {
+        // Cerramos la splash antes de resetear para evitar el flash de “ganaste”.
+        victorySplash.dismiss()
+        
         Task {
             do {
                 try await env.gameActor.resetGame()
                 guessText = ""
                 // Limpiamos cualquier pista previa para que la nueva partida arranque en idle.
-                resetHintState()
+                resetHintUIState()
             } catch {
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             }
@@ -433,6 +446,25 @@ struct GameView: View {
                                         .font(.body)
                                         .foregroundStyle(Color.appTextPrimary)
                                         .accessibilityLabel("Pista: \(output.text)")
+                                }
+                                
+                                if hintHistory.count > 1 {
+                                    AppCard(title: "Pistas anteriores") {
+                                        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+                                            // Mostramos las pistas previas en orden descendente (mas recientes primero).
+                                            ForEach(hintHistory.dropLast().reversed()) { entry in
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text(entry.title)
+                                                        .font(.caption)
+                                                        .foregroundStyle(Color.appTextSecondary)
+                                                    Text(entry.text)
+                                                        .foregroundStyle(Color.appTextPrimary)
+                                                }
+                                                .accessibilityElement(children: .combine)
+                                                .accessibilityLabel("Pista anterior: \(entry.text)")
+                                            }
+                                        }
+                                    }
                                 }
                                 
                                 #if DEBUG
@@ -536,10 +568,13 @@ struct GameView: View {
                 // Check cancelación
                 try Task.checkCancellation()
                 
-                // 5. Actualizar estado (en MainActor)
+                // 5. Registrar pista en historial local antes de mostrarla.
+                hintHistory.append(HintHistoryEntry(text: output.text, createdAt: Date()))
+                
+                // 6. Actualizar estado (en MainActor)
                 hintState = .loaded(output)
                 
-                // 6. Cargar debug info (solo en DEBUG)
+                // 7. Cargar debug info (solo en DEBUG)
                 #if DEBUG
                 hintDebugInfo = await env.hintService.debugInfo()
                 #endif
@@ -556,12 +591,41 @@ struct GameView: View {
     
     /// Resetea el estado de la pista y cancela cualquier generación en curso.
     /// - Why: evita que el texto o loading de una partida anterior contamine la nueva.
-    private func resetHintState() {
+    private func resetHintUIState() {
         hintTask?.cancel()
         hintTask = nil
         hintState = .empty
         hintDebugInfo = nil
+        hintHistory.removeAll()
         isHintPresented = false
+    }
+
+    /// Prepara el estado de la pista para generar una nueva al abrir el sheet.
+    /// - Why: si el usuario pide otra pista, no debe quedarse con la anterior.
+    private func prepareHintPresentation() {
+        hintTask?.cancel()
+        hintTask = nil
+        hintState = .empty
+        hintDebugInfo = nil
+    }
+
+    /// Modelo liviano para renderizar historial de pistas en la UI.
+    /// - Why: evita depender de SwiftData y mantiene el estado solo en memoria.
+    private struct HintHistoryEntry: Identifiable {
+        let id = UUID()
+        let text: String
+        let createdAt: Date
+
+        var title: String {
+            // Mostramos una etiqueta simple para darle contexto temporal sin persistencia.
+            "Pista \(formattedTime)"
+        }
+
+        private var formattedTime: String {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm"
+            return formatter.string(from: createdAt)
+        }
     }
     
     /// Convierte un GameDetailSnapshot a HintInput.
