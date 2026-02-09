@@ -35,17 +35,23 @@ struct GameDetailView: View {
     @State private var state: LoadState<GameDetailSnapshot> = .loading
 
     var body: some View {
-        Group {
-            switch state {
-            case .loading:
-                ProgressView("Cargando detalle...")
-            case .loaded(let snapshot):
-                detailContent(snapshot: snapshot)
-            case .empty:
-                // Este caso no debería ocurrir en la práctica (una partida siempre existe si llegamos aquí)
-                emptyStateView
-            case .failure(let error):
-                failureView(error: error)
+        ZStack {
+            Color.appBackgroundPrimary
+                .ignoresSafeArea()
+
+            Group {
+                switch state {
+                case .loading:
+                    ProgressView("Cargando detalle...")
+                        .tint(.appActionPrimary)
+                case .loaded(let snapshot):
+                    detailContent(snapshot: snapshot)
+                case .empty:
+                    // Este caso no debería ocurrir en la práctica (una partida siempre existe si llegamos aquí)
+                    emptyStateView
+                case .failure(let error):
+                    failureView(error: error)
+                }
             }
         }
         .navigationTitle("Detalle de partida")
@@ -72,14 +78,15 @@ struct GameDetailView: View {
         VStack(spacing: 16) {
             Text("No se pudo cargar la partida.")
                 .font(.headline)
-                .foregroundStyle(.secondary)
-            
+                .foregroundStyle(Color.appTextSecondary)
+
             Button("Reintentar") {
                 Task {
                     await loadGameDetail()
                 }
             }
             .buttonStyle(.borderedProminent)
+            .tint(.appActionPrimary)
         }
         .padding()
     }
@@ -89,7 +96,7 @@ struct GameDetailView: View {
         VStack(spacing: 12) {
             Text("No se encontró la partida.")
                 .font(.headline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appTextSecondary)
         }
         .padding()
     }
@@ -101,6 +108,9 @@ struct GameDetailView: View {
             attemptsSection(snapshot: snapshot)
             digitBoardSection(snapshot: snapshot)
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(Color.appBackgroundPrimary)
     }
 
     // MARK: - Header
@@ -113,36 +123,39 @@ struct GameDetailView: View {
                 HStack {
                     Text("Estado")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    
+                        .foregroundStyle(Color.appTextSecondary)
+
                     Spacer()
-                    
+
                     Text(stateText(for: snapshot.state))
                         .font(.headline)
+                        .foregroundStyle(Color.appTextPrimary)
                 }
 
                 // Fecha de finalización
                 HStack {
                     Text("Fecha")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    
+                        .foregroundStyle(Color.appTextSecondary)
+
                     Spacer()
-                    
+
                     Text(displayDate(for: snapshot), format: .dateTime.year().month().day().hour().minute())
                         .font(.subheadline)
+                        .foregroundStyle(Color.appTextPrimary)
                 }
 
                 // Cantidad de intentos
                 HStack {
                     Text("Intentos")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    
+                        .foregroundStyle(Color.appTextSecondary)
+
                     Spacer()
-                    
+
                     Text("\(snapshot.attempts.count)")
                         .font(.subheadline)
+                        .foregroundStyle(Color.appTextPrimary)
                 }
 
                 // Número secreto (solo si está ganada, para no spoilear)
@@ -150,13 +163,14 @@ struct GameDetailView: View {
                     HStack {
                         Text("Número secreto")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        
+                            .foregroundStyle(Color.appTextSecondary)
+
                         Spacer()
-                        
+
                         Text(secret)
                             .font(.headline)
                             .fontDesign(.monospaced)
+                            .foregroundStyle(Color.appTextPrimary)
                     }
                 }
             }
@@ -175,7 +189,7 @@ struct GameDetailView: View {
         Section {
             if snapshot.attempts.isEmpty {
                 Text("No hay intentos registrados.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appTextSecondary)
             } else {
                 ForEach(snapshot.attempts) { attemptSnapshot in
                     AttemptRowView(snapshot: attemptSnapshot)

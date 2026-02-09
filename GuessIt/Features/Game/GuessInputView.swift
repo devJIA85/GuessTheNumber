@@ -36,11 +36,10 @@ struct GuessInputView: View {
     }
 
     var body: some View {
-        Section("Tu intento") {
-            TextField(placeholder, text: $guessText)
-                .keyboardType(.numberPad)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            // Input estilo OTP con 5 celdas individuales
+            OTPStyleDigitInput(text: $guessText)
+                .frame(maxWidth: .infinity)
 
             Button {
                 // Normalizamos (trim) para no validar espacios accidentales.
@@ -48,17 +47,30 @@ struct GuessInputView: View {
                 onSubmit(normalized)
             } label: {
                 Text("Probar")
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.borderedProminent)
+            .tint(.appActionPrimary)
             // Evitamos acciones inútiles cuando el campo está vacío.
-            .disabled(guessText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(isButtonDisabled)
+            // Micro-animación sutil cuando el botón pasa a enabled
+            // - Why: feedback visual de "listo para enviar" sin ser intrusivo
+            .scaleEffect(isButtonDisabled ? 0.98 : 1.0)
+            .opacity(isButtonDisabled ? 0.6 : 1.0)
+            .animation(.easeOut(duration: 0.2), value: isButtonDisabled)
         }
+    }
+    
+    // MARK: - Helpers
+    
+    /// Estado del botón: disabled cuando el input está vacío o incompleto.
+    private var isButtonDisabled: Bool {
+        guessText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
 
 #Preview("GuessInputView") {
     @Previewable @State var text: String = ""
 
-    return List {
-        GuessInputView(guessText: $text) { _ in }
-    }
+    return GuessInputView(guessText: $text) { _ in }
 }

@@ -29,4 +29,23 @@ enum LoadState<Value>: Equatable where Value: Equatable {
             return false
         }
     }
+    
+    // MARK: - Computed Properties
+    
+    /// Indica si el estado actual es `.loading`.
+    ///
+    /// # Por qué útil
+    /// - Facilita bindings para componentes UI como `DeferredProgressView`.
+    /// - Más legible que comparar con switch o if-case en la UI.
+    ///
+    /// # Uso típico
+    /// ```swift
+    /// DeferredProgressView(isActive: loadState.isLoading, delay: .milliseconds(300))
+    /// ```
+    var isLoading: Bool {
+        if case .loading = self {
+            return true
+        }
+        return false
+    }
 }

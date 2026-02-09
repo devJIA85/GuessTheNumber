@@ -31,18 +31,19 @@ struct GameSummaryRowView: View {
             HStack {
                 Text(stateText(for: snapshot.state))
                     .font(.headline)
+                    .foregroundStyle(Color.appTextPrimary)
 
                 Spacer()
 
                 Text(displayDate, format: .dateTime.year().month().day().hour().minute())
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appTextSecondary)
             }
 
             // Línea 2: Cantidad de intentos
             Text("\(snapshot.attemptsCount) intentos")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appTextSecondary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText)

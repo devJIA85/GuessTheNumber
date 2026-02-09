@@ -27,26 +27,32 @@ struct DigitBoardSnapshotView: View {
     
     // MARK: - Layout
     
-    /// 10 dígitos en una grilla de 5 columnas × 2 filas.
-    private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 10), count: 5)
+    /// Grilla fija: 2 filas × 5 columnas.
+    private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 12), count: 5)
     
     var body: some View {
-        Section {
-            LazyVGrid(columns: columns, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            // Header
+            HStack {
+                Text("Tablero 0–9 (final)")
+                    .font(.headline)
+                    .foregroundStyle(Color.appTextPrimary)
+
+                Spacer()
+            }
+
+            // Grilla 2×5
+            LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(sortedNotes) { note in
                     DigitNoteCell(
                         digit: note.digit,
                         mark: note.mark,
-                        onTap: {}, // No-op: read-only
-                        onSetMark: { _ in } // No-op: read-only
+                        onTap: {} // No-op: read-only
                     )
                     .disabled(true) // Deshabilitar interacción
                     .opacity(0.8) // Indicador visual de solo lectura
                 }
             }
-            .padding(.vertical, 6)
-        } header: {
-            Text("Tablero 0–9 (final)")
         }
     }
     

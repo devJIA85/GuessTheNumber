@@ -6,71 +6,69 @@
 //
 
 import SwiftUI
+import SwiftData
 
-/// Tablero 0–9 para que el jugador marque manualmente sus hipótesis.
+/// Tablero 0–9 como herramienta cognitiva manual.
 ///
-/// # Rol
-/// - Muestra las 10 `DigitNote` de la partida actual.
-/// - Permite actualizar la marca de cada dígito (persistido en SwiftData).
-/// - Puede funcionar en modo solo lectura para visualización de partidas terminadas.
+/// # Diseño
+/// - Card única con header (título + reset).
+/// - Grilla fija 2 filas × 5 columnas.
+/// - 100% manual: no refleja lógica automática del juego.
 ///
-/// # Fuente de verdad
-/// - La UI **no** escribe SwiftData directamente.
-/// - Las actualizaciones se delegan a `GuessItModelActor`.
+/// # Interacción
+/// - Tap simple cicla estados: none → poor → fair → good → none.
+/// - Sin long-press ni menús contextuales.
 struct DigitBoardView: View {
 
     // MARK: - Dependencies
 
-    @Environment(\.appEnvironment) private var env
+    @Environment(\.modelContext) private var modelContext
 
     // MARK: - Input
 
     /// Partida a la que pertenece el tablero.
-    let game: Game
+    @Bindable var game: Game
 
     /// Modo solo lectura: deshabilita interacciones de edición.
-    /// - Why: permite reutilizar esta vista en contextos de visualización
-    ///   (como `GameDetailView`) sin permitir modificaciones.
     var isReadOnly: Bool = false
 
     // MARK: - Layout
 
-    /// 10 dígitos en una grilla de 5 columnas × 2 filas.
-    private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 10), count: 5)
+    /// Grilla fija: 2 filas × 5 columnas.
+    private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 12), count: 5)
 
     var body: some View {
-        Section {
-            LazyVGrid(columns: columns, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            // Header
+            HStack {
+                Text("Tablero 0–9")
+                    .font(.headline)
+                    .foregroundStyle(Color.appTextPrimary)
+
+                Spacer()
+
+                if !isReadOnly {
+                    Button {
+                        resetBoard()
+                    } label: {
+                        Text("Reset tablero")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.appActionPrimary)
+                    }
+                }
+            }
+
+            // Grilla 2×5
+            LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(sortedNotes, id: \.id) { note in
                     DigitNoteCell(
                         digit: note.digit,
                         mark: note.mark,
                         onTap: {
-                            // Solo permite interacción si no es read-only
                             guard !isReadOnly else { return }
-                            cycleMark(forDigit: note.digit, current: note.mark)
-                        },
-                        onSetMark: { newMark in
-                            // Solo permite interacción si no es read-only
-                            guard !isReadOnly else { return }
-                            setMark(newMark, forDigit: note.digit)
+                            cycleMark(forDigit: note.digit)
                         }
                     )
-                }
-            }
-            .padding(.vertical, 6)
-        } header: {
-            HStack {
-                Text("Tablero 0–9")
-                Spacer()
-                // Solo muestra el botón de reset en modo editable
-                if !isReadOnly {
-                    Button {
-                        resetBoard()
-                    } label: {
-                        Label("Reset tablero", systemImage: "arrow.counterclockwise")
-                            .font(.subheadline)
-                    }
                 }
             }
         }
@@ -78,46 +76,48 @@ struct DigitBoardView: View {
 
     // MARK: - Data
 
-    /// Ordena por dígito para que el tablero sea siempre predecible.
     private var sortedNotes: [DigitNote] {
         game.digitNotes.sorted { $0.digit < $1.digit }
     }
 
     // MARK: - Actions
 
-    /// Cicla la marca en un orden estable (manual, no “lógico”).
-    ///
-    /// Orden elegido:
-    /// unknown → poor → fair → good → unknown
-    ///
-    /// - Why: permite iterar rápido con un solo tap.
-    private func cycleMark(forDigit digit: Int, current: DigitMark) {
+    /// Cicla la marca: none → poor → fair → good → none.
+    private func cycleMark(forDigit digit: Int) {
+        guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
+            return
+        }
+        
+        let current = note.mark
         let next = nextMark(after: current)
         setMark(next, forDigit: digit)
     }
 
-    /// Persiste la marca usando el `ModelActor`.
+    /// Persiste la marca directamente.
     private func setMark(_ mark: DigitMark, forDigit digit: Int) {
-        Task {
-            do {
-                try await env.modelActor.setDigitMark(digit: digit, mark: mark, gameID: game.persistentID)
-            } catch {
-                // MVP: si falla el guardado, no rompemos UI.
-                // Más adelante lo llevamos a un alert/toast.
-                assertionFailure("No se pudo guardar la marca del dígito \(digit): \(error)")
-            }
+        guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
+            return
+        }
+        
+        note.mark = mark
+        
+        do {
+            try modelContext.save()
+        } catch {
+            assertionFailure("No se pudo guardar la marca del dígito \(digit): \(error)")
         }
     }
 
-    /// Resetea todas las notas del tablero a `.unknown`.
+    /// Resetea todas las notas a `.unknown`.
     private func resetBoard() {
-        Task {
-            do {
-                try await env.modelActor.resetDigitNotes(gameID: game.persistentID)
-            } catch {
-                // MVP: si falla el guardado, no rompemos UI.
-                assertionFailure("No se pudo resetear el tablero: \(error)")
-            }
+        for note in game.digitNotes {
+            note.mark = .unknown
+        }
+        
+        do {
+            try modelContext.save()
+        } catch {
+            assertionFailure("No se pudo resetear el tablero: \(error)")
         }
     }
 
@@ -133,12 +133,17 @@ struct DigitBoardView: View {
 }
 
 #Preview("DigitBoardView") {
-    // Preview simple: partida dummy.
-    // Nota: este preview no persiste; es solo para layout.
     let game = Game(secret: "01234", digitNotes: [])
     game.digitNotes = (0...9).map { DigitNote(digit: $0, mark: .unknown, game: game) }
 
-    return List {
+    return VStack {
         DigitBoardView(game: game)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.appSurfaceCard)
+            )
+            .padding()
     }
+    .background(Color.appBackgroundPrimary)
 }

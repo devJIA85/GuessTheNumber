@@ -47,8 +47,12 @@ struct GuessItApp: App {
 /// Key para exponer `AppEnvironment` en `EnvironmentValues`.
 ///
 /// - Why: permite acceso en cualquier vista sin pasar dependencias por init.
+///
+/// # Por qué no necesita @MainActor
+/// - AppEnvironment ahora es Sendable (no @MainActor), puede construirse en cualquier contexto.
+/// - El defaultValue se construye sin aislamiento específico.
 private struct AppEnvironmentKey: EnvironmentKey {
-    @MainActor static let defaultValue: AppEnvironment = {
+    static let defaultValue: AppEnvironment = {
         // Precondición: este default solo debería usarse en casos extremos.
         // En runtime y previews siempre lo inyectamos explícitamente desde `GuessItApp`.
         let container = ModelContainerFactory.make(isInMemory: true)

@@ -49,44 +49,69 @@ struct AttemptRowView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.small) {
             header
             metrics
+            Spacer(minLength: 0)
+            repeatedBadge
         }
+        // Mantener todo en una sola línea reduce altura por intento y evita scroll extra.
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabel)
     }
 
     // MARK: - Subviews
 
-    /// Encabezado con el valor ingresado y el badge de repetido si aplica.
+    /// Encabezado con el valor ingresado.
+    /// - Why más prominente: el número es lo más importante en la fila.
     private var header: some View {
-        HStack {
-            Text(data.guess)
-                .font(.headline)
-
-            Spacer()
-
-            if data.isRepeated {
-                Text("Repetido")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
+        Text(data.guess)
+            .font(.title3)
+            .fontDesign(.monospaced)
+            .fontWeight(.semibold)
+            .foregroundStyle(Color.appTextPrimary)
+            .layoutPriority(1)
     }
 
     /// Métricas GOOD/FAIR y POOR si corresponde.
+    /// - Why compact: chips secundarios, más discretos.
     private var metrics: some View {
-        HStack(spacing: 12) {
-            Text("GOOD: \(data.good)")
-            Text("FAIR: \(data.fair)")
+        HStack(spacing: 4) {
+            Text("GOOD \(data.good)")
+                .metricChip(color: .appMarkGood, compact: true)
+            Text("FAIR \(data.fair)")
+                .metricChip(color: .appMarkFair, compact: true)
 
             if data.isPoor {
-                Text("POOR")
+                Text("POOR \(poorCount)")
+                    .metricChip(color: .appMarkPoor, compact: true)
             }
         }
-        .font(.subheadline)
-        .foregroundStyle(.secondary)
+        // Reducimos el espacio entre chips para que la fila sea más baja sin perder legibilidad.
+    }
+
+    /// Conteo de POOR deducido del largo del secreto cuando el intento no tuvo GOOD/FAIR.
+    /// - Why: el usuario espera ver “POOR 5” (cantidad), no solo la etiqueta.
+    private var poorCount: Int {
+        max(0, GameConstants.secretLength - data.good - data.fair)
+    }
+
+    /// Badge de repetido alineado horizontalmente y con jerarquía visual secundaria.
+    private var repeatedBadge: some View {
+        Group {
+            if data.isRepeated {
+                Text("Repetido")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(Color.appTextSecondary.opacity(0.7))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.chip, style: .continuous)
+                            .fill(Color.appTextSecondary.opacity(0.08))
+                    )
+            }
+        }
+        // Badge pequeño para que no domine la fila y conserve la prioridad del guess.
     }
 
     // MARK: - Accessibility
@@ -100,7 +125,7 @@ struct AttemptRowView: View {
         parts.append("FAIR \(data.fair)")
 
         if data.isPoor {
-            parts.append("POOR")
+            parts.append("POOR \(poorCount)")
         }
 
         if data.isRepeated {

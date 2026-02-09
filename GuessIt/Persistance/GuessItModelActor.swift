@@ -57,6 +57,10 @@ actor GuessItModelActor {
         modelContext.insert(game)
 
         try modelContext.save()
+        
+        // 5) Verificar que se crearon correctamente
+        print("✅ Juego creado con \(game.digitNotes.count) notas de dígitos")
+        
         return game
     }
 
@@ -167,13 +171,21 @@ actor GuessItModelActor {
             throw ModelActorError.gameNotFound(gameID)
         }
         
-        guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
-            // En MVP fallamos rápido: si falta una nota, el agregado está corrupto.
-            fatalError("Invariante rota: falta DigitNote para el dígito \(digit)")
+        // Buscar o crear la nota si no existe (recuperación de errores de migración)
+        let note: DigitNote
+        if let existingNote = game.digitNotes.first(where: { $0.digit == digit }) {
+            note = existingNote
+        } else {
+            // Crear la nota que falta (fallback para partidas corruptas)
+            print("⚠️ Creando DigitNote faltante para dígito \(digit)")
+            note = DigitNote(digit: digit, mark: .unknown, game: game)
+            game.digitNotes.append(note)
         }
 
+        print("🔴 Updating mark for digit \(digit) from \(note.mark) to \(mark)")
         note.mark = mark
         try modelContext.save()
+        print("✅ Mark saved successfully")
     }
 
     /// Resetea todas las notas de dígitos de una partida a `.unknown`.
@@ -185,9 +197,10 @@ actor GuessItModelActor {
             throw ModelActorError.gameNotFound(gameID)
         }
         
-        // Validamos la invariante: debe haber exactamente 10 notas (0–9).
-        guard game.digitNotes.count == 10 else {
-            fatalError("Invariante rota: se esperan 10 DigitNotes, se encontraron \(game.digitNotes.count)")
+        // Reparar notas faltantes si es necesario
+        if game.digitNotes.count != 10 {
+            print("⚠️ Reparando digitNotes: encontradas \(game.digitNotes.count), creando las faltantes")
+            ensureAllDigitNotes(for: game)
         }
 
         // Reseteamos todas las marcas a desconocido.
@@ -271,9 +284,11 @@ actor GuessItModelActor {
             }
         
         // Mapear notas de dígitos a snapshots (ordenadas por dígito 0–9)
-        // Validamos la invariante: debe haber exactamente 10 notas.
-        guard game.digitNotes.count == 10 else {
-            fatalError("Invariante rota: se esperan 10 DigitNotes, se encontraron \(game.digitNotes.count)")
+        // Reparar notas faltantes si es necesario
+        if game.digitNotes.count != 10 {
+            print("⚠️ Reparando digitNotes en snapshot: encontradas \(game.digitNotes.count), creando las faltantes")
+            ensureAllDigitNotes(for: game)
+            try modelContext.save()
         }
         
         let digitNoteSnapshots = game.digitNotes
@@ -321,6 +336,26 @@ actor GuessItModelActor {
         // Nota: usamos el rango del dominio para evitar valores mágicos.
         GameConstants.validDigitRange.map { digit in
             DigitNote(digit: digit, mark: .unknown, game: game)
+        }
+    }
+    
+    /// Asegura que un juego tenga todas las 10 notas de dígitos (0-9).
+    /// Crea las notas faltantes si no existen.
+    ///
+    /// # Por qué este método
+    /// - Recuperación de datos corruptos o migrados incorrectamente
+    /// - Evita crashes por fatalError cuando faltan notas
+    ///
+    /// - Parameter game: juego al que asegurar las notas
+    private func ensureAllDigitNotes(for game: Game) {
+        let existingDigits = Set(game.digitNotes.map { $0.digit })
+        
+        for digit in GameConstants.validDigitRange {
+            if !existingDigits.contains(digit) {
+                print("⚠️ Creando DigitNote faltante para dígito \(digit)")
+                let note = DigitNote(digit: digit, mark: .unknown, game: game)
+                game.digitNotes.append(note)
+            }
         }
     }
 }

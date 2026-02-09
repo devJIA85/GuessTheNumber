@@ -31,16 +31,21 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                switch state {
-                case .loading:
-                    loadingView
-                case .loaded(let games):
-                    historyListView(games: games)
-                case .empty:
-                    emptyStateView
-                case .failure(let error):
-                    failureView(error: error)
+            ZStack {
+                Color.appBackgroundPrimary
+                    .ignoresSafeArea()
+
+                Group {
+                    switch state {
+                    case .loading:
+                        loadingView
+                    case .loaded(let games):
+                        historyListView(games: games)
+                    case .empty:
+                        emptyStateView
+                    case .failure(let error):
+                        failureView(error: error)
+                    }
                 }
             }
             .navigationTitle("Historial")
@@ -67,6 +72,7 @@ struct HistoryView: View {
     /// Vista de carga.
     private var loadingView: some View {
         ProgressView("Cargando historial...")
+            .tint(.appActionPrimary)
     }
 
     /// Vista cuando no hay partidas terminadas todavía.
@@ -74,11 +80,11 @@ struct HistoryView: View {
         VStack(spacing: 12) {
             Text("Todavía no hay partidas terminadas.")
                 .font(.headline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appTextSecondary)
 
             Text("Jugá una partida para que aparezca en el historial.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appTextSecondary)
                 .multilineTextAlignment(.center)
         }
         .padding()
@@ -89,14 +95,15 @@ struct HistoryView: View {
         VStack(spacing: 16) {
             Text("No se pudo cargar el historial.")
                 .font(.headline)
-                .foregroundStyle(.secondary)
-            
+                .foregroundStyle(Color.appTextSecondary)
+
             Button("Reintentar") {
                 Task {
                     await loadGames()
                 }
             }
             .buttonStyle(.borderedProminent)
+            .tint(.appActionPrimary)
         }
         .padding()
     }
@@ -110,8 +117,12 @@ struct HistoryView: View {
                 } label: {
                     GameSummaryRowView(snapshot: snapshot)
                 }
+                .listRowBackground(Color.appSurfaceCard)
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(Color.appBackgroundPrimary)
     }
 }
 

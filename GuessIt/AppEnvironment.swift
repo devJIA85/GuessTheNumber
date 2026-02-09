@@ -16,10 +16,16 @@ import SwiftData
 /// - Se crea desde el `ModelContainer` provisto por SwiftUI.
 ///
 /// # Concurrencia
-/// - Se marca `@MainActor` porque su creación ocurre desde la UI y porque
-///   contiene referencias a infraestructura (SwiftData) que se suele inicializar en el main thread.
-@MainActor
-final class AppEnvironment {
+/// - NO es @MainActor porque contiene actores que manejan su propio aislamiento.
+/// - Es Sendable porque todas sus propiedades son Sendable (actores).
+/// - Puede ser construido desde MainActor (en GuessItApp) sin problemas.
+///
+/// # Por qué Sendable
+/// - GuessItModelActor: es actor (Sendable por definición).
+/// - GameActor: es actor (Sendable por definición).
+/// - HintService: es actor (Sendable por definición).
+/// - ModelContainer: no es Sendable, pero solo se usa en init y se delega al ModelActor.
+final class AppEnvironment: Sendable {
 
     // MARK: - Dependencias públicas
 
@@ -28,14 +34,25 @@ final class AppEnvironment {
 
     /// Actor de dominio (orquesta validación/evaluación y delega persistencia).
     let gameActor: GameActor
+    
+    /// Servicio de pistas AI (opt-in, no afecta reglas del juego).
+    let hintService: HintService
 
     // MARK: - Init
 
     /// Construye el environment a partir del `ModelContainer` inyectado por SwiftUI.
+    ///
+    /// # Por qué nonisolated
+    /// - ModelContainer puede ser construido en MainActor, pero este init no necesita aislamiento.
+    /// - Los actores se construyen de forma segura sin requerir MainActor.
+    ///
     /// - Parameter modelContainer: contenedor SwiftData de la app.
-    init(modelContainer: ModelContainer) {
+    nonisolated init(modelContainer: ModelContainer) {
         // Importante: el `@ModelActor` sintetiza un init que acepta `ModelContainer`.
         self.modelActor = GuessItModelActor(modelContainer: modelContainer)
         self.gameActor = GameActor(modelActor: modelActor)
+        
+        // Servicio de pistas: verifica disponibilidad de Apple Intelligence en init.
+        self.hintService = HintService()
     }
 }

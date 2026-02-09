@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 /// Pantalla principal del juego.
 ///
@@ -35,46 +36,97 @@ struct GameView: View {
     /// Input del usuario (string crudo).
     @State private var guessText: String = ""
 
-    /// Último resultado para feedback rápido.
-    @State private var lastResult: SubmitGuessResult?
-
     /// Manejo simple de errores para mostrar en un alert.
     @State private var errorMessage: String?
+    
+    // MARK: - Hint State
+    
+    /// Estado de carga de la pista AI.
+    @State private var hintState: LoadState<HintOutput> = .empty
+    
+    /// Controla la presentación del sheet de pista.
+    @State private var isHintPresented = false
+    
+    /// Task de generación de pista (para cancelar si se cierra el sheet).
+    @State private var hintTask: Task<Void, Never>?
+    
+    /// Información de debug de la pista (solo DEBUG).
+    ///
+    /// # Por qué @State
+    /// - Esta info se carga cada vez que se abre el sheet de pista.
+    /// - Se actualiza con cada generación de pista.
+    @State private var hintDebugInfo: HintDebugInfo? = nil
+
+    /// Estado observable de la splash de victoria.
+    /// - Why: permite coordinar presentación + haptic sin persistencia.
+    @State private var victorySplash = VictorySplashState()
 
     var body: some View {
         NavigationStack {
-            List {
-                statusSection
-                
-                // Input: solo habilitado si hay partida en progreso
-                if let game = currentGame {
-                    if game.state == .inProgress {
-                        GuessInputView(guessText: $guessText) { normalized in
-                            submit(normalized)
+            ZStack {
+                Color.appBackgroundPrimary
+                    .ignoresSafeArea()
+
+                ScrollView {
+                    LazyVStack(spacing: AppTheme.Spacing.large) {
+                        // Input: foco principal de la pantalla
+                        // - Why: sin card Estado, el input lidera inmediatamente
+                        if let game = currentGame {
+                            if game.state == .inProgress {
+                                AppCard(title: "Tu intento", style: .standard) {
+                                    GuessInputView(guessText: $guessText) { normalized in
+                                        submit(normalized)
+                                    }
+                                }
+                            } else {
+                                disabledInputCard
+                            }
+                        } else {
+                            AppCard(title: "Tu intento", style: .standard) {
+                                GuessInputView(guessText: $guessText) { normalized in
+                                    submit(normalized)
+                                }
+                            }
                         }
-                    } else {
-                        disabledInputSection
+
+                        // Sección de victoria (solo si ganó)
+                        if let game = currentGame, game.state == .won {
+                            victoryCard(for: game)
+                        }
+
+                        // Contenido de la partida: secundario, más compacto
+                        if let game = currentGame {
+                            attemptsCard(for: game)
+                            boardCard(for: game)
+                        } else {
+                            emptyStateCard
+                        }
                     }
-                } else {
-                    GuessInputView(guessText: $guessText) { normalized in
-                        submit(normalized)
-                    }
-                }
-                
-                // Sección de victoria (solo si ganó)
-                if let game = currentGame, game.state == .won {
-                    victorySection(for: game)
-                }
-                
-                // Contenido de la partida
-                if let game = currentGame {
-                    attemptsSection(for: game)
-                    DigitBoardView(game: game, isReadOnly: game.state != .inProgress)
-                } else {
-                    emptyStateSection
+                    .padding(.horizontal, AppTheme.Spacing.medium)
+                    .padding(.vertical, AppTheme.Spacing.medium)
                 }
             }
+            .overlay {
+                if victorySplash.isPresented, let game = currentGame {
+                    VictorySplashView(
+                        secret: game.secret,
+                        attempts: game.attempts.count
+                    ) {
+                        // Cerramos la splash antes de iniciar nueva partida para evitar flashes.
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            victorySplash.dismiss()
+                        }
+                        startNewGame()
+                    }
+                    // Transición sutil: fade + scale.
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                }
+            }
+            // Animación sutil para entrada/salida de la splash.
+            .animation(.easeOut(duration: 0.2), value: victorySplash.isPresented)
             .navigationTitle("Guess It")
+            .navigationSubtitle(statusText)
+            .tint(.appActionPrimary)
             .task {
                 // Asegurar que siempre hay una partida en progreso al abrir la app
                 if currentGame == nil {
@@ -84,6 +136,27 @@ struct GameView: View {
                         errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     }
                 }
+            }
+            .onChange(of: currentGame?.state) { _, newValue in
+                if newValue == .won {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        victorySplash.present()
+                    }
+                    triggerVictoryHapticIfNeeded()
+                } else {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        victorySplash.dismiss()
+                    }
+                    victorySplash.resetHaptic()
+                }
+                if newValue == .inProgress {
+                    // Reiniciamos la pista para evitar contaminación entre partidas o estados.
+                    resetHintState()
+                }
+            }
+            .onChange(of: currentGame?.id) { _, _ in
+                // Cambió la partida activa: limpiamos estado de pista para comenzar desde cero.
+                resetHintState()
             }
             .alert(
                 "Error",
@@ -104,109 +177,96 @@ struct GameView: View {
                         HistoryView()
                     } label: {
                         Label("Historial", systemImage: "clock.arrow.circlepath")
+                            .labelStyle(.iconOnly)
+                    }
+                    .foregroundStyle(Color.appTextSecondary)
+                }
+                
+                // Botón de pista: solo visible/habilitado si hay partida en progreso
+                ToolbarItem(placement: .topBarTrailing) {
+                    if let game = currentGame, game.state == .inProgress {
+                        Button {
+                            isHintPresented = true
+                        } label: {
+                            Label("Pista", systemImage: "lightbulb")
+                                .labelStyle(.iconOnly)
+                        }
+                        .foregroundStyle(Color.appTextSecondary)
                     }
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        Task {
-                            do {
-                                try await env.gameActor.resetGame()
-                                lastResult = nil
-                                guessText = ""
-                            } catch {
-                                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-                            }
-                        }
+                        startNewGame()
                     } label: {
                         Label("Reiniciar", systemImage: "arrow.counterclockwise")
+                            .labelStyle(.iconOnly)
                     }
+                    .foregroundStyle(Color.appTextSecondary)
                 }
+            }
+            .toolbarTitleDisplayMode(.inline)
+            .sheet(isPresented: $isHintPresented, onDismiss: {
+                // Cancelar la task de generación si el usuario cierra el sheet
+                hintTask?.cancel()
+                hintTask = nil
+            }) {
+                hintSheet
             }
         }
     }
 
     // MARK: - Sections
 
-    /// Sección superior con estado y último resultado.
-    private var statusSection: some View {
-        Section("Estado") {
-            HStack {
-                Text("Partida")
-                Spacer()
-                Text(statusText)
-                    .foregroundStyle(.secondary)
-            }
-
-            if let lastResult {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Último intento: \(lastResult.guess)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
-                    HStack(spacing: 12) {
-                        Label("GOOD: \(lastResult.feedback.good)", systemImage: "checkmark.circle")
-                        Label("FAIR: \(lastResult.feedback.fair)", systemImage: "arrow.triangle.2.circlepath")
-                    }
-                    .font(.subheadline)
-
-                    if lastResult.feedback.isPoor {
-                        Label("POOR", systemImage: "xmark.circle")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-        }
-    }
-
     /// Sección que se muestra cuando no hay partida en progreso todavía.
-    private var emptyStateSection: some View {
-        Section {
+    private var emptyStateCard: some View {
+        AppCard(style: .compact) {
             Text("Aún no hay una partida en progreso. Ingresá tu primer intento para comenzar.")
-                .foregroundStyle(.secondary)
+                .font(.caption)
+                .foregroundStyle(Color.appTextSecondary)
         }
     }
 
     /// Sección que reemplaza el input cuando la partida ya terminó.
     /// - Why: evitamos que el usuario intente enviar más intentos en una partida finalizada.
-    private var disabledInputSection: some View {
-        Section("Tu intento") {
+    private var disabledInputCard: some View {
+        AppCard(title: "Tu intento", style: .light) {
             Text("La partida ya terminó. Creá una nueva para seguir jugando.")
-                .foregroundStyle(.secondary)
-                .font(.subheadline)
+                .foregroundStyle(Color.appTextSecondary)
+                .font(.caption)
         }
     }
 
     /// Sección de victoria con resumen y CTA para nueva partida.
     /// - Why: proporciona feedback claro al ganar y ofrece un camino evidente
     ///   para continuar jugando sin tener que buscar el botón de reinicio.
-    private func victorySection(for game: Game) -> some View {
-        Section {
-            VStack(alignment: .center, spacing: 16) {
+    private func victoryCard(for game: Game) -> some View {
+        AppCard(title: "Resultado") {
+            VStack(alignment: .center, spacing: AppTheme.Spacing.medium) {
                 Text("¡Ganaste! 🎉")
                     .font(.title2)
-                    .fontWeight(.bold)
-                
-                VStack(spacing: 8) {
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.appTextPrimary)
+
+                VStack(spacing: AppTheme.Spacing.xSmall) {
                     HStack {
                         Text("Secreto:")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appTextSecondary)
                         Spacer()
                         Text(game.secret)
                             .fontDesign(.monospaced)
                             .fontWeight(.semibold)
                     }
-                    
+
                     HStack {
                         Text("Intentos:")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appTextSecondary)
                         Spacer()
                         Text("\(game.attempts.count)")
                             .fontWeight(.semibold)
                     }
                 }
-                
+
                 Button {
                     startNewGame()
                 } label: {
@@ -214,28 +274,54 @@ struct GameView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(.appActionPrimary)
             }
             .frame(maxWidth: .infinity)
-        } header: {
-            Text("Resultado")
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Ganaste. Secreto: \(game.secret). Intentos: \(game.attempts.count).")
     }
 
     /// Historial de intentos persistidos de la partida actual.
-    private func attemptsSection(for game: Game) -> some View {
-        Section("Intentos") {
+    /// - Why compact: es información secundaria, debe ser escaneable pero no dominar.
+    private func attemptsCard(for game: Game) -> some View {
+        AppCard(title: "Intentos", style: .compact) {
             let sortedAttempts = game.attempts.sorted { $0.createdAt > $1.createdAt }
+            let maxVisibleAttempts = 4
+            // Mostramos solo los últimos intentos para ganar densidad y evitar scroll vertical.
+            let visibleAttempts = Array(sortedAttempts.prefix(maxVisibleAttempts))
 
             if sortedAttempts.isEmpty {
                 Text("Todavía no hay intentos.")
-                    .foregroundStyle(.secondary)
+                    .font(.caption)
+                    .foregroundStyle(Color.appTextSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, AppTheme.Spacing.xSmall)
+                    // Damos altura mínima para que la tarjeta no se vea “encogida” sin intentos.
             } else {
-                ForEach(sortedAttempts) { attempt in
-                    AttemptRowView(attempt: attempt)
+                VStack(spacing: AppTheme.Spacing.xSmall) {
+                    ForEach(visibleAttempts) { attempt in
+                        AttemptRowView(attempt: attempt)
+                            .padding(AppTheme.Spacing.small)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Color.appBackgroundSecondary)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .strokeBorder(Color.appBorderSubtle.opacity(0.5), lineWidth: 0.5)
+                            )
+                    }
                 }
             }
+        }
+    }
+
+    /// Tablero 0-9: herramienta de apoyo.
+    /// - Why compact: es secundario, no debe dominar la pantalla.
+    private func boardCard(for game: Game) -> some View {
+        AppCard(style: .compact) {
+            DigitBoardView(game: game, isReadOnly: game.state != .inProgress)
         }
     }
 
@@ -270,8 +356,9 @@ struct GameView: View {
         Task {
             do {
                 try await env.gameActor.resetGame()
-                lastResult = nil
                 guessText = ""
+                // Limpiamos cualquier pista previa para que la nueva partida arranque en idle.
+                resetHintState()
             } catch {
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             }
@@ -280,21 +367,314 @@ struct GameView: View {
 
     /// Envía el guess al actor del dominio.
     /// - Note: hacemos `Task` porque cruzamos aislamiento de actor.
+    /// - Why no se guarda lastResult: la lista de intentos ya muestra el historial completo.
     private func submit(_ guess: String) {
         Task {
             do {
-                let result = try await env.gameActor.submitGuess(guess)
-                lastResult = result
+                _ = try await env.gameActor.submitGuess(guess)
                 guessText = ""
-
-                // Si la partida se ganó, mostramos un feedback simple.
-                // Más adelante esto debería ser un modal/pantalla dedicada.
-                if result.didWin {
-                    // No hacemos nada extra por ahora.
-                }
             } catch {
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             }
         }
     }
+
+    /// Dispara el haptic de éxito una sola vez por victoria.
+    /// - Why: refuerza el feedback sin ser intrusivo.
+    private func triggerVictoryHapticIfNeeded() {
+        guard !victorySplash.didFireHaptic else { return }
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+        victorySplash.markHapticFired()
+    }
+    
+    // MARK: - Hint Sheet
+    
+    /// Vista del sheet de pista.
+    ///
+    /// # Estados
+    /// - loading: generando la pista (muestra spinner diferido).
+    /// - loaded: pista disponible (muestra texto).
+    /// - failure: error al generar (muestra mensaje de error).
+    /// - empty: estado inicial (no debería verse, genera automáticamente).
+    private var hintSheet: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackgroundPrimary
+                    .ignoresSafeArea()
+
+                Group {
+                    switch hintState {
+                    case .loading:
+                        AppCard(title: "Pista inteligente") {
+                            VStack(spacing: AppTheme.Spacing.medium) {
+                                // Spinner diferido: evita parpadeos si la pista responde rápido
+                                // Por qué 300ms: balance entre evitar flicker y no hacer esperar al usuario
+                                // Por qué hintState.isLoading: el spinner debe aparecer/desaparecer según el estado real
+                                DeferredProgressView(
+                                    isActive: hintState.isLoading,
+                                    delay: .milliseconds(300)
+                                )
+                                .frame(height: 60)
+                                
+                                Text("Generando pista...")
+                                    .foregroundStyle(Color.appTextSecondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(AppTheme.Spacing.medium)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        
+                    case .loaded(let output):
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                                AppCard(title: "Pista inteligente") {
+                                    Text(output.text)
+                                        .font(.body)
+                                        .foregroundStyle(Color.appTextPrimary)
+                                        .accessibilityLabel("Pista: \(output.text)")
+                                }
+                                
+                                #if DEBUG
+                                // Sección de debug (solo visible en DEBUG builds)
+                                if let debugInfo = hintDebugInfo {
+                                    AppCard(title: "Debug") {
+                                        debugSection(debugInfo)
+                                    }
+                                }
+                                #endif
+                            }
+                            .padding(AppTheme.Spacing.medium)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        
+                    case .failure(let error):
+                        AppCard(title: "Pista inteligente") {
+                            VStack(spacing: AppTheme.Spacing.medium) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .font(.largeTitle)
+                                    .foregroundStyle(Color.appTextSecondary)
+                                
+                                Text(errorMessageForHint(error))
+                                    .multilineTextAlignment(.center)
+                                    .foregroundStyle(Color.appTextSecondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(AppTheme.Spacing.medium)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        
+                    case .empty:
+                        // Estado inicial, trigger generación
+                        Color.clear
+                            .onAppear {
+                                generateHint()
+                            }
+                    }
+                }
+            }
+            .navigationTitle("Pista Inteligente")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cerrar") {
+                        isHintPresented = false
+                    }
+                }
+            }
+        }
+        .tint(.appActionPrimary)
+        .presentationDetents([.medium, .large])
+    }
+    
+    // MARK: - Hint Helpers
+    
+    /// Genera una pista para la partida actual.
+    ///
+    /// # Flujo
+    /// 1. Obtener snapshot de la partida actual.
+    /// 2. Convertir snapshot a HintInput.
+    /// 3. Llamar HintService.generateHint.
+    /// 4. Actualizar hintState con el resultado.
+    ///
+    /// # Cancelación
+    /// - La task se guarda en hintTask para poder cancelarla si se cierra el sheet.
+    private func generateHint() {
+        // Cancelar task anterior si existe
+        hintTask?.cancel()
+        
+        // Setear estado loading
+        hintState = .loading
+        
+        // Crear nueva task
+        hintTask = Task {
+            do {
+                // 1. Obtener ID de la partida actual
+                guard let gameID = try await env.modelActor.fetchInProgressGameID() else {
+                    hintState = .failure(HintError.unavailable)
+                    return
+                }
+                
+                // Check cancelación
+                try Task.checkCancellation()
+                
+                // 2. Obtener snapshot completo
+                let snapshot = try await env.modelActor.fetchGameDetailSnapshot(gameID: gameID)
+                
+                // Check cancelación
+                try Task.checkCancellation()
+                
+                // 3. Convertir snapshot a HintInput
+                let hintInput = makeHintInput(from: snapshot)
+                
+                // Check cancelación
+                try Task.checkCancellation()
+                
+                // 4. Generar pista
+                let output = try await env.hintService.generateHint(input: hintInput)
+                
+                // Check cancelación
+                try Task.checkCancellation()
+                
+                // 5. Actualizar estado (en MainActor)
+                hintState = .loaded(output)
+                
+                // 6. Cargar debug info (solo en DEBUG)
+                #if DEBUG
+                hintDebugInfo = await env.hintService.debugInfo()
+                #endif
+                
+            } catch is CancellationError {
+                // Task fue cancelada, no hacer nada
+                return
+            } catch {
+                // Error al generar pista
+                hintState = .failure(error)
+            }
+        }
+    }
+    
+    /// Resetea el estado de la pista y cancela cualquier generación en curso.
+    /// - Why: evita que el texto o loading de una partida anterior contamine la nueva.
+    private func resetHintState() {
+        hintTask?.cancel()
+        hintTask = nil
+        hintState = .empty
+        hintDebugInfo = nil
+        isHintPresented = false
+    }
+    
+    /// Convierte un GameDetailSnapshot a HintInput.
+    ///
+    /// # Por qué este mapper
+    /// - HintInput es Sendable y no depende de SwiftData.
+    /// - GameDetailSnapshot ya es Sendable y tiene todos los datos necesarios.
+    /// - Este mapper mantiene la separación de concerns (UI → DTO → Service).
+    private func makeHintInput(from snapshot: GameDetailSnapshot) -> HintInput {
+        let attempts = snapshot.attempts.map { attempt in
+            HintAttempt(
+                guess: attempt.guess,
+                good: attempt.good,
+                fair: attempt.fair,
+                isPoor: attempt.isPoor,
+                isRepeated: attempt.isRepeated
+            )
+        }
+        
+        let digitNotes = snapshot.digitNotes.map { note in
+            HintDigitNote(
+                digit: note.digit,
+                mark: note.mark
+            )
+        }
+        
+        return HintInput(
+            gameID: snapshot.id,
+            attempts: attempts,
+            digitNotes: digitNotes
+        )
+    }
+    
+    /// Mapea errores de hint a mensajes user-friendly.
+    ///
+    /// # Por qué este helper
+    /// - Los errores técnicos (HintError) no son buenos mensajes para el usuario.
+    /// - Centralizamos la lógica de mensajes en un solo lugar.
+    private func errorMessageForHint(_ error: Error) -> String {
+        if let hintError = error as? HintError {
+            switch hintError {
+            case .unavailable:
+                return "Las pistas no están disponibles en este dispositivo. Se requiere Apple Intelligence."
+            case .generationFailed:
+                return "No se pudo generar una pista en este momento. Intentá de nuevo más tarde."
+            case .unsafeOutput:
+                return "La pista generada no cumplió con las reglas de seguridad. Intentá de nuevo."
+            }
+        }
+        return "Ocurrió un error inesperado al generar la pista."
+    }
+    
+    // MARK: - Debug UI (solo DEBUG)
+    
+    #if DEBUG
+    /// Sección de debug con telemetría del HintService.
+    ///
+    /// # Por qué solo DEBUG
+    /// - Esta info solo es útil para QA y desarrollo.
+    /// - No debe mostrarse en Release builds.
+    ///
+    /// # Contenido
+    /// - Total de requests de pistas en esta sesión.
+    /// - Engine usado (apple o fallback).
+    /// - Último error (si hubo).
+    @ViewBuilder
+    private func debugSection(_ info: HintDebugInfo) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Divider()
+                .padding(.vertical, 8)
+            
+            Text("Debug Info (solo visible en DEBUG)")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color.appTextSecondary)
+            
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Requests:")
+                        .font(.caption)
+                        .foregroundStyle(Color.appTextSecondary)
+                    Text("\(info.requestCount)")
+                        .font(.caption)
+                        .fontDesign(.monospaced)
+                }
+                
+                if let engine = info.lastEngineUsed {
+                    HStack {
+                        Text("Engine:")
+                            .font(.caption)
+                            .foregroundStyle(Color.appTextSecondary)
+                        Text(engine)
+                            .font(.caption)
+                            .fontDesign(.monospaced)
+                    }
+                }
+                
+                if let error = info.lastErrorDescription {
+                    HStack(alignment: .top) {
+                        Text("Last error:")
+                            .font(.caption)
+                            .foregroundStyle(Color.appTextSecondary)
+                        Text(error)
+                            .font(.caption)
+                            .fontDesign(.monospaced)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .padding(12)
+            .background(Color.appTextSecondary.opacity(0.12))
+            .cornerRadius(8)
+        }
+    }
+    #endif
 }
