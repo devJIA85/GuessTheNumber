@@ -266,36 +266,81 @@ private protocol HintEngine: Sendable {
 /// - Solo disponible si SystemLanguageModel.default.isAvailable == true.
 /// - Si el dispositivo no soporta Apple Intelligence, este engine NO se usa.
 ///
+/// # WWDC25: Guided Generation
+/// - En iOS 26+ usa `@Generable` (HintResponse) para obtener output estructurado.
+/// - El modelo genera campos tipados en vez de texto libre, eliminando la necesidad
+///   de parsing manual y reduciendo el riesgo de que el modelo "escape" del formato.
+/// - En iOS <26 mantiene la generación de texto plano como fallback.
+///
 /// # Por qué no cachear session
 /// - LanguageModelSession es stateless para single-turn prompts.
 /// - Crear session por cada hint es limpio y no tiene overhead significativo.
 private struct AppleHintEngine: HintEngine {
-    
+
     var isAvailable: Bool {
         SystemLanguageModel.default.isAvailable
     }
-    
+
     func generate(prompt: String) async throws -> String {
         try Task.checkCancellation()
-        
-        // Crear session para single-turn prompt
+
+        // iOS 26+: Usar Guided Generation para output estructurado
+        if #available(iOS 26.0, *) {
+            return try await generateStructured(prompt: prompt)
+        } else {
+            return try await generatePlainText(prompt: prompt)
+        }
+    }
+
+    /// Genera pista con Guided Generation (iOS 26+).
+    ///
+    /// # WWDC25: @Generable + @Guide
+    /// - `session.respond(to:generating:)` produce un `HintResponse` tipado.
+    /// - El framework garantiza que el output cumple la estructura definida.
+    /// - Las propiedades se generan en orden: diagnóstico → sugerencia → razón,
+    ///   lo que permite al modelo construir coherencia entre campos.
+    /// - Los `@Guide` descriptions actúan como instrucciones de safety adicionales
+    ///   integradas en el schema (ej: "No revelar dígitos concretos").
+    @available(iOS 26.0, *)
+    private func generateStructured(prompt: String) async throws -> String {
         let session = LanguageModelSession()
-        
+
         do {
-            // Configurar opciones con temperatura para aumentar variabilidad
-            // Por qué temperatura moderada: queremos respuestas variadas pero sin romper guardrails
-            // Por qué 0.7: suficiente creatividad sin sacrificar seguridad (rango típico: 0.0-2.0)
+            let response = try await session.respond(
+                to: prompt,
+                generating: HintResponse.self
+            )
+
+            try Task.checkCancellation()
+
+            // Formatear los campos estructurados en texto legible
+            let hint = response.content
+            return """
+            - Diagnóstico: \(hint.diagnostico)
+            - Próximo intento: \(hint.proximoIntento)
+            - Por qué: \(hint.porQue)
+            """
+        } catch {
+            if error is CancellationError { throw error }
+            throw HintError.generationFailed
+        }
+    }
+
+    /// Genera pista con texto plano (iOS <26 fallback).
+    private func generatePlainText(prompt: String) async throws -> String {
+        let session = LanguageModelSession()
+
+        do {
             var options = GenerationOptions()
             options.temperature = 0.7
-            
-            // Generar respuesta (texto plano, sin structured generation)
+
             let response = try await session.respond(to: prompt, options: options)
-            
+
             try Task.checkCancellation()
-            
+
             return response.content
         } catch {
-            // Mapear errores de FoundationModels a HintError
+            if error is CancellationError { throw error }
             throw HintError.generationFailed
         }
     }

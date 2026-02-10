@@ -75,7 +75,7 @@ extension EnvironmentValues {
     let container = ModelContainerFactory.make(isInMemory: true)
     let env = AppEnvironment(modelContainer: container)
 
-    return GameView()
+    GameView()
         .environment(\.appEnvironment, env)
         .modelContainer(container)
 }

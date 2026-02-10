@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FoundationModels
 import SwiftData
 
 // MARK: - Input
@@ -49,6 +50,38 @@ struct HintAttempt: Sendable {
 struct HintDigitNote: Sendable {
     let digit: Int
     let mark: DigitMark
+}
+
+// MARK: - Structured Output (Guided Generation - WWDC25)
+
+/// Respuesta estructurada del modelo de IA para pistas.
+///
+/// # WWDC25: Guided Generation
+/// - Usa `@Generable` para obtener output tipado del modelo on-device.
+/// - Reemplaza la generación de texto libre + parsing manual.
+/// - El framework garantiza que el output cumple la estructura definida.
+/// - Las propiedades se generan en el orden declarado (importante: diagnóstico
+///   informa al modelo antes de generar la sugerencia).
+///
+/// # Por qué @Generable en vez de texto libre
+/// - Elimina la fragilidad del parsing de texto con regex.
+/// - Reduce falsos positivos en guardrails (el modelo no puede "escapar" del formato).
+/// - Mejora la UX: campos separados permiten renderizado diferenciado en la UI.
+///
+/// # Disponibilidad
+/// - Solo disponible en iOS 26+ (requiere FoundationModels con Guided Generation).
+/// - El fallback (FallbackHintEngine) sigue generando texto plano.
+@available(iOS 26.0, *)
+@Generable
+struct HintResponse {
+    @Guide(description: "Diagnóstico breve del estado actual del juego basado en los intentos. No revelar dígitos concretos ni posiciones.")
+    var diagnostico: String
+
+    @Guide(description: "Sugerencia táctica para el próximo intento. No mencionar dígitos concretos, posiciones exactas, ni dar la respuesta.")
+    var proximoIntento: String
+
+    @Guide(description: "Razón breve de por qué se sugiere esa estrategia.")
+    var porQue: String
 }
 
 // MARK: - Output

@@ -147,33 +147,34 @@ struct HintPromptBuilder: Sendable {
         }
         
         // 4. Instrucciones de la pista (QUÉ hacer y QUÉ NO hacer)
-        // Agregamos un timestamp para forzar variabilidad en el prompt
+        //
+        // WWDC25 Safety Best Practice: las instrucciones de safety en mayúsculas
+        // mejoran la defensa contra prompt injection (Apple Research).
+        // El modelo está entrenado para priorizar instructions sobre prompts.
+        //
+        // Nota: en iOS 26+ con Guided Generation, el formato es manejado por el schema
+        // (@Generable), pero las instrucciones de safety siguen siendo necesarias
+        // porque el contenido de cada campo sigue siendo texto libre.
         let timestamp = Date().timeIntervalSince1970
         sections.append("""
-        
+
         Tu tarea:
-        Proporciona UNA pista táctica, breve (1-4 líneas), textual y no determinista.
-        
-        Formato OBLIGATORIO (máx 4 líneas):
-        - Diagnóstico: ...
-        - Próximo intento: ...
-        - Por qué: ...
-        - Evita: ... (opcional)
-        
+        Proporciona UNA pista táctica, breve, textual y no determinista.
+
         LO QUE PUEDES hacer:
         - Dar instrucciones accionables sin mencionar dígitos concretos ni posiciones.
         - Recomendar experimentos controlados (p. ej., reusar parte del mejor intento y variar pocas piezas).
         - Basarte en el resumen táctico para priorizar el siguiente movimiento.
-        
-        LO QUE NO PUEDES hacer:
-        - NO revelar el secreto ni dar 5 dígitos consecutivos.
-        - NO decir "el número es..." o "la respuesta es...".
-        - NO proporcionar un único intento específico como solución final.
-        - NO usar lenguaje de solver ni enumerar combinaciones.
-        - NO mencionar dígito + posición (ej: "7 en la posición 3").
-        
+
+        LO QUE NO PUEDES HACER (REGLAS DE SEGURIDAD OBLIGATORIAS):
+        - NO REVELAR EL SECRETO NI DAR 5 DÍGITOS CONSECUTIVOS.
+        - NO DECIR "EL NÚMERO ES..." O "LA RESPUESTA ES...".
+        - NO PROPORCIONAR UN ÚNICO INTENTO ESPECÍFICO COMO SOLUCIÓN FINAL.
+        - NO USAR LENGUAJE DE SOLVER NI ENUMERAR COMBINACIONES.
+        - NO MENCIONAR DÍGITO + POSICIÓN (EJ: "7 EN LA POSICIÓN 3").
+
         Responde SOLO con la pista, sin preámbulos ni explicaciones adicionales.
-        
+
         [Request ID: \(Int(timestamp))]
         """)
         

@@ -24,9 +24,14 @@ struct GameView: View {
 
     // MARK: - SwiftData
 
-    /// Buscamos las partidas recientes ordenadas por fecha de creación.
-    /// - Note: filtramos en código (no en el predicado) porque SwiftData tiene limitaciones
-    ///   con enums en predicados en runtime.
+    /// Partidas recientes ordenadas por fecha de creación.
+    ///
+    /// # Por qué filtramos en código y no en #Predicate
+    /// - SwiftData no soporta comparaciones de enum en `#Predicate`
+    ///   (error: "key path cannot refer to enum case").
+    /// - La alternativa sería agregar un `stateRawValue: String` stored property
+    ///   al modelo, pero requiere migración de SwiftData y es invasivo para el MVP.
+    /// - Con un dataset pequeño (decenas de partidas), el filtrado en código es aceptable.
     @Query(
         sort: [SortDescriptor(\Game.createdAt, order: .reverse)]
     ) private var allGames: [Game]
@@ -221,12 +226,14 @@ struct GameView: View {
                     }
                     .foregroundStyle(Color.appTextSecondary)
                 }
-                
-                // Botón de pista: solo visible/habilitado si hay partida en progreso
-                ToolbarItem(placement: .topBarTrailing) {
+
+                // WWDC25: ToolbarItemGroup agrupa botones trailing en un cluster
+                // Liquid Glass unificado. En iOS 26+ los botones agrupados comparten
+                // una superficie glass común, mejorando la coherencia visual.
+                // ToolbarSpacer(.fixed) separa acciones de juego (pista/reset) de debug.
+                ToolbarItemGroup(placement: .topBarTrailing) {
                     if let game = currentGame, game.state == .inProgress {
                         Button {
-                            // Reiniciamos estado para forzar una nueva generación en cada apertura.
                             prepareHintPresentation()
                             isHintPresented = true
                         } label: {
@@ -235,9 +242,7 @@ struct GameView: View {
                         }
                         .foregroundStyle(Color.appTextSecondary)
                     }
-                }
 
-                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         startNewGame()
                     } label: {
@@ -245,20 +250,17 @@ struct GameView: View {
                             .labelStyle(.iconOnly)
                     }
                     .foregroundStyle(Color.appTextSecondary)
-                }
-                
-                #if DEBUG
-                ToolbarItem(placement: .topBarTrailing) {
+
+                    #if DEBUG
                     Button {
-                        // Mostramos el secreto actual solo en DEBUG para pruebas rápidas.
                         isDebugSecretPresented = true
                     } label: {
                         Label("Debug Secreto", systemImage: "eye")
                             .labelStyle(.iconOnly)
                     }
                     .foregroundStyle(Color.appTextSecondary)
+                    #endif
                 }
-                #endif
             }
             .toolbarTitleDisplayMode(.inline)
             .sheet(isPresented: $isHintPresented, onDismiss: {
@@ -297,8 +299,8 @@ struct GameView: View {
     }
 
     /// La partida actual (en progreso o recién ganada).
-    /// - Why: unifica el acceso a la partida activa en toda la vista.
-    /// - Note: filtramos abandonadas porque no son relevantes para la vista principal.
+    /// - Note: filtramos abandonadas en código porque SwiftData no soporta
+    ///   comparaciones de enum en `#Predicate`.
     private var currentGame: Game? {
         allGames.first { $0.state != .abandoned }
     }

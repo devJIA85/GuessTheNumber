@@ -61,17 +61,10 @@ struct VictorySplashView: View {
                         .scaleEffect(glowPulse ? 1.05 : 0.95)
                         .animation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true), value: glowPulse)
 
-                    Circle()
-                        .fill(Color.appSurfaceCard)
-                        .frame(width: 72, height: 72)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(Color.appBorderSubtle, lineWidth: 1)
-                        )
-
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 30, weight: .semibold))
-                        .foregroundStyle(Color.appActionPrimary)
+                    // WWDC25: Usar Liquid Glass para el badge del ícono de victoria.
+                    // En iOS 26+ la superficie glass reacciona al halo animado de fondo,
+                    // creando un efecto de refracción dinámico durante la celebración.
+                    victoryBadge
                 }
 
                 VStack(spacing: AppTheme.Spacing.xSmall) {
@@ -136,12 +129,43 @@ struct VictorySplashView: View {
             // Entrada suave para evitar el efecto "pop" pobre.
             .animation(.spring(response: 0.45, dampingFraction: 0.85), value: isVisible)
         }
-        // Marca la vista como modal para bloquear interacción debajo.
         .accessibilityAddTraits(.isModal)
         .onAppear {
-            // Animación de entrada y halo activo para enfatizar la victoria.
             isVisible = true
             glowPulse = true
+        }
+    }
+
+    // MARK: - Victory Badge
+
+    /// Badge del ícono de victoria con Liquid Glass en iOS 26+.
+    ///
+    /// # WWDC25: Applying Liquid Glass to custom views
+    /// - En iOS 26+ usa `.glassEffect()` en el circle para que el badge refracte
+    ///   el halo animado de fondo, creando un efecto visual dinámico.
+    /// - En iOS <26 mantiene el diseño original con fill + border.
+    @ViewBuilder
+    private var victoryBadge: some View {
+        if #available(iOS 26.0, *) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 30, weight: .semibold))
+                .foregroundStyle(Color.appActionPrimary)
+                .frame(width: 72, height: 72)
+                .glassEffect(.regular.tint(Color.appActionPrimary.opacity(0.2)), in: .circle)
+        } else {
+            ZStack {
+                Circle()
+                    .fill(Color.appSurfaceCard)
+                    .frame(width: 72, height: 72)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(Color.appBorderSubtle, lineWidth: 1)
+                    )
+
+                Image(systemName: "sparkles")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundStyle(Color.appActionPrimary)
+            }
         }
     }
 }

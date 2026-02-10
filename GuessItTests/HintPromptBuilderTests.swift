@@ -187,13 +187,16 @@ struct HintPromptBuilderTests {
     
     // MARK: - Construcción de prompt (formato táctico)
     
-    @Test("makePrompt incluye el formato táctico requerido")
-    func testMakePromptTacticalFormatContainsRequiredHeadings() {
+    @Test("makePrompt incluye instrucciones de safety y tarea")
+    func testMakePromptContainsSafetyInstructions() {
         let input = makeInput(attempts: [])
         let prompt = builder.makePrompt(input: input)
-        #expect(prompt.contains("Diagnóstico:"))
-        #expect(prompt.contains("Próximo intento:"))
-        #expect(prompt.contains("Por qué:"))
+        // WWDC25: las instrucciones de safety van en MAYÚSCULAS por recomendación de Apple.
+        // El formato (Diagnóstico/Próximo intento/Por qué) ahora es responsabilidad
+        // del schema @Generable, no del prompt.
+        #expect(prompt.contains("NO REVELAR EL SECRETO"))
+        #expect(prompt.contains("NO DECIR"))
+        #expect(prompt.contains("pista táctica"))
     }
     
     @Test("makePrompt incluye resumen táctico derivado cuando hay intentos")
