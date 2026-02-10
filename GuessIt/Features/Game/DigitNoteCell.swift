@@ -17,6 +17,10 @@ import SwiftUI
 ///
 /// # Accesibilidad
 /// - No depende solo del color: muestra texto/símbolo + label accesible.
+///
+/// # SwiftUI 2025
+/// - Usa .animation(.smooth) para transiciones más naturales
+/// - Transiciones de mark son fluidas y orgánicas
 struct DigitNoteCell: View {
 
     let digit: Int
@@ -35,14 +39,18 @@ struct DigitNoteCell: View {
                 .foregroundStyle(Color.appTextPrimary)
 
             // Estado manual
+            // SwiftUI 2025: usar .id(mark) para forzar transición suave entre estados
             HStack(spacing: 4) {
                 Image(systemName: markSymbol)
                     .font(.system(size: 11))
+                    .contentTransition(.symbolEffect(.replace))
 
                 Text(markShortText)
                     .font(.system(size: 11, weight: .medium))
             }
             .foregroundStyle(markColor)
+            .id(mark)  // Fuerza recreación con transición suave
+            .transition(.opacity.combined(with: .scale(scale: 0.8)))
         }
         .frame(maxWidth: .infinity)
         .frame(height: 70)
@@ -52,6 +60,7 @@ struct DigitNoteCell: View {
         )
         .overlay {
             // Borde más suave en estado NONE para neutralizar visualmente
+            // SwiftUI 2025: animación smooth para transiciones orgánicas
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(
                     mark == .unknown ? Color.appBorderSubtle.opacity(0.3) : markColor.opacity(0.3),
@@ -59,6 +68,8 @@ struct DigitNoteCell: View {
                 )
         }
         .scaleEffect(isPressed ? 0.95 : 1.0)
+        // SwiftUI 2025: .smooth animation para feedback táctil natural
+        .animation(.smooth(duration: 0.2), value: mark)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
         .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .onTapGesture {

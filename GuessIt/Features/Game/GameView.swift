@@ -39,6 +39,12 @@ struct GameView: View {
     /// Manejo simple de errores para mostrar en un alert.
     @State private var errorMessage: String?
     
+    #if DEBUG
+    /// Controla el alert de debug para revelar el secreto actual.
+    /// - Why: facilita probar la UI de victoria sin resolver la partida.
+    @State private var isDebugSecretPresented = false
+    #endif
+    
     // MARK: - Hint State
     
     /// Estado de carga de la pista AI.
@@ -68,46 +74,64 @@ struct GameView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.appBackgroundPrimary
-                    .ignoresSafeArea()
+                // FONDO PREMIUM: Gradiente complejo que da profundidad sin saturar
+                // - Why: elimina el color plano y crea una base visual moderna
+                // - SwiftUI 2025: usa backgroundExtensionEffect() para continuidad visual
+                PremiumBackgroundGradient()
+                    .modernBackgroundExtension()
 
                 ScrollView {
-                    LazyVStack(spacing: AppTheme.Spacing.large) {
-                        // Input: foco principal de la pantalla
-                        // - Why: sin card Estado, el input lidera inmediatamente
-                        if let game = currentGame {
-                            if game.state == .inProgress {
-                                AppCard(title: "Tu intento", style: .standard) {
-                                    GuessInputView(guessText: $guessText) { normalized in
-                                        submit(normalized)
-                                    }
+                    // OPTIMIZACIÓN iOS 26+: GlassEffectContainer
+                    // - Why: Apple recomienda usar container para múltiples efectos Glass
+                    // - Mejora rendimiento al combinar renders en una sola pasada
+                    // - Permite morphing fluido entre shapes durante transiciones
+                    // - Spacing: controla cuándo los efectos comienzan a blend juntos
+                    glassContainer {
+                        LazyVStack(spacing: AppTheme.Spacing.medium) {
+                            // NUEVO ORDEN (SwiftUI 2025 Update):
+                            // 1. Tablero compacto (versión reducida - ~50% del espacio vertical)
+                            // 2. Input (intento actual)
+                            // 3. Historial (intentos anteriores)
+                            
+                            // SECCIÓN 1: Tablero de Deducción (jerarquía visual primaria)
+                            // - Why: tablero compacto arriba para referencia rápida mientras juega
+                            // - Usa LazyVGrid compacto en lugar de layout expandido
+                            if let game = currentGame {
+                                CompactDeductionBoardView(game: game, isReadOnly: game.state != .inProgress)
+                            }
+                            
+                            // SECCIÓN 2: Victoria (solo si ganó)
+                            // - Why: feedback celebratorio que merece destacarse
+                            // - tintColor: usa color de acción para énfasis
+                            if let game = currentGame, game.state == .won {
+                                VictorySectionView(game: game, onNewGame: startNewGame)
+                            }
+                            
+                            // SECCIÓN 3: Input Principal (interacción primaria)
+                            // - Why: el usuario necesita ver el tablero antes de hacer su intento
+                            // - isInteractive: true (responde a touch en tiempo real)
+                            if let game = currentGame {
+                                if game.state == .inProgress {
+                                    InputSectionView(guessText: $guessText, onSubmit: submit)
+                                } else {
+                                    DisabledInputSectionView()
                                 }
                             } else {
-                                disabledInputCard
+                                InputSectionView(guessText: $guessText, onSubmit: submit)
                             }
-                        } else {
-                            AppCard(title: "Tu intento", style: .standard) {
-                                GuessInputView(guessText: $guessText) { normalized in
-                                    submit(normalized)
-                                }
+
+                            // SECCIÓN 4: Historial de Intentos (jerarquía secundaria)
+                            // - Why: información importante pero no debe dominar la pantalla
+                            // - Usa ContentUnavailableView cuando está vacío para mejorar UX
+                            if let game = currentGame {
+                                HistorySectionView(game: game)
+                            } else {
+                                EmptyStateSectionView()
                             }
                         }
-
-                        // Sección de victoria (solo si ganó)
-                        if let game = currentGame, game.state == .won {
-                            victoryCard(for: game)
-                        }
-
-                        // Contenido de la partida: secundario, más compacto
-                        if let game = currentGame {
-                            attemptsCard(for: game)
-                            boardCard(for: game)
-                        } else {
-                            emptyStateCard
-                        }
+                        .padding(.horizontal, AppTheme.Spacing.medium)
+                        .padding(.vertical, AppTheme.Spacing.small)
                     }
-                    .padding(.horizontal, AppTheme.Spacing.medium)
-                    .padding(.vertical, AppTheme.Spacing.medium)
                 }
             }
             .overlay {
@@ -175,6 +199,18 @@ struct GameView: View {
                     Text(errorMessage ?? "")
                 }
             )
+            #if DEBUG
+            .alert(
+                "Secreto actual",
+                isPresented: $isDebugSecretPresented,
+                actions: {
+                    Button("Cerrar", role: .cancel) { isDebugSecretPresented = false }
+                },
+                message: {
+                    Text(currentGame?.secret ?? "Sin partida")
+                }
+            )
+            #endif
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink {
@@ -210,6 +246,19 @@ struct GameView: View {
                     }
                     .foregroundStyle(Color.appTextSecondary)
                 }
+                
+                #if DEBUG
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        // Mostramos el secreto actual solo en DEBUG para pruebas rápidas.
+                        isDebugSecretPresented = true
+                    } label: {
+                        Label("Debug Secreto", systemImage: "eye")
+                            .labelStyle(.iconOnly)
+                    }
+                    .foregroundStyle(Color.appTextSecondary)
+                }
+                #endif
             }
             .toolbarTitleDisplayMode(.inline)
             .sheet(isPresented: $isHintPresented, onDismiss: {
@@ -222,120 +271,30 @@ struct GameView: View {
         }
     }
 
-    // MARK: - Sections
-
-    /// Sección que se muestra cuando no hay partida en progreso todavía.
-    private var emptyStateCard: some View {
-        AppCard(style: .compact) {
-            Text("Aún no hay una partida en progreso. Ingresá tu primer intento para comenzar.")
-                .font(.caption)
-                .foregroundStyle(Color.appTextSecondary)
-        }
-    }
-
-    /// Sección que reemplaza el input cuando la partida ya terminó.
-    /// - Why: evitamos que el usuario intente enviar más intentos en una partida finalizada.
-    private var disabledInputCard: some View {
-        AppCard(title: "Tu intento", style: .light) {
-            Text("La partida ya terminó. Creá una nueva para seguir jugando.")
-                .foregroundStyle(Color.appTextSecondary)
-                .font(.caption)
-        }
-    }
-
-    /// Sección de victoria con resumen y CTA para nueva partida.
-    /// - Why: proporciona feedback claro al ganar y ofrece un camino evidente
-    ///   para continuar jugando sin tener que buscar el botón de reinicio.
-    private func victoryCard(for game: Game) -> some View {
-        AppCard(title: "Resultado") {
-            VStack(alignment: .center, spacing: AppTheme.Spacing.medium) {
-                Text("¡Ganaste! 🎉")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.appTextPrimary)
-
-                VStack(spacing: AppTheme.Spacing.xSmall) {
-                    HStack {
-                        Text("Secreto:")
-                            .foregroundStyle(Color.appTextSecondary)
-                        Spacer()
-                        Text(game.secret)
-                            .fontDesign(.monospaced)
-                            .fontWeight(.semibold)
-                    }
-
-                    HStack {
-                        Text("Intentos:")
-                            .foregroundStyle(Color.appTextSecondary)
-                        Spacer()
-                        Text("\(game.attempts.count)")
-                            .fontWeight(.semibold)
-                    }
-                }
-
-                Button {
-                    startNewGame()
-                } label: {
-                    Label("Nueva partida", systemImage: "plus.circle.fill")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.appActionPrimary)
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Ganaste. Secreto: \(game.secret). Intentos: \(game.attempts.count).")
-    }
-
-    /// Historial de intentos persistidos de la partida actual.
-    /// - Why compact: es información secundaria, debe ser escaneable pero no dominar.
-    private func attemptsCard(for game: Game) -> some View {
-        AppCard(title: "Intentos", style: .compact) {
-            let sortedAttempts = game.attempts.sorted { $0.createdAt > $1.createdAt }
-            let maxVisibleAttempts = 5
-            // Limitamos la altura para que se vean ~5 intentos y el resto quede scrolleable.
-            let maxVisibleHeight = CGFloat(maxVisibleAttempts) * 44
-
-            if sortedAttempts.isEmpty {
-                Text("Todavía no hay intentos.")
-                    .font(.caption)
-                    .foregroundStyle(Color.appTextSecondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, AppTheme.Spacing.xSmall)
-                    // Damos altura mínima para que la tarjeta no se vea “encogida” sin intentos.
-            } else {
-                ScrollView {
-                    VStack(spacing: AppTheme.Spacing.xSmall) {
-                        ForEach(sortedAttempts) { attempt in
-                            AttemptRowView(attempt: attempt)
-                                .padding(AppTheme.Spacing.small)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .fill(Color.appBackgroundSecondary)
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .strokeBorder(Color.appBorderSubtle.opacity(0.5), lineWidth: 0.5)
-                                )
-                        }
-                    }
-                }
-                // Fijamos altura aproximada para mostrar 4 intentos y permitir scroll interno.
-                .frame(maxHeight: maxVisibleHeight)
-            }
-        }
-    }
-
-    /// Tablero 0-9: herramienta de apoyo.
-    /// - Why compact: es secundario, no debe dominar la pantalla.
-    private func boardCard(for game: Game) -> some View {
-        AppCard(style: .compact) {
-            DigitBoardView(game: game, isReadOnly: game.state != .inProgress)
-        }
-    }
+    // MARK: - Modular Subviews (DRY + Arquitectura Limpia)
+    // Las subvistas están extraídas al final del archivo para mantener el body limpio
+    // - Why: mejora la legibilidad y permite reutilizar componentes
+    // - Principio: cada subvista encapsula su propia lógica visual
 
     // MARK: - Helpers
+
+    /// Envuelve el contenido en un GlassEffectContainer en iOS 26+.
+    /// - Why: Apple recomienda usar container para mejor rendimiento con múltiples efectos
+    /// - Fallback: En iOS <26 retorna el contenido sin wrapper
+    @ViewBuilder
+    private func glassContainer<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        if #available(iOS 26.0, *) {
+            // iOS 26+: Usar GlassEffectContainer para optimizar rendimiento
+            // - spacing: controla cuándo los efectos comienzan a blend
+            // - AppTheme.Spacing.medium (16pt) permite que efectos separados no se mezclen
+            GlassEffectContainer(spacing: AppTheme.Spacing.medium) {
+                content()
+            }
+        } else {
+            // iOS 13-25: No hay container, renderizar contenido directamente
+            content()
+        }
+    }
 
     /// La partida actual (en progreso o recién ganada).
     /// - Why: unifica el acceso a la partida activa en toda la vista.
@@ -366,7 +325,7 @@ struct GameView: View {
         // Cerramos la splash antes de resetear para evitar el flash de “ganaste”.
         victorySplash.dismiss()
         
-        Task {
+        Task(name: "StartNewGame") {
             do {
                 try await env.gameActor.resetGame()
                 guessText = ""
@@ -382,7 +341,7 @@ struct GameView: View {
     /// - Note: hacemos `Task` porque cruzamos aislamiento de actor.
     /// - Why no se guarda lastResult: la lista de intentos ya muestra el historial completo.
     private func submit(_ guess: String) {
-        Task {
+        Task(name: "SubmitGuess") {
             do {
                 _ = try await env.gameActor.submitGuess(guess)
                 guessText = ""
@@ -539,7 +498,7 @@ struct GameView: View {
         hintState = .loading
         
         // Crear nueva task
-        hintTask = Task {
+        hintTask = Task(name: "GenerateHint") {
             do {
                 // 1. Obtener ID de la partida actual
                 guard let gameID = try await env.modelActor.fetchInProgressGameID() else {
@@ -742,3 +701,459 @@ struct GameView: View {
     }
     #endif
 }
+
+// MARK: - Modular Subviews (Arquitectura Limpia + DRY)
+// Subvistas extraídas para mejorar la legibilidad y reutilización
+
+/// Sección de Input Principal con estética premium y glassmorphism.
+///
+/// # Diseño
+/// - Usa GlassCardStyle para efecto vidrioso moderno
+/// - Tipografía rounded para tono amigable
+/// - Botón prominent deshabilitado visualmente si no hay input
+///
+/// # Por qué existe
+/// - Encapsula toda la lógica del input en un componente reutilizable
+/// - Mantiene GameView.body limpio y legible
+/// - Permite testear el input de forma aislada
+private struct InputSectionView: View {
+    @Binding var guessText: String
+    let onSubmit: (String) -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            // Header con tipografía moderna
+            Text("Tu intento")
+                .font(AppTheme.Typography.headline())
+                .foregroundStyle(Color.appTextPrimary)
+            
+            // Input con estilo OTP (5 celdas individuales)
+            GuessInputView(guessText: $guessText, onSubmit: onSubmit)
+        }
+        .glassCard(isInteractive: true)  // Interactivo: el usuario ingresa datos aquí
+    }
+}
+
+/// Sección de Input deshabilitada cuando la partida terminó.
+///
+/// # Por qué existe
+/// - Feedback claro cuando no se puede continuar jugando
+/// - Estilo más sutil (ultraThin) para indicar estado inactivo
+private struct DisabledInputSectionView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            Text("Tu intento")
+                .font(AppTheme.Typography.headline())
+                .foregroundStyle(Color.appTextSecondary)
+            
+            HStack(spacing: AppTheme.Spacing.small) {
+                Image(systemName: "lock.fill")
+                    .foregroundStyle(Color.appTextSecondary)
+                    .font(.title3)
+                
+                Text("La partida ya terminó. Creá una nueva para seguir jugando.")
+                    .font(AppTheme.Typography.body())
+                    .foregroundStyle(Color.appTextSecondary)
+            }
+        }
+        .glassCard(material: .ultraThin)  // Material más sutil para estado inactivo
+    }
+}
+
+/// Sección de Estado Vacío cuando no hay partida en progreso.
+///
+/// # Por qué existe
+/// - Feedback claro de que la app está esperando la primera acción
+/// - Usa SF Symbol para comunicación visual rápida
+private struct EmptyStateSectionView: View {
+    var body: some View {
+        VStack(spacing: AppTheme.Spacing.medium) {
+            Image(systemName: "play.circle")
+                .font(.system(size: 48))
+                .foregroundStyle(Color.appTextSecondary.opacity(0.6))
+            
+            Text("Ingresá tu primer intento para comenzar")
+                .font(AppTheme.Typography.body())
+                .foregroundStyle(Color.appTextSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .glassCard(material: .ultraThin)
+    }
+}
+
+/// Sección de Victoria con celebración y CTA.
+///
+/// # Diseño
+/// - Estilo vibrante para reforzar el éxito
+/// - Botón prominent para guiar a la siguiente acción
+/// - Tipografía bold para jerarquizar el mensaje de victoria
+///
+/// # Por qué existe
+/// - Proporciona feedback celebratorio claro
+/// - Ofrece camino evidente para continuar jugando
+private struct VictorySectionView: View {
+    let game: Game
+    let onNewGame: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .center, spacing: AppTheme.Spacing.large) {
+            // Título celebratorio con emoji
+            // Why: el emoji refuerza el sentimiento positivo sin necesitar animaciones complejas
+            Text("¡Ganaste! 🎉")
+                .font(AppTheme.Typography.title())
+                .foregroundStyle(Color.appActionPrimary)
+            
+            // Métricas del juego
+            VStack(spacing: AppTheme.Spacing.small) {
+                MetricRow(label: "Secreto", value: game.secret, isMonospaced: true)
+                MetricRow(label: "Intentos", value: "\(game.attempts.count)", isMonospaced: false)
+            }
+            .padding(AppTheme.Spacing.medium)
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
+                    .fill(Color.appBackgroundSecondary.opacity(0.5))
+            )
+            
+            // CTA: Nueva partida
+            // Why: botón prominent con ícono para máxima affordance
+            // iOS 26+: Usa GlassProminentButtonStyle (Liquid Glass)
+            // iOS 13-25: Usa .borderedProminent (fallback)
+            Button(action: onNewGame) {
+                Label("Nueva partida", systemImage: "plus.circle.fill")
+                    .font(AppTheme.Typography.headline())
+                    .frame(maxWidth: .infinity)
+            }
+            .modernProminentButton()  // Helper que detecta iOS 26+ automáticamente
+            .tint(.appActionPrimary)
+            .controlSize(.large)
+        }
+        .frame(maxWidth: .infinity)
+        .glassCard(tintColor: .appActionPrimary)  // Tint para dar énfasis celebratorio
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Ganaste. Secreto: \(game.secret). Intentos: \(game.attempts.count).")
+    }
+}
+
+/// Row helper para mostrar métricas key-value.
+/// - Why DRY: evita duplicar el layout de HStack + labels en VictorySectionView
+private struct MetricRow: View {
+    let label: String
+    let value: String
+    let isMonospaced: Bool
+    
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(AppTheme.Typography.body())
+                .foregroundStyle(Color.appTextSecondary)
+            Spacer()
+            Text(value)
+                .font(AppTheme.Typography.headline())
+                .fontDesign(isMonospaced ? .monospaced : .rounded)
+                .foregroundStyle(Color.appTextPrimary)
+        }
+    }
+}
+
+/// Sección de Historial de Intentos con ContentUnavailableView.
+///
+/// # Diseño
+/// - Si está vacío: muestra ContentUnavailableView bonito con SF Symbol
+/// - Si tiene intentos: lista scrolleable limitada a 5 intentos visibles
+/// - Cada intento se renderiza en una mini-card con AttemptRowView
+///
+/// # Por qué existe
+/// - Encapsula la lógica de renderizado del historial
+/// - ContentUnavailableView mejora la UX cuando no hay datos
+/// - Mantiene el código DRY (no repetimos el layout de intentos)
+private struct HistorySectionView: View {
+    let game: Game
+    
+    private var sortedAttempts: [Attempt] {
+        game.attempts.sorted { $0.createdAt > $1.createdAt }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            // Header
+            Text("Historial")
+                .font(AppTheme.Typography.headline())
+                .foregroundStyle(Color.appTextPrimary)
+            
+            // Contenido: ContentUnavailableView si vacío, lista si hay intentos
+            if sortedAttempts.isEmpty {
+                // Estado vacío con ContentUnavailableView estilo iOS 18
+                // Why: comunica claramente que no hay datos sin parecer un error
+                // NOTA: Usamos frame con altura fija para evitar que ocupe demasiado espacio
+                ContentUnavailableView {
+                    Label("Sin intentos", systemImage: "clock.badge.questionmark")
+                        .font(.subheadline)  // Reducimos tamaño para compactar
+                } description: {
+                    Text("Tus intentos aparecerán aquí")
+                        .font(AppTheme.Typography.caption())
+                }
+                .frame(height: 100)  // Altura fija compacta para no dominar la pantalla
+            } else {
+                // Lista scrolleable de intentos
+                // Why: limitar altura a ~5 intentos evita que la sección domine la pantalla
+                ScrollView {
+                    VStack(spacing: AppTheme.Spacing.small) {
+                        ForEach(sortedAttempts) { attempt in
+                            AttemptRowView(attempt: attempt)
+                                .padding(AppTheme.Spacing.small)
+                                .background(
+                                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
+                                        .fill(Color.appBackgroundSecondary.opacity(0.6))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
+                                        .strokeBorder(Color.appBorderSubtle.opacity(0.3), lineWidth: 0.5)
+                                )
+                        }
+                    }
+                }
+                .frame(maxHeight: 220)  // ~5 intentos visibles
+            }
+        }
+        .glassCard(material: .regular, padding: AppTheme.CardPadding.compact)
+    }
+}
+
+/// Sección del Tablero de Deducción 0-9 (VERSIÓN COMPACTA - SwiftUI 2025).
+///
+/// # Diseño Compacto
+/// - Ocupa ~50% del espacio vertical anterior
+/// - Grilla 2x5 con celdas más pequeñas (altura: 48pt vs 70pt original)
+/// - Header compacto con ícono más pequeño
+/// - Padding reducido para maximizar espacio útil
+///
+/// # Por qué versión compacta
+/// - Permite ver tablero + input + historial en una sola pantalla
+/// - Tablero es referencia rápida, no necesita dominar el espacio
+/// - Mejor balance visual entre las 3 secciones principales
+///
+/// # SwiftUI 2025
+/// - Usa .glassCard con material ultraThin para look ligero
+/// - Animaciones smooth para cambios de estado
+private struct CompactDeductionBoardView: View {
+    let game: Game
+    let isReadOnly: Bool
+    
+    @Environment(\.modelContext) private var modelContext
+    
+    // Grilla fija: 2 filas × 5 columnas (igual que antes)
+    private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 8), count: 5)
+    
+    private var sortedNotes: [DigitNote] {
+        game.digitNotes.sorted { $0.digit < $1.digit }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            // Header compacto
+            HStack {
+                Label("Tablero", systemImage: "square.grid.2x2")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.appTextPrimary)
+                
+                Spacer()
+                
+                if !isReadOnly {
+                    Button {
+                        resetBoard()
+                    } label: {
+                        Text("Reset")
+                            .font(.caption)
+                            .foregroundStyle(Color.appActionPrimary)
+                    }
+                }
+            }
+            
+            // Grilla compacta 2×5
+            LazyVGrid(columns: columns, spacing: 8) {
+                ForEach(sortedNotes, id: \.id) { note in
+                    CompactDigitCell(
+                        digit: note.digit,
+                        mark: note.mark,
+                        onTap: {
+                            guard !isReadOnly else { return }
+                            cycleMark(forDigit: note.digit)
+                        }
+                    )
+                }
+            }
+        }
+        .glassCard(
+            material: .ultraThin,
+            padding: AppTheme.CardPadding.compact,
+            isInteractive: !isReadOnly
+        )
+    }
+    
+    // MARK: - Actions
+    
+    private func cycleMark(forDigit digit: Int) {
+        guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
+            return
+        }
+        
+        let current = note.mark
+        let next = nextMark(after: current)
+        setMark(next, forDigit: digit)
+    }
+    
+    private func setMark(_ mark: DigitMark, forDigit digit: Int) {
+        guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
+            return
+        }
+        
+        note.mark = mark
+        
+        do {
+            try modelContext.save()
+        } catch {
+            assertionFailure("No se pudo guardar la marca del dígito \(digit): \(error)")
+        }
+    }
+    
+    private func resetBoard() {
+        for note in game.digitNotes {
+            note.mark = .unknown
+        }
+        
+        do {
+            try modelContext.save()
+        } catch {
+            assertionFailure("No se pudo resetear el tablero: \(error)")
+        }
+    }
+    
+    private func nextMark(after current: DigitMark) -> DigitMark {
+        let order: [DigitMark] = [.unknown, .poor, .fair, .good]
+        guard let idx = order.firstIndex(of: current) else { return .unknown }
+
+        let nextIndex = order.index(after: idx)
+        return nextIndex < order.endIndex ? order[nextIndex] : .unknown
+    }
+}
+
+/// Celda compacta para el tablero reducido (48pt height vs 70pt original).
+///
+/// # Diseño Ultra-Compacto
+/// - Altura: 48pt (vs 70pt original = ~31% más pequeño)
+/// - Fuente del dígito: 20pt (vs 28pt original)
+/// - Fuente del estado: 9pt (vs 11pt original)
+/// - Spacing reducido para maximizar densidad
+///
+/// # Por qué existe
+/// - El tablero compacto necesita celdas más pequeñas
+/// - Mantiene legibilidad mientras ahorra espacio
+/// - Mismo comportamiento táctil que la versión grande
+///
+/// # SwiftUI 2025
+/// - Usa .smooth animation para transiciones orgánicas
+/// - Symbol replace effect para cambios de ícono fluidos
+private struct CompactDigitCell: View {
+    let digit: Int
+    let mark: DigitMark
+    let onTap: () -> Void
+    
+    @State private var isPressed = false
+    
+    var body: some View {
+        VStack(spacing: 2) {
+            // Número (elemento principal - más pequeño)
+            Text("\(digit)")
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color.appTextPrimary)
+            
+            // Estado manual (ultra compacto)
+            HStack(spacing: 2) {
+                Image(systemName: markSymbol)
+                    .font(.system(size: 8))
+                    .contentTransition(.symbolEffect(.replace))
+                
+                Text(markShortText)
+                    .font(.system(size: 9, weight: .medium))
+            }
+            .foregroundStyle(markColor)
+            .id(mark)
+            .transition(.opacity.combined(with: .scale(scale: 0.8)))
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 48)  // Altura compacta (vs 70pt original)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.appSurfaceCard)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(
+                    mark == .unknown ? Color.appBorderSubtle.opacity(0.2) : markColor.opacity(0.3),
+                    lineWidth: mark == .unknown ? 0.5 : 1.2
+                )
+        }
+        .scaleEffect(isPressed ? 0.95 : 1.0)
+        .animation(.smooth(duration: 0.2), value: mark)
+        .animation(.easeInOut(duration: 0.1), value: isPressed)
+        .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .onTapGesture {
+            isPressed = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isPressed = false
+            }
+            onTap()
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Dígito \(digit). Estado \(markSpokenText)")
+        .accessibilityHint("Doble toque para cambiar estado")
+        .accessibilityAddTraits(.isButton)
+    }
+    
+    // MARK: - Presentation
+    
+    private var markSymbol: String {
+        switch mark {
+        case .unknown: return "minus"
+        case .poor:    return "xmark"
+        case .fair:    return "questionmark"
+        case .good:    return "checkmark"
+        }
+    }
+    
+    private var markShortText: String {
+        switch mark {
+        case .unknown: return "—"
+        case .poor:    return "POOR"
+        case .fair:    return "FAIR"
+        case .good:    return "GOOD"
+        }
+    }
+    
+    private var markColor: Color {
+        switch mark {
+        case .unknown:
+            return .appTextSecondary.opacity(0.2)
+        case .poor:
+            return .appMarkPoor.opacity(0.85)
+        case .fair:
+            return .appMarkFair.opacity(0.85)
+        case .good:
+            return .appMarkGood.opacity(0.85)
+        }
+    }
+    
+    // MARK: - Accessibility
+    
+    private var markSpokenText: String {
+        switch mark {
+        case .unknown: return "sin estado"
+        case .poor:    return "POOR"
+        case .fair:    return "FAIR"
+        case .good:    return "GOOD"
+        }
+    }
+}
+

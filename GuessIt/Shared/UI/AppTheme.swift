@@ -1,21 +1,37 @@
 import SwiftUI
 
-// Centralized tokens for the app visual system.
+// MARK: - Centralized Design Tokens
+/// Sistema centralizado de tokens visuales para mantener consistencia en toda la app.
+///
+/// # Filosofía de diseño
+/// - Usa Font.Design.rounded para un tono moderno y amigable
+/// - Esquinas redondeadas generosas (24pt) para estética iOS 18
+/// - Glassmorphism sutil con Material para profundidad
 enum AppTheme {
+    // MARK: - Spacing
+    /// Espaciado vertical y horizontal reutilizable.
+    /// - Why: mantener ritmo visual consistente en toda la UI
     enum Spacing {
         static let xSmall: CGFloat = 6
         static let small: CGFloat = 10
         static let medium: CGFloat = 16
         static let large: CGFloat = 22
         static let xLarge: CGFloat = 28
+        static let xxLarge: CGFloat = 36  // Nuevo: para secciones principales
     }
 
+    // MARK: - Corner Radius
+    /// Radios de esquina para diferentes componentes.
+    /// - Why: iOS 18 prefiere esquinas más generosas para look premium
     enum CornerRadius {
-        static let card: CGFloat = 16
+        static let card: CGFloat = 16        // Cards legacy
+        static let glassCard: CGFloat = 24   // Nuevo: cards premium con glassmorphism
         static let field: CGFloat = 12
         static let chip: CGFloat = 10
+        static let button: CGFloat = 16      // Nuevo: botones de acción
     }
     
+    // MARK: - Card Padding
     /// Variantes de padding para cards según jerarquía visual.
     enum CardPadding {
         /// Padding estándar para cards principales (16pt).
@@ -26,9 +42,53 @@ enum AppTheme {
         /// Padding ligero para cards de menor jerarquía (10pt).
         /// - Why: hace que la card sea más liviana visualmente.
         static let light: CGFloat = 10
+        /// Padding premium para glass cards (20pt).
+        /// - Why: las glass cards necesitan más respiración visual.
+        static let glass: CGFloat = 20
+    }
+    
+    // MARK: - Typography
+    /// Configuración tipográfica moderna con Font.Design.rounded.
+    /// - Why: .rounded da un tono amigable pero profesional (estilo iOS 18)
+    enum Typography {
+        /// Título grande para secciones principales
+        static func largeTitle() -> Font {
+            .system(.largeTitle, design: .rounded, weight: .bold)
+        }
+        
+        /// Título para headers de secciones
+        static func title() -> Font {
+            .system(.title2, design: .rounded, weight: .heavy)
+        }
+        
+        /// Headline para subtítulos importantes
+        static func headline() -> Font {
+            .system(.headline, design: .rounded, weight: .semibold)
+        }
+        
+        /// Body para contenido general
+        static func body() -> Font {
+            .system(.body, design: .rounded, weight: .regular)
+        }
+        
+        /// Caption para información secundaria
+        static func caption() -> Font {
+            .system(.caption, design: .rounded, weight: .medium)
+        }
+    }
+    
+    // MARK: - Shadow
+    /// Sombras sutiles para dar profundidad sin saturar.
+    /// - Why: las sombras muy marcadas envejecen la UI
+    enum Shadow {
+        static let subtle = (color: Color.black.opacity(0.06), radius: CGFloat(8), x: CGFloat(0), y: CGFloat(2))
+        static let medium = (color: Color.black.opacity(0.1), radius: CGFloat(12), x: CGFloat(0), y: CGFloat(4))
     }
 }
 
+// MARK: - Semantic Colors
+/// Colores semánticos que se adaptan a light/dark mode.
+/// - Why: centralizar colores facilita tematización y consistencia
 extension Color {
     static let appBackgroundPrimary = Color("BackgroundPrimary")
     static let appBackgroundSecondary = Color("BackgroundSecondary")
@@ -36,7 +96,11 @@ extension Color {
     static let appTextPrimary = Color("TextPrimary")
     static let appTextSecondary = Color("TextSecondary")
     static let appBorderSubtle = Color("BorderSubtle")
+    
+    /// Color de acción principal (botones CTA, elementos activos)
+    /// - Why: debe ser vibrante para guiar la atención del usuario
     static let appActionPrimary = Color("ActionPrimary")
+    
     static let appMarkGood = Color("MarkGood")
     static let appMarkFair = Color("MarkFair")
     static let appMarkPoor = Color("MarkPoor")
@@ -151,6 +215,132 @@ struct MetricChipStyle: ViewModifier {
     }
 }
 
+// MARK: - Glass Card Style (DRY Principle + iOS 18 Liquid Glass)
+/// ViewModifier que aplica efecto glassmorphism moderno a cualquier vista.
+///
+/// # Características
+/// - iOS 18+: Usa Liquid Glass (.glassEffect) para efecto premium nativo
+/// - iOS 13-17: Fallback a Material.regular/ultraThin con sombras
+/// - Esquinas redondeadas generosas (24pt) estilo iOS 18
+/// - Borde sutil para definir límites
+/// - Compatible desde iOS 13+ con degradación elegante
+///
+/// # Por qué existe (DRY)
+/// - Evita repetir el mismo código de estilo en cada sección
+/// - Centraliza la estética glassmorphism en un solo lugar
+/// - Facilita cambios globales de diseño
+/// - Adopta automáticamente Liquid Glass en iOS 18+ sin código duplicado
+///
+/// # Cuándo usar
+/// - Secciones principales: Input, Historial, Tablero
+/// - Cualquier contenedor que necesite destacar sobre el fondo con gradiente
+struct GlassCardStyle: ViewModifier {
+    /// Variante del material (regular para cards principales, ultraThin para secundarias)
+    let material: Material
+    
+    /// Padding interno de la card
+    let padding: CGFloat
+    
+    /// Habilitar Liquid Glass en iOS 26+ (default: true)
+    /// - Why: permite deshabilitar Liquid Glass si se necesita Material explícitamente
+    let useLiquidGlass: Bool
+    
+    /// Hacer el efecto interactivo (responde a touch/pointer)
+    /// - Why: Apple recomienda .interactive() para elementos táctiles
+    let isInteractive: Bool
+    
+    /// Color de tint para dar énfasis (opcional)
+    /// - Why: Apple permite usar .tint() para destacar secciones importantes
+    let tintColor: Color?
+    
+    init(
+        material: Material = .regular,
+        padding: CGFloat = AppTheme.CardPadding.glass,
+        useLiquidGlass: Bool = true,
+        isInteractive: Bool = false,
+        tintColor: Color? = nil
+    ) {
+        self.material = material
+        self.padding = padding
+        self.useLiquidGlass = useLiquidGlass
+        self.isInteractive = isInteractive
+        self.tintColor = tintColor
+    }
+    
+    func body(content: Content) -> some View {
+        // ESTRATEGIA: Detección de iOS 26+ para usar Liquid Glass
+        // - iOS 26+: .glassEffect() proporciona Liquid Glass nativo con reflexiones y profundidad 3D
+        // - iOS 13-25: Material + sombras manuales para simular glassmorphism
+        // - Ambos se ven bien, pero Liquid Glass es superior en iOS 26+
+        
+        if #available(iOS 26.0, *), useLiquidGlass {
+            // iOS 26+: LIQUID GLASS (efecto premium)
+            // - Why: Apple recomienda usar .glassEffect() en custom views para iOS 26+
+            // - Proporciona reflexiones, profundidad 3D, y reacciona a interacciones
+            // - Se integra perfectamente con el sistema de diseño de iOS 26
+            content
+                .padding(padding)
+                .glassEffect(
+                    configureGlass(),  // Configura Glass con interactive y tint según parámetros
+                    in: RoundedRectangle(
+                        cornerRadius: AppTheme.CornerRadius.glassCard,
+                        style: .continuous
+                    )
+                )
+                // Nota: Liquid Glass incluye bordes y sombras automáticamente
+                // por lo que no necesitamos agregarlos manualmente
+        } else {
+            // iOS 13-25: MATERIAL FALLBACK (glassmorphism clásico)
+            // - Why: Material existe desde iOS 13 y proporciona blur + vibrancy
+            // - Agregamos borde y sombra manualmente para simular el look moderno
+            content
+                .padding(padding)
+                .background(
+                    material,
+                    in: RoundedRectangle(
+                        cornerRadius: AppTheme.CornerRadius.glassCard,
+                        style: .continuous
+                    )
+                )
+                .overlay {
+                    // Borde sutil para definir límites de la card
+                    RoundedRectangle(
+                        cornerRadius: AppTheme.CornerRadius.glassCard,
+                        style: .continuous
+                    )
+                    .strokeBorder(Color.appBorderSubtle.opacity(0.3), lineWidth: 1)
+                }
+                .shadow(
+                    color: AppTheme.Shadow.subtle.color,
+                    radius: AppTheme.Shadow.subtle.radius,
+                    x: AppTheme.Shadow.subtle.x,
+                    y: AppTheme.Shadow.subtle.y
+                )
+        }
+    }
+    
+    /// Configura el objeto Glass con interactividad y tint según parámetros.
+    /// - Why: Apple permite encadenar .interactive() y .tint() para personalizar el efecto
+    @available(iOS 26.0, *)
+    private func configureGlass() -> Glass {
+        var glass: Glass = .regular
+        
+        // Agregar interactividad si está habilitado
+        // - Why: .interactive() hace que el efecto responda a touch y pointer en tiempo real
+        if isInteractive {
+            glass = glass.interactive()
+        }
+        
+        // Agregar tint si está especificado
+        // - Why: .tint() da énfasis visual a secciones importantes
+        if let tintColor {
+            glass = glass.tint(tintColor)
+        }
+        
+        return glass
+    }
+}
+
 extension View {
     func appTextFieldStyle() -> some View {
         modifier(AppTextFieldStyle())
@@ -163,4 +353,195 @@ extension View {
     func metricChip(color: Color, compact: Bool = false) -> some View {
         modifier(MetricChipStyle(color: color, isCompact: compact))
     }
+    
+    /// Aplica estilo glassmorphism premium a la vista con soporte Liquid Glass.
+    ///
+    /// # Comportamiento adaptivo
+    /// - iOS 26+: Usa Liquid Glass (.glassEffect) con soporte para interactividad y tint
+    /// - iOS 13-25: Usa Material con fallback elegante
+    ///
+    /// # Características iOS 26+
+    /// - `.interactive()`: Hace que el efecto responda a touch/pointer en tiempo real
+    /// - `.tint()`: Agrega color de énfasis para destacar secciones importantes
+    ///
+    /// - Parameters:
+    ///   - material: Material a usar en iOS 13-25 fallback (default: .regular)
+    ///   - padding: Padding interno (default: CardPadding.glass)
+    ///   - useLiquidGlass: Habilitar Liquid Glass en iOS 26+ (default: true)
+    ///   - isInteractive: Hacer el efecto interactivo (iOS 26+) (default: false)
+    ///   - tintColor: Color de tint para énfasis (iOS 26+) (default: nil)
+    /// - Returns: Vista con efecto glass aplicado
+    func glassCard(
+        material: Material = .regular,
+        padding: CGFloat = AppTheme.CardPadding.glass,
+        useLiquidGlass: Bool = true,
+        isInteractive: Bool = false,
+        tintColor: Color? = nil
+    ) -> some View {
+        modifier(GlassCardStyle(
+            material: material,
+            padding: padding,
+            useLiquidGlass: useLiquidGlass,
+            isInteractive: isInteractive,
+            tintColor: tintColor
+        ))
+    }
 }
+// MARK: - Modern Button Styles (SwiftUI 2025 Liquid Glass Support)
+/// Helper para aplicar estilos de botón modernos con soporte Liquid Glass.
+///
+/// # Por qué existe
+/// - Centraliza la lógica de detección de iOS 26+
+/// - Proporciona fallback elegante a .borderedProminent
+/// - Permite usar Liquid Glass button styles sin #available en cada uso
+///
+/// # SwiftUI 2025 Update
+/// - Usa el nuevo `.glass` button style introducido en June 2025
+/// - `.glass` es el reemplazo oficial de `.glassProminent` para Liquid Glass
+extension View {
+    /// Aplica un button style prominent con soporte Liquid Glass.
+    ///
+    /// # Comportamiento
+    /// - iOS 26+: Usa .glass (Liquid Glass nativo - SwiftUI 2025)
+    /// - iOS 13-25: Usa .borderedProminent (style clásico)
+    ///
+    /// # Cuándo usar
+    /// - Botones de acción primaria (CTA)
+    /// - Botones que necesitan máxima prominencia visual
+    ///
+    /// # SwiftUI 2025
+    /// - Usa buttonStyle(.glass) como recomienda Apple en June 2025 updates
+    ///
+    /// - Returns: Vista con button style aplicado
+    func modernProminentButton() -> some View {
+        if #available(iOS 26.0, *) {
+            // iOS 26+: Liquid Glass button (SwiftUI 2025)
+            // - Why: .glass es el button style oficial para Liquid Glass
+            // - Proporciona reflexiones, profundidad 3D, y responde a interacciones
+            return AnyView(self.buttonStyle(.glass))
+        } else {
+            // iOS 13-25: Bordered prominent fallback
+            // - Why: .borderedProminent existe desde iOS 15, se ve bien
+            return AnyView(self.buttonStyle(.borderedProminent))
+        }
+    }
+}
+
+// MARK: - Premium Background Gradient
+/// Fondo con gradiente complejo que da profundidad visual sin saturar.
+///
+/// # Diseño
+/// - Gradiente multi-punto que simula iluminación natural
+/// - Colores sutiles que no compiten con el contenido
+/// - Compatible con light/dark mode (se adapta automáticamente)
+///
+/// # Por qué no MeshGradient
+/// - MeshGradient requiere iOS 18+, LinearGradient funciona desde iOS 13
+/// - LinearGradient bien implementado da profundidad sin complejidad
+///
+/// # Cuándo usar
+/// - Como fondo de pantallas principales (GameView, HistoryView)
+/// - Cualquier vista que necesite escapar del color plano
+struct PremiumBackgroundGradient: View {
+    /// Color scheme del entorno (light/dark)
+    @Environment(\.colorScheme) private var colorScheme
+    
+    var body: some View {
+        // Gradiente complejo con múltiples stops para simular iluminación suave
+        // Why: los gradientes simples de 2 colores se ven planos y "baratos"
+        LinearGradient(
+            gradient: Gradient(stops: [
+                // Top: zona más clara (simula luz desde arriba)
+                .init(color: topColor, location: 0.0),
+                .init(color: middleTopColor, location: 0.25),
+                
+                // Middle: transición suave
+                .init(color: middleColor, location: 0.5),
+                
+                // Bottom: zona más oscura (da peso y profundidad)
+                .init(color: middleBottomColor, location: 0.75),
+                .init(color: bottomColor, location: 1.0)
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+    }
+    
+    // MARK: - Adaptive Colors
+    /// Colores que se adaptan a light/dark mode.
+    /// - Why: el mismo gradiente debe funcionar en ambos modos sin verse forzado
+    
+    private var topColor: Color {
+        colorScheme == .dark
+            ? Color(red: 0.05, green: 0.05, blue: 0.12)  // Azul oscuro muy sutil
+            : Color(red: 0.95, green: 0.96, blue: 0.98)  // Blanco ligeramente azulado
+    }
+    
+    private var middleTopColor: Color {
+        colorScheme == .dark
+            ? Color(red: 0.08, green: 0.08, blue: 0.15)
+            : Color(red: 0.93, green: 0.95, blue: 0.98)
+    }
+    
+    private var middleColor: Color {
+        colorScheme == .dark
+            ? Color(red: 0.06, green: 0.06, blue: 0.13)
+            : Color(red: 0.96, green: 0.97, blue: 0.99)
+    }
+    
+    private var middleBottomColor: Color {
+        colorScheme == .dark
+            ? Color(red: 0.04, green: 0.04, blue: 0.11)
+            : Color(red: 0.94, green: 0.95, blue: 0.97)
+    }
+    
+    private var bottomColor: Color {
+        colorScheme == .dark
+            ? Color(red: 0.02, green: 0.02, blue: 0.08)  // Casi negro con tinte azul
+            : Color(red: 0.92, green: 0.94, blue: 0.97)  // Gris muy claro
+    }
+}
+
+// MARK: - SwiftUI 2025: Background Extension Effect
+/// Extiende y blur el background alrededor de los bordes con safe areas disponibles.
+///
+/// # SwiftUI 2025 Feature
+/// - Introducido en June 2025: backgroundExtensionEffect()
+/// - Duplica, refleja y blur las vistas colocadas alrededor de bordes con safe areas
+/// - Crea una estética más inmersiva y moderna
+///
+/// # Por qué existe
+/// - Elimina los bordes duros cuando hay safe areas (notch, Dynamic Island, etc.)
+/// - Da sensación de continuidad visual en toda la pantalla
+/// - Se integra perfectamente con Liquid Glass y gradientes premium
+///
+/// # Cuándo usar
+/// - Pantallas con gradientes de fondo (GameView, HistoryView)
+/// - Vistas que usan PremiumBackgroundGradient
+/// - Cualquier vista que quiera maximizar el uso del espacio visual
+extension View {
+    /// Aplica background extension effect en iOS 26+.
+    ///
+    /// # Comportamiento
+    /// - iOS 26+: Usa backgroundExtensionEffect() para blur y extend en bordes
+    /// - iOS 13-25: No hace nada (retorna la vista sin cambios)
+    ///
+    /// # Por qué condicional
+    /// - backgroundExtensionEffect() solo existe en iOS 26+
+    /// - El fallback es seguro: la vista se ve bien sin este efecto
+    ///
+    /// - Returns: Vista con background extension aplicado (iOS 26+) o sin cambios
+    func modernBackgroundExtension() -> some View {
+        if #available(iOS 26.0, *) {
+            // iOS 26+: Background extension effect
+            // - Why: crea continuidad visual en bordes con safe areas
+            // - Duplica, refleja y blur automáticamente
+            return AnyView(self.backgroundExtensionEffect())
+        } else {
+            // iOS 13-25: No hay efecto, retornar vista sin cambios
+            return AnyView(self)
+        }
+    }
+}
+

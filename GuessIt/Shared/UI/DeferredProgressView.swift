@@ -108,7 +108,7 @@ struct DeferredProgressView: View {
             delayTask?.cancel()
             
             // Crear nueva task de delay
-            delayTask = Task {
+            delayTask = Task(name: "DeferredProgressDelay") {
                 do {
                     // Esperar el delay
                     try await Task.sleep(for: delay)
@@ -148,7 +148,7 @@ struct DeferredProgressView: View {
                 
                 Button("Iniciar carga rápida") {
                     isLoading = true
-                    Task {
+                    Task(name: "PreviewFastLoad") {
                         try? await Task.sleep(for: .milliseconds(200))
                         isLoading = false
                     }
@@ -180,7 +180,7 @@ struct DeferredProgressView: View {
                 
                 Button("Iniciar carga lenta") {
                     isLoading = true
-                    Task {
+                    Task(name: "PreviewSlowLoad") {
                         try? await Task.sleep(for: .seconds(2))
                         isLoading = false
                     }

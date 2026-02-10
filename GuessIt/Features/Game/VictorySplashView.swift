@@ -115,17 +115,20 @@ struct VictorySplashView: View {
                     Label("Nueva partida", systemImage: "plus.circle.fill")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .modernProminentButton()  // SwiftUI 2025: Liquid Glass button
                 .tint(.appActionPrimary)
             }
             .padding(AppTheme.Spacing.large)
-            .background(
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .fill(.ultraThinMaterial)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .strokeBorder(Color.appBorderSubtle, lineWidth: 1)
+            // SwiftUI 2025: Usar Liquid Glass para el card de victoria
+            // - Why: da un efecto premium y celebratorio
+            // - isInteractive: false (es una card estática, el botón tiene su propio style)
+            // - tintColor: appActionPrimary para énfasis en la celebración
+            .glassCard(
+                material: .ultraThin,
+                padding: 0,  // Ya tenemos padding interno en el VStack
+                useLiquidGlass: true,
+                isInteractive: false,
+                tintColor: Color.appActionPrimary.opacity(0.3)
             )
             .padding(.horizontal, AppTheme.Spacing.large)
             .scaleEffect(isVisible ? 1.0 : 0.96)

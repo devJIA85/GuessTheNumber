@@ -36,8 +36,9 @@ struct GameDetailView: View {
 
     var body: some View {
         ZStack {
-            Color.appBackgroundPrimary
-                .ignoresSafeArea()
+            // SwiftUI 2025: Usar PremiumBackgroundGradient + backgroundExtensionEffect
+            PremiumBackgroundGradient()
+                .modernBackgroundExtension()
 
             Group {
                 switch state {
@@ -81,11 +82,11 @@ struct GameDetailView: View {
                 .foregroundStyle(Color.appTextSecondary)
 
             Button("Reintentar") {
-                Task {
+                Task(name: "RetryLoadGameDetail") {
                     await loadGameDetail()
                 }
             }
-            .buttonStyle(.borderedProminent)
+            .modernProminentButton()  // SwiftUI 2025: Liquid Glass button
             .tint(.appActionPrimary)
         }
         .padding()

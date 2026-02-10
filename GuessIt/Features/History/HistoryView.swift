@@ -32,8 +32,11 @@ struct HistoryView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.appBackgroundPrimary
-                    .ignoresSafeArea()
+                // SwiftUI 2025: Usar PremiumBackgroundGradient + backgroundExtensionEffect
+                // - Why: mantiene consistencia visual con GameView
+                // - backgroundExtensionEffect: da continuidad en bordes con safe areas
+                PremiumBackgroundGradient()
+                    .modernBackgroundExtension()
 
                 Group {
                     switch state {
@@ -98,11 +101,11 @@ struct HistoryView: View {
                 .foregroundStyle(Color.appTextSecondary)
 
             Button("Reintentar") {
-                Task {
+                Task(name: "RetryLoadGames") {
                     await loadGames()
                 }
             }
-            .buttonStyle(.borderedProminent)
+            .modernProminentButton()  // SwiftUI 2025: Liquid Glass button
             .tint(.appActionPrimary)
         }
         .padding()
@@ -122,7 +125,6 @@ struct HistoryView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color.appBackgroundPrimary)
     }
 }
 

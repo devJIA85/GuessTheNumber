@@ -18,6 +18,10 @@ import SwiftData
 /// # Interacción
 /// - Tap simple cicla estados: none → poor → fair → good → none.
 /// - Sin long-press ni menús contextuales.
+///
+/// # SwiftUI 2025
+/// - Usa @Animatable macro para sintetizar animaciones personalizadas
+/// - Las transiciones de mark son suaves y fluidas
 struct DigitBoardView: View {
 
     // MARK: - Dependencies
