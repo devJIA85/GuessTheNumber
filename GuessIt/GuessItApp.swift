@@ -33,7 +33,7 @@ struct GuessItApp: App {
 
     var body: some Scene {
         WindowGroup {
-            GameView()
+            RootView()
                 // Inyectamos el environment propio de la app.
                 .environment(\.appEnvironment, appEnvironment)
         }
@@ -75,7 +75,7 @@ extension EnvironmentValues {
     let container = ModelContainerFactory.make(isInMemory: true)
     let env = AppEnvironment(modelContainer: container)
 
-    GameView()
+    RootView()
         .environment(\.appEnvironment, env)
         .modelContainer(container)
 }
