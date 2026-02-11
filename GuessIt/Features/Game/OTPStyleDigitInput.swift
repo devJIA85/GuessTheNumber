@@ -77,34 +77,77 @@ struct OTPStyleDigitInput: View {
     }
     
     /// Celda individual para un dígito.
+    ///
+    /// # Liquid Glass (iOS 26+)
+    /// - Fondo: `.ultraThinMaterial` crea "cuencas" talladas en la superficie glass,
+    ///   según la guía de "Adopting Liquid Glass" (materiales translúcidos para profundidad).
+    /// - Borde: más sutil porque el material ya proporciona distinción visual.
+    /// - Tipografía: `.foregroundStyle(.primary)` para vibrancia semántica automática
+    ///   sobre el material (Apple recomienda no usar colores sólidos sobre glass).
+    ///
+    /// # Fallback (iOS <26)
+    /// - Mantiene fondos sólidos originales y bordes más marcados.
     private func digitCell(at index: Int) -> some View {
         let digit = digitAt(index: index)
         let isActive = isFocused && index == text.count
-        
+
         return ZStack {
             // Fondo de la celda
-            // - Why sutil: en estado inactivo debe ser neutro, no competir visualmente
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                .fill(isActive ? Color.appSurfaceCard : Color.appBackgroundSecondary)
-            
-            // Borde
-            // - Why más suave en inactivo: reduce intensidad visual global del input
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                .strokeBorder(
-                    isActive ? Color.appActionPrimary : Color.appBorderSubtle.opacity(0.5),
-                    lineWidth: isActive ? 2 : 1
-                )
-            
+            if #available(iOS 26.0, *) {
+                // iOS 26+: .ultraThinMaterial para efecto de "cuenca" tallada en el vidrio
+                // - Why: la documentación indica usar materiales estándar dentro de la capa
+                //   de contenido para crear distinción visual bajo Liquid Glass.
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            } else {
+                // iOS <26: fondos sólidos (comportamiento original)
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
+                    .fill(isActive ? Color.appSurfaceCard : Color.appBackgroundSecondary)
+            }
+
+            // Borde reactivo al estado activo/inactivo
+            if #available(iOS 26.0, *) {
+                // iOS 26+: borde más sutil — .ultraThinMaterial ya proporciona distinción
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
+                    .strokeBorder(
+                        isActive ? Color.appActionPrimary.opacity(0.8) : Color.white.opacity(0.15),
+                        lineWidth: isActive ? 1.5 : 0.5
+                    )
+            } else {
+                // iOS <26: borde original más marcado
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
+                    .strokeBorder(
+                        isActive ? Color.appActionPrimary : Color.appBorderSubtle.opacity(0.5),
+                        lineWidth: isActive ? 2 : 1
+                    )
+            }
+
             // Contenido: dígito o placeholder
             if let digit {
-                Text(String(digit))
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.appTextPrimary)
+                if #available(iOS 26.0, *) {
+                    // iOS 26+: vibrancia semántica — el sistema ajusta el contraste
+                    // automáticamente sobre el material translúcido
+                    Text(String(digit))
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                } else {
+                    Text(String(digit))
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.appTextPrimary)
+                }
             } else {
-                Text("·")
-                    .font(.title)
-                    .foregroundStyle(Color.appTextSecondary.opacity(0.2))
+                if #available(iOS 26.0, *) {
+                    // iOS 26+: vibrancia terciaria para placeholder sutil
+                    Text("·")
+                        .font(.title)
+                        .foregroundStyle(.tertiary)
+                } else {
+                    Text("·")
+                        .font(.title)
+                        .foregroundStyle(Color.appTextSecondary.opacity(0.2))
+                }
             }
         }
         .frame(width: 52, height: 60)

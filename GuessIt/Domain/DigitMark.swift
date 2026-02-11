@@ -30,5 +30,26 @@ enum DigitMark: String, Codable, CaseIterable {
 
     /// El dígito no pertenece al número secreto.
     case poor
+
+    // MARK: - Cycling
+
+    /// Orden de rotación para el tablero de deducción manual.
+    /// El jugador cicla con tap: unknown → poor → fair → good → unknown.
+    private static let cycleOrder: [DigitMark] = [.unknown, .poor, .fair, .good]
+
+    /// Devuelve el siguiente mark en el ciclo de rotación.
+    ///
+    /// # Orden
+    /// `unknown → poor → fair → good → unknown`
+    ///
+    /// # Por qué vive en el enum
+    /// - Centraliza la lógica de cycling que antes estaba duplicada
+    ///   en `CollapsibleBoardHeader` y `DigitBoardView`.
+    /// - Es lógica de dominio, no de presentación.
+    func next() -> DigitMark {
+        guard let idx = Self.cycleOrder.firstIndex(of: self) else { return .unknown }
+        let nextIndex = Self.cycleOrder.index(after: idx)
+        return nextIndex < Self.cycleOrder.endIndex ? Self.cycleOrder[nextIndex] : .unknown
+    }
 }
 

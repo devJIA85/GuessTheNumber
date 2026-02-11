@@ -76,6 +76,15 @@ struct GameView: View {
     /// - Why: permite coordinar presentación + haptic sin persistencia.
     @State private var victorySplash = VictorySplashState()
 
+    /// Progreso de colapso del header del tablero (0.0 = expandido, 1.0 = colapsado).
+    ///
+    /// # Fuente de verdad
+    /// - Dirigido por el offset del ScrollView via `.onScrollGeometryChange`.
+    /// - El threshold de 60pt da una transición suave y natural.
+    /// - La diferencia de altura expandido↔colapsado es ~40pt (48→28pt × 2 filas),
+    ///   entonces 60pt de scroll es ligeramente mayor para suavizar la curva.
+    @State private var boardCollapseProgress: CGFloat = 0
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -85,58 +94,92 @@ struct GameView: View {
                 PremiumBackgroundGradient()
                     .modernBackgroundExtension()
 
-                ScrollView {
-                    // OPTIMIZACIÓN iOS 26+: GlassEffectContainer
-                    // - Why: Apple recomienda usar container para múltiples efectos Glass
-                    // - Mejora rendimiento al combinar renders en una sola pasada
-                    // - Permite morphing fluido entre shapes durante transiciones
-                    // - Spacing: controla cuándo los efectos comienzan a blend juntos
-                    glassContainer {
-                        LazyVStack(spacing: AppTheme.Spacing.large) {
-                            // NUEVO ORDEN (SwiftUI 2025 Update):
-                            // 1. Tablero compacto (versión reducida - ~50% del espacio vertical)
-                            // 2. Input (intento actual)
-                            // 3. Historial (intentos anteriores)
-                            
-                            // SECCIÓN 1: Tablero de Deducción (jerarquía visual primaria)
-                            // - Why: tablero compacto arriba para referencia rápida mientras juega
-                            // - Usa LazyVGrid compacto en lugar de layout expandido
-                            // - NUEVO: spacing large (22pt) para darle más aire
-                            if let game = currentGame {
-                                CompactDeductionBoardView(game: game, isReadOnly: game.state != .inProgress)
-                            }
-                            
-                            // SECCIÓN 2: Victoria (solo si ganó)
-                            // - Why: feedback celebratorio que merece destacarse
-                            // - tintColor: usa color de acción para énfasis
-                            if let game = currentGame, game.state == .won {
-                                VictorySectionView(game: game, onNewGame: startNewGame)
-                            }
-                            
-                            // SECCIÓN 3: Input Principal (interacción primaria)
-                            // - Why: el usuario necesita ver el tablero antes de hacer su intento
-                            // - isInteractive: true (responde a touch en tiempo real)
-                            if let game = currentGame {
-                                if game.state == .inProgress {
-                                    InputSectionView(guessText: $guessText, onSubmit: submit)
-                                } else {
-                                    DisabledInputSectionView()
-                                }
-                            } else {
-                                InputSectionView(guessText: $guessText, onSubmit: submit)
-                            }
+                // LAYOUT PRINCIPAL: VStack(spacing: 0)
+                //
+                // # Estructura
+                // 1. CollapsibleBoardHeader: fijo arriba, se contrae con scroll
+                // 2. ScrollView: solo historial + victoria (contenido scrolleable)
+                // 3. InputSection via .safeAreaInset(edge: .bottom): fijo abajo
+                //
+                // # Por qué VStack y no safeAreaInset(edge: .top)
+                // `safeAreaInset` modifica el safe area del scroll, lo que hace que
+                // al cambiar la altura del header (colapso), el safe area cambie y
+                // cause jumps en el contenido del scroll. Con VStack(spacing: 0)
+                // tenemos control total del layout sin efectos secundarios.
+                VStack(spacing: 0) {
+                    // HEADER COLAPSABLE: tablero de deducción 0-9
+                    // - Why: fijo arriba para referencia rápida mientras scrollea
+                    // - Se contrae suavemente driven por scroll offset
+                    if let game = currentGame {
+                        CollapsibleBoardHeader(
+                            game: game,
+                            isReadOnly: game.state != .inProgress,
+                            collapseProgress: boardCollapseProgress
+                        )
+                    }
 
-                            // SECCIÓN 4: Historial de Intentos (jerarquía secundaria)
-                            // - Why: información importante pero no debe dominar la pantalla
-                            // - Usa ContentUnavailableView cuando está vacío para mejorar UX
-                            if let game = currentGame {
-                                HistorySectionView(game: game)
-                            } else {
-                                EmptyStateSectionView()
+                    // CONTENIDO SCROLLEABLE: victoria + historial
+                    ScrollView {
+                        // OPTIMIZACIÓN iOS 26+: GlassEffectContainer
+                        // - Why: Apple recomienda usar container para múltiples efectos Glass
+                        // - Mejora rendimiento al combinar renders en una sola pasada
+                        // - Permite morphing fluido entre shapes durante transiciones
+                        // - Spacing: controla cuándo los efectos comienzan a blend juntos
+                        glassContainer {
+                            LazyVStack(spacing: AppTheme.Spacing.large) {
+                                // SECCIÓN 1: Victoria (solo si ganó)
+                                // - Why: feedback celebratorio que merece destacarse
+                                // - tintColor: usa color de acción para énfasis
+                                if let game = currentGame, game.state == .won {
+                                    VictorySectionView(game: game, onNewGame: startNewGame)
+                                }
+
+                                // SECCIÓN 2: Historial de Intentos (jerarquía secundaria)
+                                // - Why: información importante pero no debe dominar la pantalla
+                                // - Usa ContentUnavailableView cuando está vacío para mejorar UX
+                                if let game = currentGame {
+                                    HistorySectionView(game: game)
+                                } else {
+                                    EmptyStateSectionView()
+                                }
                             }
+                            .padding(.horizontal, AppTheme.Spacing.medium)
+                            .padding(.vertical, AppTheme.Spacing.small)
                         }
-                        .padding(.horizontal, AppTheme.Spacing.medium)
-                        .padding(.vertical, AppTheme.Spacing.small)
+                    }
+                    .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                        // Extraer offset vertical del scroll
+                        geometry.contentOffset.y
+                    } action: { _, newValue in
+                        // Calcular progreso de colapso: 0pt..60pt → 0.0..1.0
+                        // - Why threshold 60pt: la diferencia de altura expandido↔colapsado
+                        //   es ~40pt, y 60pt da una transición suave sin ser ni rápida ni lenta.
+                        let threshold: CGFloat = 60
+                        boardCollapseProgress = min(max(newValue / threshold, 0), 1)
+                    }
+                }
+                // INPUT FIJO ABAJO: siempre accesible, contenido scrollea detrás
+                // - Why: el input es la acción primaria, debe estar siempre visible
+                // - .safeAreaInset ajusta automáticamente el scroll para no tapar contenido
+                // - .ultraThinMaterial da blur del contenido que pasa detrás
+                .safeAreaInset(edge: .bottom) {
+                    if let game = currentGame {
+                        if game.state == .inProgress {
+                            InputSectionView(guessText: $guessText, onSubmit: submit)
+                                .padding(.horizontal, AppTheme.Spacing.medium)
+                                .padding(.bottom, AppTheme.Spacing.small)
+                                .background(Color.clear)
+                        } else {
+                            DisabledInputSectionView()
+                                .padding(.horizontal, AppTheme.Spacing.medium)
+                                .padding(.bottom, AppTheme.Spacing.small)
+                                .background(Color.clear)
+                        }
+                    } else {
+                        InputSectionView(guessText: $guessText, onSubmit: submit)
+                            .padding(.horizontal, AppTheme.Spacing.medium)
+                            .padding(.bottom, AppTheme.Spacing.small)
+                            .background(Color.clear)
                     }
                 }
             }
@@ -926,243 +969,9 @@ private struct HistorySectionView: View {
     }
 }
 
-/// Sección del Tablero de Deducción 0-9 (VERSIÓN COMPACTA - SwiftUI 2025).
-///
-/// # Diseño Compacto
-/// - Ocupa ~50% del espacio vertical anterior
-/// - Grilla 2x5 con celdas más pequeñas (altura: 48pt vs 70pt original)
-/// - Header compacto con ícono más pequeño
-/// - Padding reducido para maximizar espacio útil
-///
-/// # Por qué versión compacta
-/// - Permite ver tablero + input + historial en una sola pantalla
-/// - Tablero es referencia rápida, no necesita dominar el espacio
-/// - Mejor balance visual entre las 3 secciones principales
-///
-/// # SwiftUI 2025
-/// - Usa .glassCard con material ultraThin para look ligero
-/// - Animaciones smooth para cambios de estado
-private struct CompactDeductionBoardView: View {
-    let game: Game
-    let isReadOnly: Bool
-    
-    @Environment(\.modelContext) private var modelContext
-    
-    // Grilla fija: 2 filas × 5 columnas (igual que antes)
-    private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 8), count: 5)
-    
-    private var sortedNotes: [DigitNote] {
-        game.digitNotes.sorted { $0.digit < $1.digit }
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-            // Header compacto
-            HStack {
-                Label("Tablero", systemImage: "square.grid.2x2")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.appTextPrimary)
-                
-                Spacer()
-                
-                if !isReadOnly {
-                    Button {
-                        resetBoard()
-                    } label: {
-                        Text("Reset")
-                            .font(.caption)
-                            .foregroundStyle(Color.appActionPrimary)
-                    }
-                }
-            }
-            
-            // Grilla compacta 2×5
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(sortedNotes, id: \.id) { note in
-                    CompactDigitCell(
-                        digit: note.digit,
-                        mark: note.mark,
-                        onTap: {
-                            guard !isReadOnly else { return }
-                            cycleMark(forDigit: note.digit)
-                        }
-                    )
-                }
-            }
-        }
-        .glassCard(
-            material: .ultraThin,
-            padding: AppTheme.CardPadding.compact,
-            isInteractive: !isReadOnly
-        )
-    }
-    
-    // MARK: - Actions
-    
-    private func cycleMark(forDigit digit: Int) {
-        guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
-            return
-        }
-        
-        let current = note.mark
-        let next = nextMark(after: current)
-        setMark(next, forDigit: digit)
-    }
-    
-    private func setMark(_ mark: DigitMark, forDigit digit: Int) {
-        guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
-            return
-        }
-        
-        note.mark = mark
-        
-        do {
-            try modelContext.save()
-        } catch {
-            assertionFailure("No se pudo guardar la marca del dígito \(digit): \(error)")
-        }
-    }
-    
-    private func resetBoard() {
-        for note in game.digitNotes {
-            note.mark = .unknown
-        }
-        
-        do {
-            try modelContext.save()
-        } catch {
-            assertionFailure("No se pudo resetear el tablero: \(error)")
-        }
-    }
-    
-    private func nextMark(after current: DigitMark) -> DigitMark {
-        let order: [DigitMark] = [.unknown, .poor, .fair, .good]
-        guard let idx = order.firstIndex(of: current) else { return .unknown }
-
-        let nextIndex = order.index(after: idx)
-        return nextIndex < order.endIndex ? order[nextIndex] : .unknown
-    }
-}
-
-/// Celda compacta para el tablero reducido (48pt height vs 70pt original).
-///
-/// # Diseño Ultra-Compacto
-/// - Altura: 48pt (vs 70pt original = ~31% más pequeño)
-/// - Fuente del dígito: 20pt (vs 28pt original)
-/// - Fuente del estado: 9pt (vs 11pt original)
-/// - Spacing reducido para maximizar densidad
-///
-/// # Por qué existe
-/// - El tablero compacto necesita celdas más pequeñas
-/// - Mantiene legibilidad mientras ahorra espacio
-/// - Mismo comportamiento táctil que la versión grande
-///
-/// # SwiftUI 2025
-/// - Usa .smooth animation para transiciones orgánicas
-/// - Symbol replace effect para cambios de ícono fluidos
-private struct CompactDigitCell: View {
-    let digit: Int
-    let mark: DigitMark
-    let onTap: () -> Void
-    
-    @State private var isPressed = false
-    
-    var body: some View {
-        VStack(spacing: 2) {
-            // Número (elemento principal - más pequeño)
-            Text("\(digit)")
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .foregroundStyle(Color.appTextPrimary)
-            
-            // Estado manual (ultra compacto)
-            HStack(spacing: 2) {
-                Image(systemName: markSymbol)
-                    .font(.system(size: 8))
-                    .contentTransition(.symbolEffect(.replace))
-                
-                Text(markShortText)
-                    .font(.system(size: 9, weight: .medium))
-            }
-            .foregroundStyle(markColor)
-            .id(mark)
-            .transition(.opacity.combined(with: .scale(scale: 0.8)))
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 48)  // Altura compacta (vs 70pt original)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.appSurfaceCard)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(
-                    mark == .unknown ? Color.appBorderSubtle.opacity(0.2) : markColor.opacity(0.3),
-                    lineWidth: mark == .unknown ? 0.5 : 1.2
-                )
-        }
-        .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.smooth(duration: 0.2), value: mark)
-        .animation(.easeInOut(duration: 0.1), value: isPressed)
-        .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .onTapGesture {
-            isPressed = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isPressed = false
-            }
-            onTap()
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Dígito \(digit). Estado \(markSpokenText)")
-        .accessibilityHint("Doble toque para cambiar estado")
-        .accessibilityAddTraits(.isButton)
-    }
-    
-    // MARK: - Presentation
-    
-    private var markSymbol: String {
-        switch mark {
-        case .unknown: return "minus"
-        case .poor:    return "xmark"
-        case .fair:    return "questionmark"
-        case .good:    return "checkmark"
-        }
-    }
-    
-    private var markShortText: String {
-        switch mark {
-        case .unknown: return "—"
-        case .poor:    return "POOR"
-        case .fair:    return "FAIR"
-        case .good:    return "GOOD"
-        }
-    }
-    
-    private var markColor: Color {
-        switch mark {
-        case .unknown:
-            return .appTextSecondary.opacity(0.2)
-        case .poor:
-            // NUEVO: Opacidad completa para que los colores vibrantes brillen
-            return .appMarkPoor
-        case .fair:
-            // NUEVO: Opacidad completa para que los colores vibrantes brillen
-            return .appMarkFair
-        case .good:
-            // NUEVO: Opacidad completa para que los colores vibrantes brillen
-            return .appMarkGood
-        }
-    }
-    
-    // MARK: - Accessibility
-    
-    private var markSpokenText: String {
-        switch mark {
-        case .unknown: return "sin estado"
-        case .poor:    return "POOR"
-        case .fair:    return "FAIR"
-        case .good:    return "GOOD"
-        }
-    }
-}
+// MARK: - CompactDeductionBoardView y CompactDigitCell eliminados
+// Reemplazados por CollapsibleBoardHeader y AdaptiveDigitCell.
+// - CollapsibleBoardHeader: header colapsable con grilla 2×5 adaptativa.
+// - AdaptiveDigitCell: celda que interpola dimensiones según scroll offset.
+// Ver CollapsibleBoardHeader.swift y AdaptiveDigitCell.swift.
 

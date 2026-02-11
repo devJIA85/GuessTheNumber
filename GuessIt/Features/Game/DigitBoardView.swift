@@ -92,9 +92,7 @@ struct DigitBoardView: View {
             return
         }
         
-        let current = note.mark
-        let next = nextMark(after: current)
-        setMark(next, forDigit: digit)
+        setMark(note.mark.next(), forDigit: digit)
     }
 
     /// Persiste la marca directamente.
@@ -125,15 +123,6 @@ struct DigitBoardView: View {
         }
     }
 
-    // MARK: - Mark cycling
-
-    private func nextMark(after current: DigitMark) -> DigitMark {
-        let order: [DigitMark] = [.unknown, .poor, .fair, .good]
-        guard let idx = order.firstIndex(of: current) else { return .unknown }
-
-        let nextIndex = order.index(after: idx)
-        return nextIndex < order.endIndex ? order[nextIndex] : .unknown
-    }
 }
 
 #Preview("DigitBoardView") {

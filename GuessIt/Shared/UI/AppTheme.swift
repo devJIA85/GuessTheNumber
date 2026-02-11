@@ -103,10 +103,6 @@ extension Color {
     /// - Light: blanco con 85% opacidad (deja pasar el gradiente)
     /// - Dark: negro con 75% opacidad (mantiene legibilidad)
     static let appBackgroundPrimary: Color = {
-        // Intentar cargar desde Assets primero
-        if let assetColor = Color("BackgroundPrimary") as? Color {
-            return assetColor
-        }
         // Fallback: color vibrante por defecto
         return Color(.systemBackground).opacity(0.85)
     }()
@@ -114,41 +110,26 @@ extension Color {
     /// Fondo secundario: cards y superficies elevadas
     /// - Más transparencia para aprovechar el glassmorphism
     static let appBackgroundSecondary: Color = {
-        if let assetColor = Color("BackgroundSecondary") as? Color {
-            return assetColor
-        }
         return Color(.secondarySystemBackground).opacity(0.7)
     }()
     
     /// Superficie de cards: ultra transparente para glassmorphism puro
     static let appSurfaceCard: Color = {
-        if let assetColor = Color("SurfaceCard") as? Color {
-            return assetColor
-        }
         return Color(.tertiarySystemBackground).opacity(0.5)
     }()
     
     /// Texto principal: alto contraste para legibilidad sobre colores vibrantes
     static let appTextPrimary: Color = {
-        if let assetColor = Color("TextPrimary") as? Color {
-            return assetColor
-        }
         return Color(.label)
     }()
     
     /// Texto secundario: contraste medio
     static let appTextSecondary: Color = {
-        if let assetColor = Color("TextSecondary") as? Color {
-            return assetColor
-        }
         return Color(.secondaryLabel)
     }()
     
     /// Bordes sutiles: casi invisibles para look moderno
     static let appBorderSubtle: Color = {
-        if let assetColor = Color("BorderSubtle") as? Color {
-            return assetColor
-        }
         return Color(.separator).opacity(0.2)
     }()
     
@@ -543,6 +524,28 @@ extension View {
         } else {
             // iOS 13-25: Bordered prominent fallback
             // - Why: .borderedProminent existe desde iOS 15, se ve bien
+            return AnyView(self.buttonStyle(.borderedProminent))
+        }
+    }
+
+    /// Aplica `.glassProminent` en iOS 26+ (Liquid Glass con énfasis alto).
+    /// Fallback: `.borderedProminent` en iOS <26.
+    ///
+    /// # Diferencia con `modernProminentButton()`
+    /// - `modernProminentButton()` usa `.glass` (peso regular, para acciones secundarias)
+    /// - `modernGlassProminentButton()` usa `.glassProminent` (alto énfasis, para CTAs principales)
+    ///
+    /// # Cuándo usar
+    /// - Botones de acción primaria dentro de superficies Glass (input, formularios)
+    /// - CTAs donde el botón necesita destacar sobre el material translúcido
+    ///
+    /// # Documentación iOS 26
+    /// > ".glassProminent allows adopting the look and feel of the material
+    /// > with a high visual emphasis, ideal for the primary action."
+    func modernGlassProminentButton() -> some View {
+        if #available(iOS 26.0, *) {
+            return AnyView(self.buttonStyle(.glassProminent))
+        } else {
             return AnyView(self.buttonStyle(.borderedProminent))
         }
     }
