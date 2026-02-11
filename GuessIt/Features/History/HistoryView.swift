@@ -112,6 +112,13 @@ struct HistoryView: View {
     }
 
     /// Lista de partidas terminadas usando snapshots.
+    ///
+    /// # Liquid Glass (WWDC25: Adopting Liquid Glass)
+    /// - `.scrollContentBackground(.hidden)` remueve el fondo opaco del List,
+    ///   permitiendo que el `PremiumBackgroundGradient` sea visible.
+    /// - No usamos `.listRowBackground()` para que el sistema aplique
+    ///   Liquid Glass nativamente a las secciones del List en iOS 26+.
+    /// - En iOS <26 el List `.insetGrouped` mantiene su apariencia nativa.
     private func historyListView(games: [GameSummarySnapshot]) -> some View {
         List {
             ForEach(games) { snapshot in
@@ -120,7 +127,6 @@ struct HistoryView: View {
                 } label: {
                     GameSummaryRowView(snapshot: snapshot)
                 }
-                .listRowBackground(Color.appSurfaceCard)
             }
         }
         .listStyle(.insetGrouped)

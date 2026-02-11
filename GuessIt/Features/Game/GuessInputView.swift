@@ -51,6 +51,15 @@ struct GuessInputView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.appActionPrimary)
+            .controlSize(.large)
+            // NUEVO: Border sutil y shadow para darle más punch visual
+            // - Why: el botón es la acción primaria y debe destacar más
+            .overlay {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+                    .allowsHitTesting(false)
+            }
+            .shadow(color: Color.appActionPrimary.opacity(0.3), radius: 8, x: 0, y: 4)
             // Evitamos acciones inútiles cuando el campo está vacío.
             .disabled(isButtonDisabled)
             // Micro-animación sutil cuando el botón pasa a enabled

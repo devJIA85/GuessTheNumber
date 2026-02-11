@@ -86,24 +86,140 @@ enum AppTheme {
     }
 }
 
-// MARK: - Semantic Colors
+// MARK: - Semantic Colors (PALETA VIBRANTE - Game Edition)
 /// Colores semánticos que se adaptan a light/dark mode.
 /// - Why: centralizar colores facilita tematización y consistencia
+///
+/// # NUEVO: Paleta más vibrante y juguetona
+/// - Más saturación en todos los colores
+/// - Marcadores (GOOD/FAIR/POOR) inspirados en juegos modernos
+/// - Action primary en naranja/coral vibrante (más energía que azul)
 extension Color {
-    static let appBackgroundPrimary = Color("BackgroundPrimary")
-    static let appBackgroundSecondary = Color("BackgroundSecondary")
-    static let appSurfaceCard = Color("SurfaceCard")
-    static let appTextPrimary = Color("TextPrimary")
-    static let appTextSecondary = Color("TextSecondary")
-    static let appBorderSubtle = Color("BorderSubtle")
+    // MARK: - Fallback a Assets (si existen)
+    // Estos colores intentan cargar desde Assets.xcassets primero,
+    // pero si no existen, usan los valores vibrantes por defecto definidos abajo.
     
-    /// Color de acción principal (botones CTA, elementos activos)
-    /// - Why: debe ser vibrante para guiar la atención del usuario
-    static let appActionPrimary = Color("ActionPrimary")
+    /// Fondo principal: semi-transparente para dejar ver el gradiente vibrante
+    /// - Light: blanco con 85% opacidad (deja pasar el gradiente)
+    /// - Dark: negro con 75% opacidad (mantiene legibilidad)
+    static let appBackgroundPrimary: Color = {
+        // Intentar cargar desde Assets primero
+        if let assetColor = Color("BackgroundPrimary") as? Color {
+            return assetColor
+        }
+        // Fallback: color vibrante por defecto
+        return Color(.systemBackground).opacity(0.85)
+    }()
     
-    static let appMarkGood = Color("MarkGood")
-    static let appMarkFair = Color("MarkFair")
-    static let appMarkPoor = Color("MarkPoor")
+    /// Fondo secundario: cards y superficies elevadas
+    /// - Más transparencia para aprovechar el glassmorphism
+    static let appBackgroundSecondary: Color = {
+        if let assetColor = Color("BackgroundSecondary") as? Color {
+            return assetColor
+        }
+        return Color(.secondarySystemBackground).opacity(0.7)
+    }()
+    
+    /// Superficie de cards: ultra transparente para glassmorphism puro
+    static let appSurfaceCard: Color = {
+        if let assetColor = Color("SurfaceCard") as? Color {
+            return assetColor
+        }
+        return Color(.tertiarySystemBackground).opacity(0.5)
+    }()
+    
+    /// Texto principal: alto contraste para legibilidad sobre colores vibrantes
+    static let appTextPrimary: Color = {
+        if let assetColor = Color("TextPrimary") as? Color {
+            return assetColor
+        }
+        return Color(.label)
+    }()
+    
+    /// Texto secundario: contraste medio
+    static let appTextSecondary: Color = {
+        if let assetColor = Color("TextSecondary") as? Color {
+            return assetColor
+        }
+        return Color(.secondaryLabel)
+    }()
+    
+    /// Bordes sutiles: casi invisibles para look moderno
+    static let appBorderSubtle: Color = {
+        if let assetColor = Color("BorderSubtle") as? Color {
+            return assetColor
+        }
+        return Color(.separator).opacity(0.2)
+    }()
+    
+    // MARK: - Colores Vibrantes (sin Assets)
+    // Estos colores NO cargan desde Assets porque queremos que sean vibrantes siempre
+    
+    /// Color de acción principal: NARANJA CORAL vibrante (más energía que azul)
+    /// - Why: los juegos modernos usan naranjas/corales para CTAs (Duolingo, etc.)
+    /// - Light: coral brillante
+    /// - Dark: naranja neón
+    static var appActionPrimary: Color {
+        Color(UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                // Dark mode: naranja neón vibrante
+                return UIColor(red: 1.0, green: 0.45, blue: 0.20, alpha: 1.0)
+            default:
+                // Light mode: coral brillante
+                return UIColor(red: 1.0, green: 0.35, blue: 0.30, alpha: 1.0)
+            }
+        })
+    }
+    
+    /// Marcador GOOD: VERDE ESMERALDA brillante (éxito y logro)
+    /// - Why: verde vibrante comunica éxito mejor que verde apagado
+    /// - Inspirado en: Duolingo, Wordle
+    static var appMarkGood: Color {
+        Color(UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                // Dark mode: verde neón
+                return UIColor(red: 0.30, green: 0.90, blue: 0.50, alpha: 1.0)
+            default:
+                // Light mode: esmeralda brillante
+                return UIColor(red: 0.20, green: 0.80, blue: 0.40, alpha: 1.0)
+            }
+        })
+    }
+    
+    /// Marcador FAIR: AMARILLO DORADO brillante (advertencia amigable)
+    /// - Why: amarillo vibrante es menos neutral que el anterior
+    /// - Inspirado en: indicadores de progreso de juegos móviles
+    static var appMarkFair: Color {
+        Color(UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                // Dark mode: amarillo neón
+                return UIColor(red: 1.0, green: 0.85, blue: 0.20, alpha: 1.0)
+            default:
+                // Light mode: dorado brillante
+                return UIColor(red: 1.0, green: 0.75, blue: 0.10, alpha: 1.0)
+            }
+        })
+    }
+    
+    /// Marcador POOR: MAGENTA/ROSA vibrante (error juguetón, no amenazante)
+    /// - Why: rojo tradicional es muy agresivo para un juego
+    /// - Rosa/magenta es más amigable y mantiene la vibra juguetona
+    /// - Inspirado en: Dribbble, apps de fitness gamificadas
+    static var appMarkPoor: Color {
+        Color(UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                // Dark mode: magenta neón
+                return UIColor(red: 1.0, green: 0.30, blue: 0.70, alpha: 1.0)
+            default:
+                // Light mode: rosa fucsia brillante
+                return UIColor(red: 0.95, green: 0.25, blue: 0.60, alpha: 1.0)
+            }
+        })
+    }
 }
 
 /// Card estándar con jerarquía visual configurable.
@@ -197,6 +313,10 @@ struct AppTextFieldStyle: ViewModifier {
 /// # Por qué existe
 /// - Evita duplicar código de chips en AttemptRowView y otras vistas.
 /// - Centraliza el diseño de badges para mantener consistencia.
+///
+/// # NUEVO: Opacidad aumentada para paleta vibrante
+/// - Antes: 0.12-0.15 (muy sutil, colores apagados)
+/// - Después: 0.20-0.25 (más saturación, colores vibrantes brillan)
 struct MetricChipStyle: ViewModifier {
     let color: Color
     let isCompact: Bool
@@ -210,7 +330,8 @@ struct MetricChipStyle: ViewModifier {
             .padding(.vertical, isCompact ? 3 : 4)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.chip, style: .continuous)
-                    .fill(color.opacity(isCompact ? 0.12 : 0.15))
+                    // CAMBIO: Opacidad aumentada para que los colores vibrantes se vean
+                    .fill(color.opacity(isCompact ? 0.20 : 0.25))
             )
     }
 }
@@ -427,39 +548,41 @@ extension View {
     }
 }
 
-// MARK: - Premium Background Gradient
-/// Fondo con gradiente complejo que da profundidad visual sin saturar.
+// MARK: - Premium Background Gradient (VERSIÓN VIBRANTE - Game Edition)
+/// Fondo con gradiente vibrante y juguetón perfecto para un juego.
 ///
-/// # Diseño
-/// - Gradiente multi-punto que simula iluminación natural
-/// - Colores sutiles que no compiten con el contenido
+/// # Diseño NUEVO
+/// - Gradiente colorido con tonos púrpura/azul/rosa vibrantes
+/// - Inspirado en juegos modernos (Wordle, Duolingo, Alto's Adventure)
+/// - Más saturación para dar energía y personalidad
 /// - Compatible con light/dark mode (se adapta automáticamente)
 ///
-/// # Por qué no MeshGradient
-/// - MeshGradient requiere iOS 18+, LinearGradient funciona desde iOS 13
-/// - LinearGradient bien implementado da profundidad sin complejidad
+/// # Por qué cambió
+/// - La versión anterior era demasiado sobria para un juego
+/// - Los juegos necesitan paletas que transmitan diversión y energía
+/// - El color ayuda a crear engagement emocional
 ///
 /// # Cuándo usar
 /// - Como fondo de pantallas principales (GameView, HistoryView)
-/// - Cualquier vista que necesite escapar del color plano
+/// - Cualquier vista que necesite personalidad vibrante
 struct PremiumBackgroundGradient: View {
     /// Color scheme del entorno (light/dark)
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
-        // Gradiente complejo con múltiples stops para simular iluminación suave
-        // Why: los gradientes simples de 2 colores se ven planos y "baratos"
+        // Gradiente vibrante con múltiples stops que crean profundidad cromática
+        // Why: los gradientes coloridos con 5+ stops crean transiciones orgánicas
         LinearGradient(
             gradient: Gradient(stops: [
-                // Top: zona más clara (simula luz desde arriba)
+                // Top: púrpura vibrante (energía y creatividad)
                 .init(color: topColor, location: 0.0),
-                .init(color: middleTopColor, location: 0.25),
+                .init(color: middleTopColor, location: 0.3),
                 
-                // Middle: transición suave
+                // Middle: azul brillante (confianza y claridad)
                 .init(color: middleColor, location: 0.5),
                 
-                // Bottom: zona más oscura (da peso y profundidad)
-                .init(color: middleBottomColor, location: 0.75),
+                // Bottom: cyan/teal (frescura y modernidad)
+                .init(color: middleBottomColor, location: 0.7),
                 .init(color: bottomColor, location: 1.0)
             ]),
             startPoint: .topLeading,
@@ -468,38 +591,38 @@ struct PremiumBackgroundGradient: View {
         .ignoresSafeArea()
     }
     
-    // MARK: - Adaptive Colors
-    /// Colores que se adaptan a light/dark mode.
-    /// - Why: el mismo gradiente debe funcionar en ambos modos sin verse forzado
+    // MARK: - Vibrant Adaptive Colors
+    /// Colores vibrantes que se adaptan a light/dark mode.
+    /// - Why: el gradiente debe tener punch visual pero sin cegar al usuario
     
     private var topColor: Color {
         colorScheme == .dark
-            ? Color(red: 0.05, green: 0.05, blue: 0.12)  // Azul oscuro muy sutil
-            : Color(red: 0.95, green: 0.96, blue: 0.98)  // Blanco ligeramente azulado
+            ? Color(red: 0.35, green: 0.15, blue: 0.55)  // Púrpura intenso oscuro
+            : Color(red: 0.75, green: 0.50, blue: 0.90)  // Púrpura brillante suave
     }
     
     private var middleTopColor: Color {
         colorScheme == .dark
-            ? Color(red: 0.08, green: 0.08, blue: 0.15)
-            : Color(red: 0.93, green: 0.95, blue: 0.98)
+            ? Color(red: 0.30, green: 0.25, blue: 0.65)  // Púrpura-azul profundo
+            : Color(red: 0.70, green: 0.60, blue: 0.95)  // Lavanda vibrante
     }
     
     private var middleColor: Color {
         colorScheme == .dark
-            ? Color(red: 0.06, green: 0.06, blue: 0.13)
-            : Color(red: 0.96, green: 0.97, blue: 0.99)
+            ? Color(red: 0.20, green: 0.35, blue: 0.70)  // Azul real vibrante
+            : Color(red: 0.55, green: 0.70, blue: 0.98)  // Azul cielo brillante
     }
     
     private var middleBottomColor: Color {
         colorScheme == .dark
-            ? Color(red: 0.04, green: 0.04, blue: 0.11)
-            : Color(red: 0.94, green: 0.95, blue: 0.97)
+            ? Color(red: 0.15, green: 0.45, blue: 0.75)  // Azul cyan eléctrico
+            : Color(red: 0.45, green: 0.80, blue: 0.98)  // Cyan fresco
     }
     
     private var bottomColor: Color {
         colorScheme == .dark
-            ? Color(red: 0.02, green: 0.02, blue: 0.08)  // Casi negro con tinte azul
-            : Color(red: 0.92, green: 0.94, blue: 0.97)  // Gris muy claro
+            ? Color(red: 0.10, green: 0.50, blue: 0.70)  // Teal profundo
+            : Color(red: 0.40, green: 0.85, blue: 0.95)  // Aqua luminoso
     }
 }
 

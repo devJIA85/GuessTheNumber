@@ -74,20 +74,20 @@ struct AttemptRowView: View {
     }
 
     /// Métricas GOOD/FAIR y POOR si corresponde.
-    /// - Why compact: chips secundarios, más discretos.
+    /// - NUEVO: chips no-compact para mejor legibilidad (tamaño de fuente aumentado).
+    /// - Why: los chips compactos eran difíciles de leer rápidamente.
     private var metrics: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 6) {
             Text("GOOD \(data.good)")
-                .metricChip(color: .appMarkGood, compact: true)
+                .metricChip(color: .appMarkGood, compact: false)
             Text("FAIR \(data.fair)")
-                .metricChip(color: .appMarkFair, compact: true)
+                .metricChip(color: .appMarkFair, compact: false)
 
             if data.isPoor {
                 Text("POOR \(poorCount)")
-                    .metricChip(color: .appMarkPoor, compact: true)
+                    .metricChip(color: .appMarkPoor, compact: false)
             }
         }
-        // Reducimos el espacio entre chips para que la fila sea más baja sin perder legibilidad.
     }
 
     /// Conteo de POOR deducido del largo del secreto cuando el intento no tuvo GOOD/FAIR.

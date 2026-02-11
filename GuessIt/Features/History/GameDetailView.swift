@@ -103,6 +103,12 @@ struct GameDetailView: View {
     }
     
     /// Contenido principal del detalle.
+    ///
+    /// # Liquid Glass (WWDC25: Adopting Liquid Glass)
+    /// - Removido `.background(Color.appBackgroundPrimary)` que bloqueaba el
+    ///   `PremiumBackgroundGradient` y el efecto glass nativo del List.
+    /// - `.scrollContentBackground(.hidden)` es suficiente para que el gradiente
+    ///   premium sea visible a través de las secciones glass del List.
     private func detailContent(snapshot: GameDetailSnapshot) -> some View {
         List {
             headerSection(snapshot: snapshot)
@@ -111,7 +117,6 @@ struct GameDetailView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color.appBackgroundPrimary)
     }
 
     // MARK: - Header

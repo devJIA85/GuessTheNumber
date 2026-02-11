@@ -112,12 +112,14 @@ struct DigitNoteCell: View {
             // - Why: no debe competir visualmente con los estados activos
             return .appTextSecondary.opacity(0.2)
         case .poor:
-            // Colores soft, sin saturación excesiva
-            return .appMarkPoor.opacity(0.85)
+            // NUEVO: Opacidad completa para que los colores vibrantes brillen
+            return .appMarkPoor
         case .fair:
-            return .appMarkFair.opacity(0.85)
+            // NUEVO: Opacidad completa para que los colores vibrantes brillen
+            return .appMarkFair
         case .good:
-            return .appMarkGood.opacity(0.85)
+            // NUEVO: Opacidad completa para que los colores vibrantes brillen
+            return .appMarkGood
         }
     }
 

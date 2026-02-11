@@ -92,7 +92,7 @@ struct GameView: View {
                     // - Permite morphing fluido entre shapes durante transiciones
                     // - Spacing: controla cuándo los efectos comienzan a blend juntos
                     glassContainer {
-                        LazyVStack(spacing: AppTheme.Spacing.medium) {
+                        LazyVStack(spacing: AppTheme.Spacing.large) {
                             // NUEVO ORDEN (SwiftUI 2025 Update):
                             // 1. Tablero compacto (versión reducida - ~50% del espacio vertical)
                             // 2. Input (intento actual)
@@ -101,6 +101,7 @@ struct GameView: View {
                             // SECCIÓN 1: Tablero de Deducción (jerarquía visual primaria)
                             // - Why: tablero compacto arriba para referencia rápida mientras juega
                             // - Usa LazyVGrid compacto en lugar de layout expandido
+                            // - NUEVO: spacing large (22pt) para darle más aire
                             if let game = currentGame {
                                 CompactDeductionBoardView(game: game, isReadOnly: game.state != .inProgress)
                             }
@@ -904,13 +905,16 @@ private struct HistorySectionView: View {
                         ForEach(sortedAttempts) { attempt in
                             AttemptRowView(attempt: attempt)
                                 .padding(AppTheme.Spacing.small)
+                                // NUEVO: Fondo ultra-sutil que mantiene glassmorphism
+                                // - Why: el fondo anterior (opacity 0.6) era muy opaco
+                                // - Ahora usa opacity 0.15 para máxima transparencia
                                 .background(
                                     RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                                        .fill(Color.appBackgroundSecondary.opacity(0.6))
+                                        .fill(Color.white.opacity(0.08))
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                                        .strokeBorder(Color.appBorderSubtle.opacity(0.3), lineWidth: 0.5)
+                                        .strokeBorder(Color.appBorderSubtle.opacity(0.2), lineWidth: 0.5)
                                 )
                         }
                     }
@@ -918,7 +922,7 @@ private struct HistorySectionView: View {
                 .frame(maxHeight: 220)  // ~5 intentos visibles
             }
         }
-        .glassCard(material: .regular, padding: AppTheme.CardPadding.compact)
+        .glassCard()
     }
 }
 
@@ -1139,11 +1143,14 @@ private struct CompactDigitCell: View {
         case .unknown:
             return .appTextSecondary.opacity(0.2)
         case .poor:
-            return .appMarkPoor.opacity(0.85)
+            // NUEVO: Opacidad completa para que los colores vibrantes brillen
+            return .appMarkPoor
         case .fair:
-            return .appMarkFair.opacity(0.85)
+            // NUEVO: Opacidad completa para que los colores vibrantes brillen
+            return .appMarkFair
         case .good:
-            return .appMarkGood.opacity(0.85)
+            // NUEVO: Opacidad completa para que los colores vibrantes brillen
+            return .appMarkGood
         }
     }
     
