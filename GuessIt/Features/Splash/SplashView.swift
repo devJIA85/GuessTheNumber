@@ -240,7 +240,7 @@ struct SplashView: View {
                 width: SplashStyle.Size.iconCard,
                 height: SplashStyle.Size.iconCard
             )
-            .opacity(0.3)
+            .opacity(0.18)
             .transition(.opacity)
         } else {
             // iOS <26: overlay blanco sutil como simulación de glass.
@@ -290,8 +290,15 @@ struct SplashView: View {
             }
 
             // Glass highlight aparece con fade sutil.
-            withAnimation(.easeIn(duration: 0.15)) {
+            withAnimation(.easeIn(duration: 0.12)) {
                 showGlassHighlight = true
+            }
+
+            // Pulse corto: ocultar el glass highlight para que no lave el ícono.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+                withAnimation(.easeOut(duration: 0.18)) {
+                    showGlassHighlight = false
+                }
             }
 
             // "?" vuelve a escala normal después del pico.

@@ -13,15 +13,14 @@ import SwiftData
 /// Vista raíz que orquesta la splash animada sobre el contenido principal.
 ///
 /// # Arquitectura
-/// - `GameView` se monta **siempre** (no se retrasa la carga).
+/// - `GameView` se monta con una pequeña demora (prewarm) antes de que termine la splash.
 /// - `SplashView` se superpone como overlay y se auto-remueve al finalizar.
 /// - El estado `isSplashActive` vive aquí como fuente de verdad.
 ///
-/// # Por qué overlay y no condicional
-/// - El contenido principal (`GameView`) necesita empezar su `.task { }` para cargar
-///   la partida mientras la splash se muestra.
-/// - Si usáramos if/else, `GameView` no existiría hasta que la splash termine,
-///   causando un delay visible al cargar la partida.
+/// # Por qué prewarm diferido
+/// - Cargar `GameView` demasiado temprano puede competir con el render inicial.
+/// - Cargarlo demasiado tarde genera un salto visual al cerrar la splash.
+/// - Se monta ~0.9s después del arranque para equilibrar suavidad y tiempo de carga.
 ///
 /// # Flujo
 /// 1. App inicia → `RootView` se monta.
@@ -55,12 +54,17 @@ struct RootView: View {
             // OPTIMIZACIÓN: Cargar GameView solo cuando la splash está por terminar
             // - Why: evita montar toda la jerarquía de GameView durante el lanzamiento
             // - GameView se carga ~0.3s antes de que la splash termine para precarga
-            if isGameViewLoaded {
-                GameView()
-                    // Accesibilidad: ocultar contenido principal mientras splash está activa.
-                    // - Why: evita que VoiceOver lea el juego mientras el usuario ve la splash.
-                    .accessibilityHidden(isSplashActive)
-                    .transition(.opacity)
+            Group {
+                if isGameViewLoaded {
+                    GameView()
+                        // Accesibilidad: ocultar contenido principal mientras splash está activa.
+                        // - Why: evita que VoiceOver lea el juego mientras el usuario ve la splash.
+                        .accessibilityHidden(isSplashActive)
+                        .transition(.opacity)
+                } else {
+                    // Mantener el primer slot del ZStack estable para no recrear SplashView.
+                    Color.clear.ignoresSafeArea()
+                }
             }
 
             // SPLASH OVERLAY: SIEMPRE visible al inicio, se auto-remueve cuando isActive se pone en false.
