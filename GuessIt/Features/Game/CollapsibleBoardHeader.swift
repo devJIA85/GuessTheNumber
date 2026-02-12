@@ -97,7 +97,7 @@ struct CollapsibleBoardHeader: View {
     /// - La estructura de la grilla no cambia (siempre 2×5).
     /// - Solo cambian las dimensiones de las celdas.
     private var adaptiveGrid: some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: gridSpacing), count: 5)
+        let columns = Array(repeating: GridItem(.fixed(cellWidth), spacing: gridSpacing), count: 5)
 
         return LazyVGrid(columns: columns, spacing: gridSpacing) {
             ForEach(sortedNotes, id: \.id) { note in
@@ -140,6 +140,12 @@ struct CollapsibleBoardHeader: View {
     /// Expandido: 48pt (actual compact), Colapsado: 28pt (ultra-denso).
     private var cellHeight: CGFloat {
         lerp(from: 48, to: 28, progress: collapseProgress)
+    }
+    
+    /// Ancho de cada celda (fijo para mantener consistencia).
+    /// Expandido: 60pt, Colapsado: 50pt.
+    private var cellWidth: CGFloat {
+        lerp(from: 60, to: 50, progress: collapseProgress)
     }
 
     /// Spacing entre celdas de la grilla.

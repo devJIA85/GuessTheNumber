@@ -36,20 +36,35 @@ struct RootView: View {
     /// Controla la visibilidad de la splash screen.
     /// - Inicia en `true` y se pone en `false` cuando la animación termina.
     @State private var isSplashActive = true
+    
+    /// Controla si GameView ya fue cargado.
+    /// OPTIMIZACIÓN: Diferir carga de GameView hasta que sea necesario
+    /// - Why: evita montar GameView.task {} durante el lanzamiento
+    @State private var isGameViewLoaded = false
+    
+    /// Controla la visibilidad del tutorial.
+    /// OPTIMIZACIÓN: Lazy loading via computed property
+    /// - Why: evita acceso a UserDefaults en init
+    @State private var isTutorialPresented = false
+    @State private var hasCheckedTutorial = false
 
     // MARK: - Body
 
     var body: some View {
         ZStack {
-            // CONTENIDO PRINCIPAL: siempre montado para que .task inicie de inmediato.
-            // - Why: GameView.task { } llama a env.gameActor para cargar/crear la partida.
-            //   Si esperamos a que la splash termine, hay un delay visible.
-            GameView()
-                // Accesibilidad: ocultar contenido principal mientras splash está activa.
-                // - Why: evita que VoiceOver lea el juego mientras el usuario ve la splash.
-                .accessibilityHidden(isSplashActive)
+            // OPTIMIZACIÓN: Cargar GameView solo cuando la splash está por terminar
+            // - Why: evita montar toda la jerarquía de GameView durante el lanzamiento
+            // - GameView se carga ~0.3s antes de que la splash termine para precarga
+            if isGameViewLoaded {
+                GameView()
+                    // Accesibilidad: ocultar contenido principal mientras splash está activa.
+                    // - Why: evita que VoiceOver lea el juego mientras el usuario ve la splash.
+                    .accessibilityHidden(isSplashActive)
+                    .transition(.opacity)
+            }
 
-            // SPLASH OVERLAY: se auto-remueve cuando isActive se pone en false.
+            // SPLASH OVERLAY: SIEMPRE visible al inicio, se auto-remueve cuando isActive se pone en false.
+            // - Why: debe estar siempre presente al inicio para evitar flashes
             if isSplashActive {
                 SplashView(isActive: $isSplashActive)
                     // Transición de salida: .identity porque SplashView maneja su propia
@@ -60,7 +75,28 @@ struct RootView: View {
                     // - Why: sin esto, el usuario podría interactuar con GameView
                     //   mientras la splash está visible.
                     .allowsHitTesting(true)
+                    // Z-Index alto para asegurar que siempre esté encima
+                    .zIndex(100)
             }
+        }
+        .onAppear {
+            // OPTIMIZACIÓN: Cargar GameView justo antes de que la splash termine
+            // - Why: la splash comienza a disolverse en ~0.75s y termina en ~1.2s
+            // - Cargamos GameView en 0.9s para que esté listo cuando la splash desaparezca
+            // - Esto evita que se vea GameView detrás de la splash mientras anima
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+                isGameViewLoaded = true
+            }
+            
+            // OPTIMIZACIÓN: Check del tutorial diferido
+            // - Why: no bloquea el lanzamiento inicial
+            if !hasCheckedTutorial {
+                hasCheckedTutorial = true
+                isTutorialPresented = !UserDefaults.standard.bool(forKey: "hasCompletedTutorial")
+            }
+        }
+        .fullScreenCover(isPresented: $isTutorialPresented) {
+            TutorialView(isPresented: $isTutorialPresented)
         }
     }
 }

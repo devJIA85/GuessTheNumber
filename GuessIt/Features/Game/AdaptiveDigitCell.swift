@@ -49,60 +49,51 @@ struct AdaptiveDigitCell: View {
     // MARK: - Body
 
     var body: some View {
-        VStack(spacing: markSpacing) {
-            // Dígito: siempre visible, se reduce al colapsar
-            Text("\(digit)")
-                .font(.system(size: digitFontSize, weight: .semibold, design: .rounded))
-                .foregroundStyle(Color.appTextPrimary)
-
-            // Estado manual: se contrae y desaparece gradualmente
-            if collapseProgress < 0.85 {
-                markView
-                    .opacity(markOpacity)
+        // Solo el dígito, sin texto de estado debajo
+        Text("\(digit)")
+            .font(.system(size: digitFontSize, weight: .semibold, design: .rounded))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: cellHeight)
+            .background(cellBackground)
+            .overlay { cellBorder }
+            .scaleEffect(isPressed ? 0.95 : 1.0)
+            .animation(.smooth(duration: 0.2), value: mark)
+            .animation(.easeInOut(duration: 0.1), value: isPressed)
+            .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .onTapGesture {
+                isPressed = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isPressed = false
+                }
+                onTap()
             }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: cellHeight)
-        .background(cellBackground)
-        .overlay { cellBorder }
-        .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.smooth(duration: 0.2), value: mark)
-        .animation(.easeInOut(duration: 0.1), value: isPressed)
-        .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .onTapGesture {
-            isPressed = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isPressed = false
-            }
-            onTap()
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Dígito \(digit). Estado \(markSpokenText)")
-        .accessibilityHint("Doble toque para cambiar estado")
-        .accessibilityAddTraits(.isButton)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Dígito \(digit). Estado \(markSpokenText)")
+            .accessibilityHint("Doble toque para cambiar estado")
+            .accessibilityAddTraits(.isButton)
     }
 
     // MARK: - Subviews
 
-    /// Vista del estado manual (ícono + texto corto).
-    private var markView: some View {
-        HStack(spacing: 2) {
-            Image(systemName: markSymbol)
-                .font(.system(size: markIconSize))
-                .contentTransition(.symbolEffect(.replace))
-
-            Text(markShortText)
-                .font(.system(size: markTextSize, weight: .medium))
-        }
-        .foregroundStyle(markColor)
-        .id(mark)
-        .transition(.opacity.combined(with: .scale(scale: 0.8)))
-    }
-
     /// Fondo de la celda.
     private var cellBackground: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(Color.appSurfaceCard)
+            .fill(backgroundFillColor)
+    }
+    
+    /// Color de relleno según el mark.
+    private var backgroundFillColor: Color {
+        switch mark {
+        case .unknown: 
+            return Color.white.opacity(0.12)
+        case .poor: 
+            return Color.red.opacity(0.30)
+        case .good: 
+            return Color.green.opacity(0.30)
+        case .fair: 
+            return Color.yellow.opacity(0.35)
+        }
     }
 
     /// Borde de la celda.
@@ -119,80 +110,49 @@ struct AdaptiveDigitCell: View {
 
     // MARK: - Dimensiones interpoladas
 
-    /// Fuente del dígito: 20pt → 14pt.
+    /// Fuente del dígito: 20pt → 16pt.
     private var digitFontSize: CGFloat {
-        lerp(from: 20, to: 14, progress: collapseProgress)
+        lerp(from: 20, to: 16, progress: collapseProgress)
     }
 
-    /// Spacing entre dígito y mark: 2pt → 0pt.
-    private var markSpacing: CGFloat {
-        lerp(from: 2, to: 0, progress: collapseProgress)
-    }
-
-    /// Opacidad del mark: 1.0 → 0.0 (desaparece al colapsar).
-    private var markOpacity: Double {
-        Double(1.0 - min(collapseProgress * 1.5, 1.0))
-    }
-
-    /// Corner radius: 10pt → 6pt.
+    /// Corner radius: 10pt → 8pt.
     private var cornerRadius: CGFloat {
-        lerp(from: 10, to: 6, progress: collapseProgress)
-    }
-
-    /// Tamaño del ícono de mark: 8pt → 6pt.
-    private var markIconSize: CGFloat {
-        lerp(from: 8, to: 6, progress: collapseProgress)
-    }
-
-    /// Tamaño del texto de mark: 9pt → 7pt.
-    private var markTextSize: CGFloat {
-        lerp(from: 9, to: 7, progress: collapseProgress)
+        lerp(from: 10, to: 8, progress: collapseProgress)
     }
 
     /// Color del borde: se intensifica al colapsar para marks activos.
     private var borderColor: Color {
         if mark == .unknown {
-            return Color.appBorderSubtle.opacity(0.2)
+            return Color.white.opacity(0.25)
         }
         // Al colapsar, el borde se vuelve más intenso para compensar
         // la pérdida del texto de mark.
-        let baseOpacity: CGFloat = 0.3
-        let collapsedOpacity: CGFloat = 0.7
+        let baseOpacity: CGFloat = 0.7
+        let collapsedOpacity: CGFloat = 0.9
         let opacity = lerp(from: baseOpacity, to: collapsedOpacity, progress: collapseProgress)
         return markColor.opacity(opacity)
     }
 
     /// Ancho del borde: marks activos tienen borde más grueso.
     private var borderWidth: CGFloat {
-        mark == .unknown ? 0.5 : lerp(from: 1.2, to: 1.8, progress: collapseProgress)
+        mark == .unknown ? 1.0 : lerp(from: 2.0, to: 2.5, progress: collapseProgress)
     }
 
     // MARK: - Presentación
 
-    private var markSymbol: String {
-        switch mark {
-        case .unknown: return "minus"
-        case .poor:    return "xmark"
-        case .fair:    return "questionmark"
-        case .good:    return "checkmark"
-        }
-    }
-
-    private var markShortText: String {
-        switch mark {
-        case .unknown: return "—"
-        case .poor:    return "POOR"
-        case .fair:    return "FAIR"
-        case .good:    return "GOOD"
-        }
-    }
-
     private var markColor: Color {
         switch mark {
-        case .unknown: return .appTextSecondary.opacity(0.2)
-        case .poor:    return .appMarkPoor
-        case .fair:    return .appMarkFair
-        case .good:    return .appMarkGood
+        case .unknown: 
+            return .white
+        case .poor:    
+            // Rojo más saturado y vibrante
+            return Color(red: 1.0, green: 0.2, blue: 0.2)
+        case .fair:    
+            // Amarillo más saturado (más naranja)
+            return Color(red: 1.0, green: 0.7, blue: 0.0)
+        case .good:    
+            // Verde más saturado y vibrante
+            return Color(red: 0.2, green: 0.9, blue: 0.3)
         }
     }
 

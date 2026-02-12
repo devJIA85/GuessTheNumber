@@ -75,6 +75,9 @@ struct GameView: View {
     /// Estado observable de la splash de victoria.
     /// - Why: permite coordinar presentación + haptic sin persistencia.
     @State private var victorySplash = VictorySplashState()
+    
+    /// Controla la presentación del tutorial.
+    @State private var isTutorialPresented = false
 
     /// Progreso de colapso del header del tablero (0.0 = expandido, 1.0 = colapsado).
     ///
@@ -201,7 +204,7 @@ struct GameView: View {
             }
             // Animación sutil para entrada/salida de la splash.
             .animation(.easeOut(duration: 0.2), value: victorySplash.isPresented)
-            .navigationTitle("Guess It")
+            .navigationTitle("game.title")
             .navigationSubtitle(statusText)
             .tint(.appActionPrimary)
             .task {
@@ -261,11 +264,27 @@ struct GameView: View {
             )
             #endif
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItemGroup(placement: .topBarLeading) {
                     NavigationLink {
                         HistoryView()
                     } label: {
                         Label("Historial", systemImage: "clock.arrow.circlepath")
+                            .labelStyle(.iconOnly)
+                    }
+                    .foregroundStyle(Color.appTextSecondary)
+                    
+                    NavigationLink {
+                        StatsView()
+                    } label: {
+                        Label("Estadísticas", systemImage: "chart.bar.fill")
+                            .labelStyle(.iconOnly)
+                    }
+                    .foregroundStyle(Color.appTextSecondary)
+                    
+                    NavigationLink {
+                        DailyChallengeView()
+                    } label: {
+                        Label("Desafío Diario", systemImage: "calendar")
                             .labelStyle(.iconOnly)
                     }
                     .foregroundStyle(Color.appTextSecondary)
@@ -286,6 +305,14 @@ struct GameView: View {
                         }
                         .foregroundStyle(Color.appTextSecondary)
                     }
+                    
+                    Button {
+                        isTutorialPresented = true
+                    } label: {
+                        Label("Cómo jugar", systemImage: "questionmark.circle")
+                            .labelStyle(.iconOnly)
+                    }
+                    .foregroundStyle(Color.appTextSecondary)
 
                     Button {
                         startNewGame()
@@ -313,6 +340,9 @@ struct GameView: View {
                 hintTask = nil
             }) {
                 hintSheet
+            }
+            .fullScreenCover(isPresented: $isTutorialPresented) {
+                TutorialView(isPresented: $isTutorialPresented)
             }
         }
     }
@@ -352,16 +382,16 @@ struct GameView: View {
     /// Texto de estado, basado en la partida persistida.
     private var statusText: String {
         guard let game = currentGame else {
-            return "Sin partida"
+            return String(localized: "game.status.none")
         }
 
         switch game.state {
         case .inProgress:
-            return "En progreso"
+            return String(localized: "game.status.in_progress")
         case .won:
-            return "Ganada"
+            return String(localized: "game.status.won")
         case .abandoned:
-            return "Abandonada"
+            return String(localized: "game.status.abandoned")
         }
     }
 
@@ -769,7 +799,7 @@ private struct InputSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
             // Header con tipografía moderna
-            Text("Tu intento")
+            Text(String(localized: "game.input.title", defaultValue: "Tu intento"))
                 .font(AppTheme.Typography.headline())
                 .foregroundStyle(Color.appTextPrimary)
             
@@ -788,7 +818,7 @@ private struct InputSectionView: View {
 private struct DisabledInputSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            Text("Tu intento")
+            Text(String(localized: "game.input.title", defaultValue: "Tu intento"))
                 .font(AppTheme.Typography.headline())
                 .foregroundStyle(Color.appTextSecondary)
             
@@ -797,7 +827,7 @@ private struct DisabledInputSectionView: View {
                     .foregroundStyle(Color.appTextSecondary)
                     .font(.title3)
                 
-                Text("La partida ya terminó. Creá una nueva para seguir jugando.")
+                Text("game.input.disabled")
                     .font(AppTheme.Typography.body())
                     .foregroundStyle(Color.appTextSecondary)
             }
@@ -846,14 +876,14 @@ private struct VictorySectionView: View {
         VStack(alignment: .center, spacing: AppTheme.Spacing.large) {
             // Título celebratorio con emoji
             // Why: el emoji refuerza el sentimiento positivo sin necesitar animaciones complejas
-            Text("¡Ganaste! 🎉")
+            Text("game.victory.title")
                 .font(AppTheme.Typography.title())
                 .foregroundStyle(Color.appActionPrimary)
             
             // Métricas del juego
             VStack(spacing: AppTheme.Spacing.small) {
-                MetricRow(label: "Secreto", value: game.secret, isMonospaced: true)
-                MetricRow(label: "Intentos", value: "\(game.attempts.count)", isMonospaced: false)
+                MetricRow(label: String(localized: "game.victory.secret"), value: game.secret, isMonospaced: true)
+                MetricRow(label: String(localized: "game.victory.attempts"), value: "\(game.attempts.count)", isMonospaced: false)
             }
             .padding(AppTheme.Spacing.medium)
             .background(
@@ -922,10 +952,10 @@ private struct HistorySectionView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            // Header
+            // Header con mejor contraste
             Text("Historial")
                 .font(AppTheme.Typography.headline())
-                .foregroundStyle(Color.appTextPrimary)
+                .foregroundStyle(Color.primary)
             
             // Contenido: ContentUnavailableView si vacío, lista si hay intentos
             if sortedAttempts.isEmpty {
@@ -935,9 +965,11 @@ private struct HistorySectionView: View {
                 ContentUnavailableView {
                     Label("Sin intentos", systemImage: "clock.badge.questionmark")
                         .font(.subheadline)  // Reducimos tamaño para compactar
+                        .foregroundStyle(Color.primary)
                 } description: {
                     Text("Tus intentos aparecerán aquí")
                         .font(AppTheme.Typography.caption())
+                        .foregroundStyle(Color.secondary)
                 }
                 .frame(height: 100)  // Altura fija compacta para no dominar la pantalla
             } else {

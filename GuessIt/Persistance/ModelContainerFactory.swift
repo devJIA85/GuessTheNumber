@@ -22,7 +22,10 @@ enum ModelContainerFactory {
         let schema = Schema([
             Game.self,
             Attempt.self,
-            DigitNote.self
+            DigitNote.self,
+            GameStats.self,
+            DailyChallenge.self,
+            DailyChallengeAttempt.self
         ])
 
         // `isStoredInMemoryOnly` permite un store efímero (ideal para Previews) o persistente (ejecución real).

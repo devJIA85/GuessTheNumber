@@ -15,27 +15,43 @@ struct GuessItApp: App {
 
     /// Instancia única del contenedor para toda la vida de la app.
     /// Nota: `ModelContainer` no es `Sendable`, por eso lo creamos una sola vez y lo inyectamos en SwiftUI.
-    private let modelContainer: ModelContainer
+    /// 
+    /// OPTIMIZACIÓN: Lazy loading para mejorar tiempo de lanzamiento.
+    /// - Why: diferir la creación hasta que body se evalúa reduce el tiempo de init()
+    private var modelContainer: ModelContainer = {
+        ModelContainerFactory.make(isInMemory: false)
+    }()
 
     // MARK: - Composition Root
 
     /// Environment de alto nivel (actores y dependencias).
     /// `@State` asegura que SwiftUI preserve la instancia a través de recomposiciones.
-    @State private var appEnvironment: AppEnvironment
+    /// 
+    /// OPTIMIZACIÓN: Lazy loading via wrappedValue.
+    /// - Why: diferir la creación de actores hasta que body se evalúa
+    @State private var appEnvironment: AppEnvironment?
 
     // MARK: - Init
 
     init() {
-        let container = ModelContainerFactory.make(isInMemory: false)
-        self.modelContainer = container
-        _appEnvironment = State(initialValue: AppEnvironment(modelContainer: container))
+        // OPTIMIZACIÓN: Init vacío para lanzamiento ultra-rápido
+        // - ModelContainer se crea lazy la primera vez que se accede
+        // - AppEnvironment se crea en body cuando es necesario
     }
 
     var body: some Scene {
         WindowGroup {
+            // OPTIMIZACIÓN: Crear AppEnvironment lazy la primera vez que body se evalúa
+            // - Why: evita crear actores en init(), mejorando tiempo de lanzamiento
+            let environment = appEnvironment ?? {
+                let env = AppEnvironment(modelContainer: modelContainer)
+                appEnvironment = env
+                return env
+            }()
+            
             RootView()
                 // Inyectamos el environment propio de la app.
-                .environment(\.appEnvironment, appEnvironment)
+                .environment(\.appEnvironment, environment)
         }
         // Inyectamos el contenedor SwiftData a toda la jerarquía.
         .modelContainer(modelContainer)

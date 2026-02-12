@@ -1,0 +1,102 @@
+/* 
+   Localizable.strings (English)
+   GuessIt
+   
+   Created by AI Assistant on 12/02/2026.
+*/
+
+/* Game */
+"game.title" = "Guess It";
+"game.victory.title" = "You Won! 🎉";
+"game.victory.secret" = "Secret";
+"game.victory.attempts" = "Attempts";
+"game.victory.share" = "Share result";
+"game.victory.new_game" = "New game";
+"game.input.title" = "Your guess";
+"game.input.disabled" = "The game is over. Start a new one to keep playing.";
+"game.input.placeholder" = "Enter your number";
+"game.reset" = "Reset";
+"game.hint" = "Hint";
+"game.how_to_play" = "How to Play";
+"game.status.in_progress" = "In Progress";
+"game.status.won" = "Won";
+"game.status.abandoned" = "Abandoned";
+"game.status.none" = "No game";
+
+/* Stats */
+"stats.title" = "Statistics";
+"stats.summary" = "Summary";
+"stats.games" = "Games";
+"stats.wins" = "Wins";
+"stats.win_rate" = "Win Rate";
+"stats.average" = "Average";
+"stats.distribution" = "Win Distribution";
+"stats.streaks" = "Streaks";
+"stats.current_streak" = "Current Streak";
+"stats.best_streak" = "Best Streak";
+"stats.empty.title" = "No statistics";
+"stats.empty.description" = "Play your first game to see your stats";
+"stats.loading" = "Loading statistics...";
+
+/* Daily Challenge */
+"daily.title" = "Daily Challenge";
+"daily.description" = "All players share this challenge";
+"daily.completed" = "Challenge Completed!";
+"daily.failed" = "Challenge Not Completed";
+"daily.failed_description" = "Don't worry, there's a new challenge tomorrow";
+"daily.next_in" = "Next challenge in:";
+"daily.your_attempt" = "Your guess";
+"daily.last_attempt" = "Last attempt";
+"daily.loading" = "Loading challenge...";
+
+/* Tutorial */
+"tutorial.skip" = "Skip";
+"tutorial.next" = "Next";
+"tutorial.start" = "Start Playing!";
+"tutorial.welcome.title" = "Welcome to\nGuess It";
+"tutorial.welcome.description" = "A deduction game where you have to guess a secret 5-digit number";
+"tutorial.how_to_play.title" = "How to Play?";
+"tutorial.how_to_play.step1" = "Enter a 5-digit number (no repeats)";
+"tutorial.how_to_play.step2" = "Get feedback on your guess";
+"tutorial.how_to_play.step3" = "Use clues to deduce the secret";
+"tutorial.feedback.title" = "Feedback System";
+"tutorial.feedback.good" = "Correct digit in correct position";
+"tutorial.feedback.fair" = "Correct digit in wrong position";
+"tutorial.feedback.poor" = "No digit is in the secret";
+"tutorial.feedback.example" = "Example:";
+"tutorial.feedback.your_attempt" = "Your guess:";
+"tutorial.feedback.label" = "Feedback:";
+"tutorial.board.title" = "Deduction Board";
+"tutorial.board.description" = "Use the top board to mark digits you've ruled out or confirmed";
+"tutorial.board.legend.discard" = "Ruled out (not in the secret)";
+"tutorial.board.legend.confirmed" = "Confirmed (correct position)";
+"tutorial.board.legend.in_secret" = "In the secret (wrong position)";
+
+/* History */
+"history.title" = "History";
+"history.empty" = "No games";
+"history.empty.description" = "Your past games will appear here";
+"history.attempts" = "attempts";
+"history.attempt" = "attempt";
+
+/* Hints */
+"hint.title" = "Smart Hint";
+"hint.generating" = "Generating hint...";
+"hint.previous" = "Previous hints";
+"hint.unavailable" = "Hints are not available on this device. Apple Intelligence is required.";
+"hint.error" = "Could not generate a hint at this time. Please try again later.";
+
+/* Common */
+"common.loading" = "Loading...";
+"common.error" = "Error";
+"common.ok" = "OK";
+"common.cancel" = "Cancel";
+"common.close" = "Close";
+"common.retry" = "Retry";
+"common.share" = "Share";
+
+/* Accessibility */
+"accessibility.guess_input" = "Input field for your guess";
+"accessibility.submit_button" = "Submit guess";
+"accessibility.digit_cell" = "Digit %d";
+"accessibility.attempt_row" = "Guess: %@, %d good, %d fair";

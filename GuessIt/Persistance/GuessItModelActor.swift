@@ -108,6 +108,9 @@ actor GuessItModelActor {
         game.state = .won
         game.finishedAt = Date()
         try modelContext.save()
+        
+        // Actualizar estadísticas
+        try updateStatsAfterGame(gameID: gameID)
     }
 
     /// Marca una partida como abandonada y setea `finishedAt`.
@@ -119,6 +122,9 @@ actor GuessItModelActor {
         game.state = .abandoned
         game.finishedAt = Date()
         try modelContext.save()
+        
+        // Actualizar estadísticas (rompe la racha)
+        try updateStatsAfterGame(gameID: gameID)
     }
 
     // MARK: - Attempts
@@ -357,5 +363,189 @@ actor GuessItModelActor {
                 game.digitNotes.append(note)
             }
         }
+    }
+    
+    // MARK: - GameStats
+    
+    /// Obtiene o crea el registro de estadísticas del jugador.
+    ///
+    /// # Singleton pattern
+    /// - Solo debe existir un GameStats por usuario.
+    /// - Si no existe, se crea automáticamente.
+    /// - Si existen múltiples (corrupción), retorna el primero.
+    ///
+    /// - Returns: GameStats del jugador.
+    func fetchOrCreateStats() throws -> GameStats {
+        let descriptor = FetchDescriptor<GameStats>()
+        let allStats = try modelContext.fetch(descriptor)
+        
+        if let existingStats = allStats.first {
+            // Ya existe: retornar
+            return existingStats
+        } else {
+            // No existe: crear nuevo
+            let newStats = GameStats()
+            modelContext.insert(newStats)
+            try modelContext.save()
+            return newStats
+        }
+    }
+    
+    /// Obtiene snapshot de las estadísticas del jugador.
+    ///
+    /// # Por qué snapshot
+    /// - Desacopla la UI del modelo de persistencia.
+    /// - Permite pasar stats entre actores de forma segura (Sendable).
+    ///
+    /// - Returns: snapshot inmutable de GameStats.
+    func fetchStatsSnapshot() throws -> GameStatsSnapshot {
+        let stats = try fetchOrCreateStats()
+        return GameStatsSnapshot(from: stats)
+    }
+    
+    /// Actualiza las estadísticas después de que una partida termina.
+    ///
+    /// # Cuándo llamar
+    /// - Desde markGameWon() (partida ganada).
+    /// - Desde markGameAbandoned() (partida abandonada).
+    ///
+    /// - Parameters:
+    ///   - gameID: identificador de la partida terminada.
+    func updateStatsAfterGame(gameID: GameIdentifier) throws {
+        guard let game = modelContext.model(for: gameID) as? Game else {
+            throw ModelActorError.gameNotFound(gameID)
+        }
+        
+        // Obtener o crear stats
+        let stats = try fetchOrCreateStats()
+        
+        // Actualizar stats con resultado de la partida
+        stats.update(after: game.state, attemptsCount: game.attempts.count)
+        
+        // Guardar
+        try modelContext.save()
+    }
+    
+    // MARK: - Daily Challenges
+    
+    /// Obtiene o crea el desafío del día actual.
+    ///
+    /// # Lógica
+    /// - Si ya existe el desafío de hoy: retornar.
+    /// - Si no existe: generar con seed determinístico y crear.
+    ///
+    /// - Returns: desafío del día actual.
+    func fetchOrCreateTodayChallenge() throws -> DailyChallenge {
+        let today = Calendar.current.startOfDay(for: Date())
+        
+        // Buscar desafío de hoy - filtramos en código porque #Predicate no soporta variables capturadas
+        let descriptor = FetchDescriptor<DailyChallenge>(
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        
+        let challenges = try modelContext.fetch(descriptor)
+        
+        // Filtrar en código
+        if let existing = challenges.first(where: { Calendar.current.isDate($0.date, inSameDayAs: today) }) {
+            return existing
+        }
+        
+        // No existe: crear nuevo
+        let (date, secret, seed) = DailyChallengeService.generateToday()
+        let newChallenge = DailyChallenge(date: date, secret: secret, seed: seed)
+        modelContext.insert(newChallenge)
+        try modelContext.save()
+        
+        return newChallenge
+    }
+    
+    /// Obtiene snapshot del desafío del día.
+    ///
+    /// - Parameter revealSecret: si true, incluye el secreto en el snapshot (solo si completado).
+    /// - Returns: snapshot del desafío de hoy.
+    func fetchTodayChallengeSnapshot(revealSecret: Bool = false) throws -> DailyChallengeSnapshot {
+        let challenge = try fetchOrCreateTodayChallenge()
+        let shouldReveal = revealSecret && challenge.state == .completed
+        return DailyChallengeSnapshot(from: challenge, revealSecret: shouldReveal)
+    }
+    
+    /// Envía un intento en el desafío diario.
+    ///
+    /// - Parameters:
+    ///   - guess: intento del usuario.
+    ///   - challengeID: identificador del desafío.
+    /// - Returns: feedback del intento.
+    func submitDailyChallengeGuess(guess: String, challengeID: PersistentIdentifier) throws -> AttemptFeedback {
+        guard let challenge = modelContext.model(for: challengeID) as? DailyChallenge else {
+            throw ModelActorError.gameNotFound(challengeID)
+        }
+        
+        // Validar que el desafío no está completado
+        guard challenge.state == .notStarted || challenge.state == .inProgress else {
+            throw GameDomainError.gameNotInProgress(currentState: .won)  // Reusar error existente
+        }
+        
+        // Si es el primer intento, marcar como iniciado
+        if challenge.state == .notStarted {
+            challenge.state = .inProgress
+            challenge.startedAt = Date()
+        }
+        
+        // Evaluar intento
+        let evaluation = GuessEvaluator.evaluate(secret: challenge.secret, guess: guess)
+        let feedback = AttemptFeedback(
+            good: evaluation.good,
+            fair: evaluation.fair,
+            isPoor: evaluation.isPoor
+        )
+        
+        // Persistir intento
+        let attempt = DailyChallengeAttempt(
+            guess: guess,
+            good: feedback.good,
+            fair: feedback.fair,
+            isPoor: feedback.isPoor,
+            challenge: challenge
+        )
+        challenge.attempts.append(attempt)
+        
+        // Si ganó, marcar como completado
+        if evaluation.good == GameConstants.secretLength {
+            challenge.state = .completed
+            challenge.completedAt = Date()
+        }
+        
+        try modelContext.save()
+        
+        return feedback
+    }
+    
+    /// Marca el desafío diario como fallado (abandonado).
+    ///
+    /// - Parameter challengeID: identificador del desafío.
+    func failDailyChallenge(challengeID: PersistentIdentifier) throws {
+        guard let challenge = modelContext.model(for: challengeID) as? DailyChallenge else {
+            throw ModelActorError.gameNotFound(challengeID)
+        }
+        
+        challenge.state = .failed
+        challenge.completedAt = Date()
+        try modelContext.save()
+    }
+    
+    /// Obtiene el historial de desafíos completados.
+    ///
+    /// - Returns: lista de snapshots de desafíos completados (más reciente primero).
+    func fetchCompletedChallenges() throws -> [DailyChallengeSnapshot] {
+        let descriptor = FetchDescriptor<DailyChallenge>(
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        
+        let challenges = try modelContext.fetch(descriptor)
+        
+        // Filtrar en código (SwiftData no soporta comparación de enums en predicates)
+        return challenges
+            .filter { $0.state == .completed || $0.state == .failed }
+            .map { DailyChallengeSnapshot(from: $0, revealSecret: $0.state == .completed) }
     }
 }

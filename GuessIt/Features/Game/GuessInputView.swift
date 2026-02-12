@@ -47,6 +47,7 @@ struct GuessInputView: View {
                 onSubmit(normalized)
             } label: {
                 Text("Probar")
+                    .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
             }
             // iOS 26+: .glassProminent — Liquid Glass con énfasis alto (CTA principal)
@@ -62,8 +63,9 @@ struct GuessInputView: View {
             .disabled(isButtonDisabled)
             // Micro-animación sutil cuando el botón pasa a enabled
             // - Why: feedback visual de "listo para enviar" sin ser intrusivo
+            // MEJORADO: opacity mínima de 0.75 para mejor visibilidad
             .scaleEffect(isButtonDisabled ? 0.98 : 1.0)
-            .opacity(isButtonDisabled ? 0.6 : 1.0)
+            .opacity(isButtonDisabled ? 0.75 : 1.0)
             .animation(.easeOut(duration: 0.2), value: isButtonDisabled)
         }
     }

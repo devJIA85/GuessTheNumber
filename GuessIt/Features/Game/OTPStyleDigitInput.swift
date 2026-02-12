@@ -92,26 +92,25 @@ struct OTPStyleDigitInput: View {
         let isActive = isFocused && index == text.count
 
         return ZStack {
-            // Fondo de la celda
+            // Fondo de la celda - MEJORADO para mejor contraste
             if #available(iOS 26.0, *) {
-                // iOS 26+: .ultraThinMaterial para efecto de "cuenca" tallada en el vidrio
-                // - Why: la documentación indica usar materiales estándar dentro de la capa
-                //   de contenido para crear distinción visual bajo Liquid Glass.
+                // iOS 26+: Fondo blanco semitransparente para mejor visibilidad
+                // - Why: .ultraThinMaterial era demasiado transparente, casi invisible
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .fill(Color.white.opacity(isActive ? 0.35 : 0.25))
             } else {
                 // iOS <26: fondos sólidos (comportamiento original)
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
                     .fill(isActive ? Color.appSurfaceCard : Color.appBackgroundSecondary)
             }
 
-            // Borde reactivo al estado activo/inactivo
+            // Borde reactivo al estado activo/inactivo - MEJORADO
             if #available(iOS 26.0, *) {
-                // iOS 26+: borde más sutil — .ultraThinMaterial ya proporciona distinción
+                // iOS 26+: borde más visible para mejor contraste
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
                     .strokeBorder(
-                        isActive ? Color.appActionPrimary.opacity(0.8) : Color.white.opacity(0.15),
-                        lineWidth: isActive ? 1.5 : 0.5
+                        isActive ? Color.appActionPrimary : Color.white.opacity(0.5),
+                        lineWidth: isActive ? 2.5 : 1.5
                     )
             } else {
                 // iOS <26: borde original más marcado
@@ -122,15 +121,14 @@ struct OTPStyleDigitInput: View {
                     )
             }
 
-            // Contenido: dígito o placeholder
+            // Contenido: dígito o placeholder - MEJORADO para mejor contraste
             if let digit {
                 if #available(iOS 26.0, *) {
-                    // iOS 26+: vibrancia semántica — el sistema ajusta el contraste
-                    // automáticamente sobre el material translúcido
+                    // iOS 26+: texto negro para máximo contraste sobre fondo blanco
                     Text(String(digit))
                         .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.primary)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.black.opacity(0.9))
                 } else {
                     Text(String(digit))
                         .font(.title2)
@@ -139,10 +137,10 @@ struct OTPStyleDigitInput: View {
                 }
             } else {
                 if #available(iOS 26.0, *) {
-                    // iOS 26+: vibrancia terciaria para placeholder sutil
+                    // iOS 26+: placeholder más visible
                     Text("·")
                         .font(.title)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(Color.black.opacity(0.3))
                 } else {
                     Text("·")
                         .font(.title)
