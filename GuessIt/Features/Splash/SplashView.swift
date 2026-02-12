@@ -50,14 +50,8 @@ struct SplashView: View {
     /// Escala del ícono (0.92 → 1.0 en Fase 1).
     @State private var iconScale: CGFloat = SplashStyle.Scale.initial
 
-    /// Escala del símbolo "?" (1.0 → 1.06 → 1.0 en Fase 2).
-    @State private var symbolScale: CGFloat = 1.0
-
-    /// Controla la aparición del highlight glass en Fase 2.
-    @State private var showGlassHighlight: Bool = false
-
-    /// Radio de blur para la disolución en Fase 3.
-    @State private var dissolveBlur: CGFloat = 0
+    /// Escala extra para el micro-pop del ícono en Fase 2.
+    @State private var iconPopScale: CGFloat = 1.0
 
     /// Opacidad general para la disolución en Fase 3.
     @State private var dissolveOpacity: CGFloat = 1
@@ -73,9 +67,8 @@ struct SplashView: View {
 
             // ÍCONO ANIMADO: card centrada con gradiente del app icon.
             iconCard
-                .scaleEffect(iconScale)
+                .scaleEffect(iconScale * iconPopScale)
                 .opacity(iconOpacity)
-                .blur(radius: dissolveBlur)
         }
         .opacity(dissolveOpacity)
         .ignoresSafeArea()
@@ -91,170 +84,21 @@ struct SplashView: View {
 
     // MARK: - Icon Card
 
-    /// Card del ícono: gradiente + "?" + dots + glass highlight.
-    ///
-    /// # Estructura
-    /// ```
-    /// ZStack {
-    ///     RoundedRectangle (gradiente)
-    ///     RoundedRectangle (borde glass)
-    ///     VStack { "?" + dots }
-    ///     glassHighlightOverlay (condicional)
-    /// }
-    /// ```
+    /// Card del ícono: usa el asset real del app icon para match 1:1.
     private var iconCard: some View {
-        ZStack {
-            // Card base con gradiente del ícono (réplica del app icon).
-            RoundedRectangle(
-                cornerRadius: SplashStyle.Size.iconCornerRadius,
-                style: .continuous
-            )
-            .fill(
-                LinearGradient(
-                    colors: [
-                        SplashStyle.IconColors.lavender,
-                        SplashStyle.IconColors.skyBlue,
-                        SplashStyle.IconColors.cyan
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
+        Image("SplashIcon")
+            .resizable()
+            .scaledToFit()
             .frame(
                 width: SplashStyle.Size.iconCard,
                 height: SplashStyle.Size.iconCard
             )
-
-            // Borde glass sutil: define los límites de la card.
-            // - Why: un borde blanco tenue da profundidad sin competir con el contenido.
-            RoundedRectangle(
-                cornerRadius: SplashStyle.Size.iconCornerRadius,
-                style: .continuous
-            )
-            .strokeBorder(Color.white.opacity(0.3), lineWidth: 1.5)
-            .frame(
-                width: SplashStyle.Size.iconCard,
-                height: SplashStyle.Size.iconCard
-            )
-
-            // Contenido del ícono: "?" + dots decorativos.
-            VStack(spacing: 12) {
-                questionMarkSymbol
-                decorativeDots
-            }
-
-            // Glass highlight overlay: aparece en Fase 2 como "pulso" vidrioso.
-            if showGlassHighlight {
-                glassHighlightOverlay
-            }
-        }
-    }
-
-    // MARK: - Question Mark Symbol
-
-    /// Símbolo "?" con Liquid Glass en iOS 26+ o shadow en iOS <26.
-    ///
-    /// # iOS 26+
-    /// - Usa `.glassEffect(.regular.interactive())` para integración nativa.
-    /// - El glass reacciona al material y da profundidad automática.
-    ///
-    /// # iOS <26
-    /// - Shadow blanco sutil para simular profundidad.
-    private var questionMarkSymbol: some View {
-        Group {
-            if #available(iOS 26.0, *) {
-                // iOS 26+: Liquid Glass en el "?" para efecto vidrioso nativo.
-                Text("?")
-                    .font(.system(
-                        size: SplashStyle.Size.questionMarkFont,
-                        weight: .bold,
-                        design: .rounded
-                    ))
-                    .foregroundStyle(Color.white.opacity(SplashStyle.Opacity.questionMark))
-                    .scaleEffect(symbolScale)
-                    .glassEffect(
-                        .regular.interactive(),
-                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    )
-            } else {
-                // iOS <26: fallback con shadow sutil.
-                Text("?")
-                    .font(.system(
-                        size: SplashStyle.Size.questionMarkFont,
-                        weight: .bold,
-                        design: .rounded
-                    ))
-                    .foregroundStyle(Color.white.opacity(SplashStyle.Opacity.questionMark))
-                    .scaleEffect(symbolScale)
-                    .shadow(color: Color.white.opacity(0.3), radius: 8)
-            }
-        }
-    }
-
-    // MARK: - Decorative Dots
-
-    /// 4 puntos decorativos debajo del "?" (réplica del app icon).
-    ///
-    /// # Diseño
-    /// - Blancos con opacidad baja para no competir con el "?".
-    /// - Distribuidos en HStack con spacing uniforme.
-    private var decorativeDots: some View {
-        HStack(spacing: SplashStyle.Size.dotSpacing) {
-            ForEach(0..<4, id: \.self) { _ in
-                Circle()
-                    .fill(SplashStyle.Opacity.dotsColor.opacity(SplashStyle.Opacity.dots))
-                    .frame(
-                        width: SplashStyle.Size.dot,
-                        height: SplashStyle.Size.dot
-                    )
-            }
-        }
-    }
-
-    // MARK: - Glass Highlight Overlay
-
-    /// Overlay glass que aparece en Fase 2 como efecto de "pulso".
-    ///
-    /// # iOS 26+
-    /// - Usa `.glassEffect(.regular)` para reflejo vidrioso real.
-    ///
-    /// # iOS <26
-    /// - Fill blanco con opacidad baja como simulación.
-    @ViewBuilder
-    private var glassHighlightOverlay: some View {
-        if #available(iOS 26.0, *) {
-            // iOS 26+: glass overlay real con Liquid Glass.
-            RoundedRectangle(
-                cornerRadius: SplashStyle.Size.iconCornerRadius,
-                style: .continuous
-            )
-            .fill(.clear)
-            .glassEffect(
-                .regular,
-                in: RoundedRectangle(
+            .clipShape(
+                RoundedRectangle(
                     cornerRadius: SplashStyle.Size.iconCornerRadius,
                     style: .continuous
                 )
             )
-            .frame(
-                width: SplashStyle.Size.iconCard,
-                height: SplashStyle.Size.iconCard
-            )
-            .opacity(0.18)
-            .transition(.opacity)
-        } else {
-            // iOS <26: overlay blanco sutil como simulación de glass.
-            RoundedRectangle(
-                cornerRadius: SplashStyle.Size.iconCornerRadius,
-                style: .continuous
-            )
-            .fill(Color.white.opacity(0.15))
-            .frame(
-                width: SplashStyle.Size.iconCard,
-                height: SplashStyle.Size.iconCard
-            )
-            .transition(.opacity)
-        }
     }
 
     // MARK: - Animation Sequences
@@ -281,30 +125,18 @@ struct SplashView: View {
             iconScale = SplashStyle.Scale.target
         }
 
-        // FASE 2: Micro-pop del "?" + glass highlight.
+        // FASE 2: Micro-pop del ícono.
         // - t=0.42s: empieza después de que el spring de entrada se estabilice.
         DispatchQueue.main.asyncAfter(deadline: .now() + SplashStyle.Duration.delayBeforePop) {
-            // Pop del "?": spring con damping bajo para rebote visible.
+            // Pop del ícono: spring con damping bajo para rebote visible.
             withAnimation(.spring(response: SplashStyle.Duration.symbolPop, dampingFraction: 0.5)) {
-                symbolScale = SplashStyle.Scale.popPeak
+                iconPopScale = SplashStyle.Scale.popPeak
             }
 
-            // Glass highlight aparece con fade sutil.
-            withAnimation(.easeIn(duration: 0.12)) {
-                showGlassHighlight = true
-            }
-
-            // Pulse corto: ocultar el glass highlight para que no lave el ícono.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-                withAnimation(.easeOut(duration: 0.18)) {
-                    showGlassHighlight = false
-                }
-            }
-
-            // "?" vuelve a escala normal después del pico.
+            // Ícono vuelve a escala normal después del pico.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
-                    symbolScale = SplashStyle.Scale.target
+                    iconPopScale = SplashStyle.Scale.target
                 }
             }
         }
@@ -313,7 +145,6 @@ struct SplashView: View {
         // - t=0.75s: el pop ya terminó, empezamos la salida.
         DispatchQueue.main.asyncAfter(deadline: .now() + SplashStyle.Duration.delayBeforeDissolve) {
             withAnimation(.easeOut(duration: SplashStyle.Duration.dissolve)) {
-                dissolveBlur = 10
                 dissolveOpacity = 0
             }
 

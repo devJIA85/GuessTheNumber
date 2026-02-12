@@ -94,10 +94,10 @@ enum SplashStyle {
     /// Opacidades para los elementos visuales del ícono.
     enum Opacity {
         /// Opacidad del símbolo "?" (blanco).
-        static let questionMark: CGFloat = 0.85
+        static let questionMark: CGFloat = 0.92
 
         /// Opacidad de los puntos decorativos.
-        static let dots: CGFloat = 0.45
+        static let dots: CGFloat = 0.6
 
         /// Color de los puntos (blanco soft).
         static let dotsColor = Color(red: 0.96, green: 0.97, blue: 1.0)  // #F4F8FF
@@ -109,19 +109,19 @@ enum SplashStyle {
     enum Size {
         /// Tamaño de la card del ícono.
         /// - Why: 140pt es suficiente para que el ícono se vea prominente centrado.
-        static let iconCard: CGFloat = 140
+        static let iconCard: CGFloat = 200
 
         /// Corner radius del ícono (super-rounded, icon-like).
         /// - Why: 32pt da la forma de "squircle" de los iconos de iOS.
-        static let iconCornerRadius: CGFloat = 32
+        static let iconCornerRadius: CGFloat = 44
 
         /// Tamaño del font del símbolo "?".
-        static let questionMarkFont: CGFloat = 64
+        static let questionMarkFont: CGFloat = 104
 
         /// Tamaño de cada punto decorativo.
-        static let dot: CGFloat = 6
+        static let dot: CGFloat = 8
 
         /// Spacing entre puntos.
-        static let dotSpacing: CGFloat = 8
+        static let dotSpacing: CGFloat = 12
     }
 }
