@@ -22,6 +22,9 @@
 "game.status.won" = "Won";
 "game.status.abandoned" = "Abandoned";
 "game.status.none" = "No game";
+"game.board.title" = "Board";
+"game.board.reset" = "Reset";
+"game.board.0_9" = "Board 0–9";
 
 /* Stats */
 "stats.title" = "Statistics";

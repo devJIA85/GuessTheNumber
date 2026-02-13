@@ -2,9 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
+	<!-- 
+	Info.plist limpio - sin capacidades no usadas.
+	
+	ELIMINADO:
+	- UIBackgroundModes remote-notification: no se usan push notifications
+	
+	Si en el futuro necesitas background modes, agregar aquí.
+	-->
 </dict>
 </plist>

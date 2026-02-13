@@ -41,6 +41,21 @@ final class Game {
     /// Estado actual de la partida.
     /// Controla si acepta intentos, si fue ganada o abandonada.
     var state: GameState
+    
+    /// Representación raw del estado para queries eficientes.
+    ///
+    /// # Por qué necesitamos esto
+    /// - SwiftData no soporta predicates directos sobre enums.
+    /// - Esta propiedad permite filtrar por estado en queries sin cargar todos los juegos.
+    ///
+    /// # Sincronización
+    /// - Se actualiza automáticamente cuando cambia `state` vía updateState().
+    /// - No debe modificarse directamente, solo leer para queries.
+    ///
+    /// # Acceso interno
+    /// - Debe ser internal para poder usarlo en predicates desde GuessItModelActor.
+    /// - No exponemos públicamente, es solo para uso interno del módulo.
+    internal var stateRaw: String
 
     /// Número secreto de la partida.
     /// - Nota: se persiste para poder reconstruir partidas.
@@ -69,9 +84,25 @@ final class Game {
         self.id = UUID()
         self.createdAt = Date()
         self.finishedAt = nil
-        self.state = .inProgress
+        let initialState = GameState.inProgress
+        self.state = initialState
+        self.stateRaw = initialState.rawValue
         self.secret = secret
         self.attempts = []
         self.digitNotes = digitNotes
+    }
+    
+    // MARK: - Helpers
+    
+    /// Actualiza el estado y sincroniza stateRaw.
+    ///
+    /// # Por qué este método
+    /// - Centraliza la lógica de actualización de estado.
+    /// - Garantiza que stateRaw siempre está sincronizado con state.
+    ///
+    /// - Parameter newState: nuevo estado a asignar.
+    func updateState(_ newState: GameState) {
+        self.state = newState
+        self.stateRaw = newState.rawValue
     }
 }

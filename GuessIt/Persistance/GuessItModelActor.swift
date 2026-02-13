@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import OSLog
 
 /// Errores específicos del `GuessItModelActor`.
 enum ModelActorError: Error {
@@ -25,19 +26,46 @@ enum ModelActorError: Error {
 /// - Este actor se encarga de **persistir** y **reconstruir** estado.
 @ModelActor
 actor GuessItModelActor {
+    
+    // MARK: - Logging
+    
+    /// Logger estructurado para el ModelActor.
+    ///
+    /// # Niveles
+    /// - `.debug`: información detallada para debugging (solo DEBUG builds)
+    /// - `.info`: eventos normales del ciclo de vida (creación de partidas, etc.)
+    /// - `.error`: errores que requieren atención (datos corruptos, etc.)
+    ///
+    /// # Por qué Logger vs print
+    /// - Permite filtrado por subsistema y categoría en Console.app
+    /// - Respeta niveles de log configurados por el sistema
+    /// - No contamina consola en release builds
+    private static let logger = Logger(subsystem: "com.antolini.GuessIt", category: "ModelActor")
 
     // MARK: - Games
 
     /// Devuelve la partida en progreso si existe.
+    ///
+    /// # Optimización
+    /// - Usa predicate sobre `stateRaw` para filtrar en la base de datos.
+    /// - No carga todos los juegos en memoria (antes sí lo hacía).
+    /// - Mucho más eficiente y escalable.
+    ///
     /// - Returns: el `Game` activo o `nil` si no hay.
-    /// - Note: filtramos en código porque SwiftData no puede usar .rawValue en predicados.
     func fetchInProgressGame() throws -> Game? {
-        let descriptor = FetchDescriptor<Game>(
+        let inProgressRaw = GameState.inProgress.rawValue
+        let predicate = #Predicate<Game> { game in
+            game.stateRaw == inProgressRaw
+        }
+
+        var descriptor = FetchDescriptor<Game>(
+            predicate: predicate,
             sortBy: [SortDescriptor(\Game.createdAt, order: .reverse)]
         )
+        descriptor.fetchLimit = 1 // Solo necesitamos la más reciente
 
-        let allGames = try modelContext.fetch(descriptor)
-        return allGames.first { $0.state == .inProgress }
+        let games = try modelContext.fetch(descriptor)
+        return games.first
     }
 
     /// Crea una partida nueva y la deja lista para jugar.
@@ -59,7 +87,7 @@ actor GuessItModelActor {
         try modelContext.save()
         
         // 5) Verificar que se crearon correctamente
-        print("✅ Juego creado con \(game.digitNotes.count) notas de dígitos")
+        Self.logger.info("Juego creado con \(game.digitNotes.count) notas de dígitos")
         
         return game
     }
@@ -100,30 +128,62 @@ actor GuessItModelActor {
     }
 
     /// Marca una partida como ganada y setea `finishedAt`.
+    ///
+    /// # Idempotencia
+    /// - Si la partida ya está en estado `.won`, no hace nada.
+    /// - Esto previene doble conteo de stats en llamadas repetidas.
+    ///
     /// - Parameter gameID: identificador persistente de la partida.
     func markGameWon(gameID: GameIdentifier) throws {
         guard let game = modelContext.model(for: gameID) as? Game else {
             throw ModelActorError.gameNotFound(gameID)
         }
-        game.state = .won
+        
+        // Guarda de idempotencia: si ya está ganada, no hacer nada
+        guard game.state != .won else {
+            return
+        }
+        
+        // Validar transición válida: solo desde .inProgress
+        guard game.state == .inProgress else {
+            throw GameDomainError.gameNotInProgress(currentState: game.state)
+        }
+        
+        game.updateState(.won)
         game.finishedAt = Date()
         try modelContext.save()
         
-        // Actualizar estadísticas
+        // Actualizar estadísticas (solo se ejecuta una vez por partida)
         try updateStatsAfterGame(gameID: gameID)
     }
 
     /// Marca una partida como abandonada y setea `finishedAt`.
+    ///
+    /// # Idempotencia
+    /// - Si la partida ya está en estado `.abandoned`, no hace nada.
+    /// - Esto previene doble conteo de stats en llamadas repetidas.
+    ///
     /// - Parameter gameID: identificador persistente de la partida.
     func markGameAbandoned(gameID: GameIdentifier) throws {
         guard let game = modelContext.model(for: gameID) as? Game else {
             throw ModelActorError.gameNotFound(gameID)
         }
-        game.state = .abandoned
+        
+        // Guarda de idempotencia: si ya está abandonada, no hacer nada
+        guard game.state != .abandoned else {
+            return
+        }
+        
+        // Validar transición válida: solo desde .inProgress
+        guard game.state == .inProgress else {
+            throw GameDomainError.gameNotInProgress(currentState: game.state)
+        }
+        
+        game.updateState(.abandoned)
         game.finishedAt = Date()
         try modelContext.save()
         
-        // Actualizar estadísticas (rompe la racha)
+        // Actualizar estadísticas (solo se ejecuta una vez por partida, rompe la racha)
         try updateStatsAfterGame(gameID: gameID)
     }
 
@@ -183,17 +243,40 @@ actor GuessItModelActor {
             note = existingNote
         } else {
             // Crear la nota que falta (fallback para partidas corruptas)
-            print("⚠️ Creando DigitNote faltante para dígito \(digit)")
+            Self.logger.error("Creando DigitNote faltante para dígito \(digit) - datos corruptos")
             note = DigitNote(digit: digit, mark: .unknown, game: game)
             game.digitNotes.append(note)
         }
 
-        print("🔴 Updating mark for digit \(digit) from \(note.mark) to \(mark)")
         note.mark = mark
         try modelContext.save()
-        print("✅ Mark saved successfully")
     }
 
+    /// Cicla la marca de un dígito al siguiente estado.
+    ///
+    /// Orden: unknown → poor → fair → good → unknown.
+    ///
+    /// - Parameters:
+    ///   - digit: dígito 0–9.
+    ///   - gameID: identificador persistente de la partida.
+    func cycleDigitMark(digit: Int, gameID: GameIdentifier) throws {
+        guard let game = modelContext.model(for: gameID) as? Game else {
+            throw ModelActorError.gameNotFound(gameID)
+        }
+        
+        guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
+            // Nota no existe, crearla (fallback para partidas corruptas)
+            Self.logger.error("Creando DigitNote faltante para dígito \(digit) - datos corruptos")
+            let newNote = DigitNote(digit: digit, mark: .poor, game: game)
+            game.digitNotes.append(newNote)
+            try modelContext.save()
+            return
+        }
+        
+        note.mark = note.mark.next()
+        try modelContext.save()
+    }
+    
     /// Resetea todas las notas de dígitos de una partida a `.unknown`.
     ///
     /// - Parameter gameID: identificador persistente de la partida cuyo tablero se quiere limpiar.
@@ -205,7 +288,7 @@ actor GuessItModelActor {
         
         // Reparar notas faltantes si es necesario
         if game.digitNotes.count != 10 {
-            print("⚠️ Reparando digitNotes: encontradas \(game.digitNotes.count), creando las faltantes")
+            Self.logger.error("Reparando digitNotes: encontradas \(game.digitNotes.count), esperadas 10 - datos corruptos")
             ensureAllDigitNotes(for: game)
         }
 
@@ -292,7 +375,7 @@ actor GuessItModelActor {
         // Mapear notas de dígitos a snapshots (ordenadas por dígito 0–9)
         // Reparar notas faltantes si es necesario
         if game.digitNotes.count != 10 {
-            print("⚠️ Reparando digitNotes en snapshot: encontradas \(game.digitNotes.count), creando las faltantes")
+            Self.logger.error("Reparando digitNotes en snapshot: encontradas \(game.digitNotes.count), esperadas 10 - datos corruptos")
             ensureAllDigitNotes(for: game)
             try modelContext.save()
         }
@@ -358,7 +441,7 @@ actor GuessItModelActor {
         
         for digit in GameConstants.validDigitRange {
             if !existingDigits.contains(digit) {
-                print("⚠️ Creando DigitNote faltante para dígito \(digit)")
+                Self.logger.error("Creando DigitNote faltante para dígito \(digit) - datos corruptos")
                 let note = DigitNote(digit: digit, mark: .unknown, game: game)
                 game.digitNotes.append(note)
             }

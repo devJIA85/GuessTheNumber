@@ -22,6 +22,9 @@
 "game.status.won" = "Ganada";
 "game.status.abandoned" = "Abandonada";
 "game.status.none" = "Sin partida";
+"game.board.title" = "Tablero";
+"game.board.reset" = "Reset tablero";
+"game.board.0_9" = "Tablero 0–9";
 
 /* Stats */
 "stats.title" = "Estadísticas";

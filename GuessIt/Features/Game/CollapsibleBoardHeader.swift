@@ -44,7 +44,7 @@ struct CollapsibleBoardHeader: View {
 
     // MARK: - Dependencies
 
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.appEnvironment) private var env
 
     // MARK: - Body
 
@@ -72,7 +72,7 @@ struct CollapsibleBoardHeader: View {
     /// Se desvanece al colapsar para ganar espacio vertical.
     private var headerRow: some View {
         HStack {
-            Label("Tablero", systemImage: "square.grid.2x2")
+            Label("game.board.title", systemImage: "square.grid.2x2")
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundStyle(Color.appTextPrimary)
@@ -83,7 +83,7 @@ struct CollapsibleBoardHeader: View {
                 Button {
                     resetBoard()
                 } label: {
-                    Text("Reset")
+                    Text("game.board.reset")
                         .font(.caption)
                         .foregroundStyle(Color.appActionPrimary)
                 }
@@ -165,43 +165,36 @@ struct CollapsibleBoardHeader: View {
         lerp(from: 20, to: 0, progress: collapseProgress)
     }
 
-    // MARK: - Actions (SwiftData)
+    // MARK: - Actions (delegadas al ModelActor)
 
     /// Cicla el mark del dígito al siguiente estado.
     /// Orden: unknown → poor → fair → good → unknown.
+    ///
+    /// # Single-Writer Pattern
+    /// - Delega la mutación al GuessItModelActor en lugar de escribir directamente.
+    /// - Mantiene la arquitectura de "solo el actor escribe".
     private func cycleMark(forDigit digit: Int) {
-        guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
-            return
-        }
-
-        setMark(note.mark.next(), forDigit: digit)
-    }
-
-    /// Persiste el nuevo mark para un dígito.
-    private func setMark(_ mark: DigitMark, forDigit digit: Int) {
-        guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
-            return
-        }
-
-        note.mark = mark
-
-        do {
-            try modelContext.save()
-        } catch {
-            assertionFailure("No se pudo guardar la marca del dígito \(digit): \(error)")
+        Task {
+            do {
+                try await env.modelActor.cycleDigitMark(digit: digit, gameID: game.persistentID)
+            } catch {
+                assertionFailure("No se pudo ciclar la marca del dígito \(digit): \(error)")
+            }
         }
     }
 
     /// Resetea todas las marcas del tablero a `.unknown`.
+    ///
+    /// # Single-Writer Pattern
+    /// - Delega la mutación al GuessItModelActor en lugar de escribir directamente.
+    /// - Mantiene la arquitectura de "solo el actor escribe".
     private func resetBoard() {
-        for note in game.digitNotes {
-            note.mark = .unknown
-        }
-
-        do {
-            try modelContext.save()
-        } catch {
-            assertionFailure("No se pudo resetear el tablero: \(error)")
+        Task {
+            do {
+                try await env.modelActor.resetDigitNotes(gameID: game.persistentID)
+            } catch {
+                assertionFailure("No se pudo resetear el tablero: \(error)")
+            }
         }
     }
 
