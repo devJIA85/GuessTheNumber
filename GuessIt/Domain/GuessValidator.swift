@@ -58,13 +58,23 @@ struct GuessValidator {
         try validateDigitRange(input)
         try validateUniquenessIfNeeded(input)
     }
+    
+    /// Valida un intento del desafío diario (3 dígitos).
+    /// - Parameter input: String crudo proveniente de la UI.
+    /// - Throws: `ValidationError` si alguna regla del dominio no se cumple.
+    static func validateDailyChallenge(_ input: String) throws {
+        try validateLength(input, expected: GameConstants.dailyChallengeLength)
+        try validateNumeric(input)
+        try validateDigitRange(input)
+        try validateUniquenessIfNeeded(input, required: GameConstants.dailyChallengeRequiresUniqueDigits)
+    }
 
     // MARK: - Reglas privadas
 
     /// Verifica que el input tenga la longitud exacta requerida por el juego.
-    private static func validateLength(_ input: String) throws {
-        guard input.count == GameConstants.secretLength else {
-            throw ValidationError.invalidLength(expected: GameConstants.secretLength)
+    private static func validateLength(_ input: String, expected: Int = GameConstants.secretLength) throws {
+        guard input.count == expected else {
+            throw ValidationError.invalidLength(expected: expected)
         }
     }
 
@@ -85,8 +95,8 @@ struct GuessValidator {
     }
 
     /// Verifica unicidad de dígitos si la regla del juego lo exige.
-    private static func validateUniquenessIfNeeded(_ input: String) throws {
-        guard GameConstants.requiresUniqueDigits else { return }
+    private static func validateUniquenessIfNeeded(_ input: String, required: Bool = GameConstants.requiresUniqueDigits) throws {
+        guard required else { return }
 
         let digits = input.map { $0 }
         let uniqueDigits = Set(digits)

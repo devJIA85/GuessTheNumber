@@ -79,14 +79,7 @@ struct GameView: View {
     /// Controla la presentación del tutorial.
     @State private var isTutorialPresented = false
 
-    /// Progreso de colapso del header del tablero (0.0 = expandido, 1.0 = colapsado).
-    ///
-    /// # Fuente de verdad
-    /// - Dirigido por el offset del ScrollView via `.onScrollGeometryChange`.
-    /// - El threshold de 60pt da una transición suave y natural.
-    /// - La diferencia de altura expandido↔colapsado es ~40pt (48→28pt × 2 filas),
-    ///   entonces 60pt de scroll es ligeramente mayor para suavizar la curva.
-    @State private var boardCollapseProgress: CGFloat = 0
+
 
     var body: some View {
         NavigationStack {
@@ -104,85 +97,92 @@ struct GameView: View {
                 // 2. ScrollView: solo historial + victoria (contenido scrolleable)
                 // 3. InputSection via .safeAreaInset(edge: .bottom): fijo abajo
                 //
-                // # Por qué VStack y no safeAreaInset(edge: .top)
-                // `safeAreaInset` modifica el safe area del scroll, lo que hace que
-                // al cambiar la altura del header (colapso), el safe area cambie y
-                // cause jumps en el contenido del scroll. Con VStack(spacing: 0)
-                // tenemos control total del layout sin efectos secundarios.
-                VStack(spacing: 0) {
-                    // HEADER COLAPSABLE: tablero de deducción 0-9
-                    // - Why: fijo arriba para referencia rápida mientras scrollea
-                    // - Se contrae suavemente driven por scroll offset
-                    if let game = currentGame {
-                        CollapsibleBoardHeader(
-                            game: game,
-                            isReadOnly: game.state != .inProgress,
-                            collapseProgress: boardCollapseProgress
-                        )
-                    }
-
-                    // CONTENIDO SCROLLEABLE: victoria + historial
-                    ScrollView {
-                        // OPTIMIZACIÓN iOS 26+: GlassEffectContainer
-                        // - Why: Apple recomienda usar container para múltiples efectos Glass
-                        // - Mejora rendimiento al combinar renders en una sola pasada
-                        // - Permite morphing fluido entre shapes durante transiciones
-                        // - Spacing: controla cuándo los efectos comienzan a blend juntos
-                        glassContainer {
-                            LazyVStack(spacing: AppTheme.Spacing.large) {
-                                // SECCIÓN 1: Victoria (solo si ganó)
-                                // - Why: feedback celebratorio que merece destacarse
-                                // - tintColor: usa color de acción para énfasis
-                                if let game = currentGame, game.state == .won {
-                                    VictorySectionView(game: game, onNewGame: startNewGame)
-                                }
-
-                                // SECCIÓN 2: Historial de Intentos (jerarquía secundaria)
-                                // - Why: información importante pero no debe dominar la pantalla
-                                // - Usa ContentUnavailableView cuando está vacío para mejorar UX
-                                if let game = currentGame {
-                                    HistorySectionView(game: game)
-                                } else {
-                                    EmptyStateSectionView()
-                                }
+                // CONTENIDO SCROLLEABLE: victoria + historial
+                // - Why: layout simplificado, sin header sticky
+                // - El tablero de dígitos ahora está en el input section abajo
+                ScrollView {
+                    // OPTIMIZACIÓN iOS 26+: GlassEffectContainer
+                    // - Why: Apple recomienda usar container para múltiples efectos Glass
+                    // - Mejora rendimiento al combinar renders en una sola pasada
+                    // - Permite morphing fluido entre shapes durante transiciones
+                    // - Spacing: controla cuándo los efectos comienzan a blend juntos
+                    glassContainer {
+                        LazyVStack(spacing: AppTheme.Spacing.large) {
+                            // SECCIÓN 1: Victoria (solo si ganó)
+                            // - Why: feedback celebratorio que merece destacarse
+                            // - tintColor: usa color de acción para énfasis
+                            if let game = currentGame, game.state == .won {
+                                VictorySectionView(game: game, onNewGame: startNewGame)
                             }
-                            .padding(.horizontal, AppTheme.Spacing.medium)
-                            .padding(.vertical, AppTheme.Spacing.small)
+
+                            // SECCIÓN 2: Historial de Intentos (jerarquía secundaria)
+                            // - Why: información importante pero no debe dominar la pantalla
+                            // - Usa ContentUnavailableView cuando está vacío para mejorar UX
+                            if let game = currentGame {
+                                HistorySectionView(game: game)
+                            } else {
+                                EmptyStateSectionView()
+                            }
                         }
-                    }
-                    .onScrollGeometryChange(for: CGFloat.self) { geometry in
-                        // Extraer offset vertical del scroll
-                        geometry.contentOffset.y
-                    } action: { _, newValue in
-                        // Calcular progreso de colapso: 0pt..60pt → 0.0..1.0
-                        // - Why threshold 60pt: la diferencia de altura expandido↔colapsado
-                        //   es ~40pt, y 60pt da una transición suave sin ser ni rápida ni lenta.
-                        let threshold: CGFloat = 60
-                        boardCollapseProgress = min(max(newValue / threshold, 0), 1)
+                        .padding(.horizontal, AppTheme.Spacing.small)
+                        .padding(.vertical, 4)
                     }
                 }
                 // INPUT FIJO ABAJO: siempre accesible, contenido scrollea detrás
                 // - Why: el input es la acción primaria, debe estar siempre visible
+                // - Incluye: slots + tablero de dígitos + botones de acción
                 // - .safeAreaInset ajusta automáticamente el scroll para no tapar contenido
-                // - .ultraThinMaterial da blur del contenido que pasa detrás
                 .safeAreaInset(edge: .bottom) {
-                    if let game = currentGame {
-                        if game.state == .inProgress {
-                            InputSectionView(guessText: $guessText, onSubmit: submit)
-                                .padding(.horizontal, AppTheme.Spacing.medium)
-                                .padding(.bottom, AppTheme.Spacing.small)
-                                .background(Color.clear)
+                    VStack(spacing: 0) {
+                        if let game = currentGame {
+                            @Bindable var bindableGame = game
+                            
+                            if game.state == .inProgress {
+                                GuessInputView(
+                                    guessText: $guessText,
+                                    game: bindableGame,
+                                    onDigitTap: { digit in
+                                        // Agregar dígito al guess si no llegamos al máximo (5)
+                                        if guessText.count < 5 {
+                                            guessText.append("\(digit)")
+                                            
+                                            // Haptic feedback
+                                            let impact = UIImpactFeedbackGenerator(style: .light)
+                                            impact.impactOccurred()
+                                        }
+                                    },
+                                    onSubmit: submit
+                                )
+                                .padding(.horizontal, AppTheme.Spacing.small)
+                                .padding(.top, 8)
+                                .padding(.bottom, 8)
+                            } else {
+                                DisabledInputSectionView()
+                                    .padding(.horizontal, AppTheme.Spacing.small)
+                                    .padding(.top, 4)
+                                    .padding(.bottom, 4)
+                            }
                         } else {
-                            DisabledInputSectionView()
-                                .padding(.horizontal, AppTheme.Spacing.medium)
-                                .padding(.bottom, AppTheme.Spacing.small)
-                                .background(Color.clear)
+                            GuessInputView(
+                                guessText: $guessText,
+                                game: nil,
+                                onDigitTap: nil,
+                                onSubmit: submit
+                            )
+                            .padding(.horizontal, AppTheme.Spacing.small)
+                            .padding(.top, 8)
+                            .padding(.bottom, 8)
                         }
-                    } else {
-                        InputSectionView(guessText: $guessText, onSubmit: submit)
-                            .padding(.horizontal, AppTheme.Spacing.medium)
-                            .padding(.bottom, AppTheme.Spacing.small)
-                            .background(Color.clear)
+                    }
+                    .background {
+                        if #available(iOS 26.0, *) {
+                            // iOS 26+: Fondo glass translúcido
+                            Color.clear
+                                .background(.ultraThinMaterial)
+                        } else {
+                            // iOS <26: Fondo sólido con blur
+                            Color.appBackgroundPrimary.opacity(0.95)
+                        }
                     }
                 }
             }
@@ -780,35 +780,6 @@ struct GameView: View {
 
 // MARK: - Modular Subviews (Arquitectura Limpia + DRY)
 // Subvistas extraídas para mejorar la legibilidad y reutilización
-
-/// Sección de Input Principal con estética premium y glassmorphism.
-///
-/// # Diseño
-/// - Usa GlassCardStyle para efecto vidrioso moderno
-/// - Tipografía rounded para tono amigable
-/// - Botón prominent deshabilitado visualmente si no hay input
-///
-/// # Por qué existe
-/// - Encapsula toda la lógica del input en un componente reutilizable
-/// - Mantiene GameView.body limpio y legible
-/// - Permite testear el input de forma aislada
-private struct InputSectionView: View {
-    @Binding var guessText: String
-    let onSubmit: (String) -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            // Header con tipografía moderna
-            Text(String(localized: "game.input.title", defaultValue: "Tu intento"))
-                .font(AppTheme.Typography.headline())
-                .foregroundStyle(Color.appTextPrimary)
-            
-            // Input con estilo OTP (5 celdas individuales)
-            GuessInputView(guessText: $guessText, onSubmit: onSubmit)
-        }
-        .glassCard(isInteractive: true)  // Interactivo: el usuario ingresa datos aquí
-    }
-}
 
 /// Sección de Input deshabilitada cuando la partida terminó.
 ///

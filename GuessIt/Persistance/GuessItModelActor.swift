@@ -555,7 +555,7 @@ actor GuessItModelActor {
     /// Envía un intento en el desafío diario.
     ///
     /// - Parameters:
-    ///   - guess: intento del usuario.
+    ///   - guess: intento del usuario (3 dígitos).
     ///   - challengeID: identificador del desafío.
     /// - Returns: feedback del intento.
     func submitDailyChallengeGuess(guess: String, challengeID: PersistentIdentifier) throws -> AttemptFeedback {
@@ -574,8 +574,8 @@ actor GuessItModelActor {
             challenge.startedAt = Date()
         }
         
-        // Evaluar intento
-        let evaluation = GuessEvaluator.evaluate(secret: challenge.secret, guess: guess)
+        // Evaluar intento (desafío diario usa 3 dígitos)
+        let evaluation = GuessEvaluator.evaluateDailyChallenge(secret: challenge.secret, guess: guess)
         let feedback = AttemptFeedback(
             good: evaluation.good,
             fair: evaluation.fair,
@@ -592,9 +592,14 @@ actor GuessItModelActor {
         )
         challenge.attempts.append(attempt)
         
-        // Si ganó, marcar como completado
-        if evaluation.good == GameConstants.secretLength {
+        // Si ganó, marcar como completado (victoria = 3 GOOD para desafío diario)
+        if evaluation.good == GameConstants.dailyChallengeLength {
             challenge.state = .completed
+            challenge.completedAt = Date()
+        }
+        // Si alcanzó el límite de intentos sin ganar, marcar como fallado
+        else if challenge.attempts.count >= GameConstants.dailyChallengeMaxAttempts {
+            challenge.state = .failed
             challenge.completedAt = Date()
         }
         

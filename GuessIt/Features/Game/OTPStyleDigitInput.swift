@@ -10,18 +10,20 @@ import SwiftUI
 /// Input visual de 5 celdas individuales para dígitos, similar a códigos OTP.
 ///
 /// # Características
-/// - TextField único subyacente (el usuario escribe de forma continua)
+/// - SOLO visualización (no hay TextField, no invoca teclado del sistema)
 /// - 5 celdas visuales que se llenan de izquierda a derecha
+/// - El input es manejado por CustomDigitPad (teclado numérico custom)
 /// - El borrado vacía de derecha a izquierda
 /// - Accesible: VoiceOver lee el valor completo como un número
 /// - Diseño limpio con bordes suaves
+///
+/// # Importante
+/// Este componente NO tiene TextField. Es pura visualización.
+/// El input se maneja completamente a través del CustomDigitPad.
 struct OTPStyleDigitInput: View {
     
     /// Texto del input (controlado por el padre).
     @Binding var text: String
-    
-    /// Estado de foco del TextField.
-    @FocusState private var isFocused: Bool
     
     /// Número de dígitos a mostrar.
     private let digitCount: Int = 5
@@ -31,47 +33,25 @@ struct OTPStyleDigitInput: View {
     }
     
     var body: some View {
-        ZStack {
-            // TextField oculto que captura el input real
-            hiddenTextField
-            
-            // Representación visual de las celdas
-            digitCellsView
-                .onTapGesture {
-                    isFocused = true
-                }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Ingreso de número de 5 dígitos")
-        .accessibilityValue(text.isEmpty ? "Vacío" : text)
-        .accessibilityHint("Ingresá un número de 5 dígitos")
+        // Solo mostramos las celdas visuales
+        // NO hay TextField - el input es 100% manejado por CustomDigitPad
+        digitCellsView
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Ingreso de número de 5 dígitos")
+            .accessibilityValue(text.isEmpty ? "Vacío" : text)
+            .accessibilityHint("Ingresá un número de 5 dígitos")
     }
     
     // MARK: - Subvistas
     
-    /// TextField oculto que maneja el input del teclado.
-    private var hiddenTextField: some View {
-        TextField("", text: $text)
-            .keyboardType(.numberPad)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .focused($isFocused)
-            .frame(width: 1, height: 1)
-            .opacity(0.001)
-            .onChange(of: text) { oldValue, newValue in
-                // Limitar a dígitos y máximo 5 caracteres
-                let filtered = newValue.filter { $0.isNumber }
-                if filtered != newValue || filtered.count > digitCount {
-                    text = String(filtered.prefix(digitCount))
-                }
-            }
-    }
-    
     /// Vista de las 5 celdas individuales.
     private var digitCellsView: some View {
-        HStack(spacing: AppTheme.Spacing.small) {
+        HStack(spacing: 6) {
             ForEach(0..<digitCount, id: \.self) { index in
                 digitCell(at: index)
+                    .accessibilityLabel("Posición \(index + 1)")
+                    .accessibilityValue(digitAt(index: index).map { "Dígito \(String($0))" } ?? "Vacío")
+                    .accessibilityAddTraits(.updatesFrequently)
             }
         }
     }
@@ -89,7 +69,7 @@ struct OTPStyleDigitInput: View {
     /// - Mantiene fondos sólidos originales y bordes más marcados.
     private func digitCell(at index: Int) -> some View {
         let digit = digitAt(index: index)
-        let isActive = isFocused && index == text.count
+        let isActive = index == text.count
 
         return ZStack {
             // Fondo de la celda - MEJORADO para mejor contraste
@@ -126,12 +106,12 @@ struct OTPStyleDigitInput: View {
                 if #available(iOS 26.0, *) {
                     // iOS 26+: texto negro para máximo contraste sobre fondo blanco
                     Text(String(digit))
-                        .font(.title2)
+                        .font(.title3)
                         .fontWeight(.bold)
                         .foregroundStyle(Color.black.opacity(0.9))
                 } else {
                     Text(String(digit))
-                        .font(.title2)
+                        .font(.title3)
                         .fontWeight(.semibold)
                         .foregroundStyle(Color.appTextPrimary)
                 }
@@ -139,16 +119,16 @@ struct OTPStyleDigitInput: View {
                 if #available(iOS 26.0, *) {
                     // iOS 26+: placeholder más visible
                     Text("·")
-                        .font(.title)
+                        .font(.title2)
                         .foregroundStyle(Color.black.opacity(0.3))
                 } else {
                     Text("·")
-                        .font(.title)
+                        .font(.title2)
                         .foregroundStyle(Color.appTextSecondary.opacity(0.2))
                 }
             }
         }
-        .frame(width: 52, height: 60)
+        .frame(width: 44, height: 44)
         .animation(.easeInOut(duration: 0.15), value: isActive)
         .animation(.easeInOut(duration: 0.15), value: digit)
     }

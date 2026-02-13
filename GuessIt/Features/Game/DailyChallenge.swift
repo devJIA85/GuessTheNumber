@@ -105,13 +105,14 @@ enum ChallengeState: String, Codable {
 /// # Por qué modelo separado
 /// - Los intentos del desafío diario son distintos de los del juego normal.
 /// - Permite queries independientes (ej: "intentos de hoy").
+/// - El desafío diario usa 3 dígitos en lugar de 5.
 @Model
 final class DailyChallengeAttempt {
     
     /// Timestamp del intento.
     var createdAt: Date
     
-    /// Intento del usuario (5 dígitos).
+    /// Intento del usuario (3 dígitos).
     var guess: String
     
     /// Feedback: dígitos correctos en posición correcta.
@@ -155,6 +156,7 @@ struct DailyChallengeService {
     /// # Algoritmo
     /// - Seed = timestamp de medianoche en UTC (ej: 2026-02-12 00:00:00 UTC).
     /// - Esto garantiza que todos los usuarios obtengan el mismo secreto.
+    /// - Usa 3 dígitos para partidas más rápidas.
     ///
     /// - Returns: desafío del día.
     static func generateToday() -> (date: Date, secret: String, seed: UInt64) {
@@ -168,9 +170,9 @@ struct DailyChallengeService {
         // Seed = timestamp en segundos desde epoch
         let seed = UInt64(utcToday.timeIntervalSince1970)
         
-        // Generar secreto con seed
+        // Generar secreto de 3 dígitos con seed
         var rng = SeededRandomNumberGenerator(seed: seed)
-        let secret = SecretGenerator.generate(using: &rng)
+        let secret = SecretGenerator.generateDailyChallenge(using: &rng)
         
         return (today, secret, seed)
     }
@@ -189,7 +191,7 @@ struct DailyChallengeService {
         let seed = UInt64(utcDayStart.timeIntervalSince1970)
         
         var rng = SeededRandomNumberGenerator(seed: seed)
-        let secret = SecretGenerator.generate(using: &rng)
+        let secret = SecretGenerator.generateDailyChallenge(using: &rng)
         
         return (dayStart, secret, seed)
     }
@@ -220,6 +222,7 @@ struct DailyChallengeSnapshot: Sendable, Identifiable, Equatable {
     let secret: String?  // Nil si no está completado
     let state: ChallengeState
     let attemptsCount: Int
+    let attempts: [DailyChallengeAttemptSnapshot]  // Historial de intentos
     let isToday: Bool
     let isExpired: Bool
     let completedAt: Date?
@@ -231,6 +234,9 @@ struct DailyChallengeSnapshot: Sendable, Identifiable, Equatable {
         self.secret = revealSecret ? challenge.secret : nil
         self.state = challenge.state
         self.attemptsCount = challenge.attempts.count
+        self.attempts = challenge.attempts
+            .sorted { $0.createdAt > $1.createdAt }
+            .map { DailyChallengeAttemptSnapshot(from: $0) }
         self.isToday = challenge.isToday
         self.isExpired = challenge.isExpired
         self.completedAt = challenge.completedAt
@@ -243,6 +249,7 @@ struct DailyChallengeSnapshot: Sendable, Identifiable, Equatable {
         secret: String?,
         state: ChallengeState,
         attemptsCount: Int,
+        attempts: [DailyChallengeAttemptSnapshot],
         isToday: Bool,
         isExpired: Bool,
         completedAt: Date?
@@ -253,6 +260,7 @@ struct DailyChallengeSnapshot: Sendable, Identifiable, Equatable {
         self.secret = secret
         self.state = state
         self.attemptsCount = attemptsCount
+        self.attempts = attempts
         self.isToday = isToday
         self.isExpired = isExpired
         self.completedAt = completedAt
@@ -261,7 +269,7 @@ struct DailyChallengeSnapshot: Sendable, Identifiable, Equatable {
     private static func makeTempID() -> PersistentIdentifier {
         let container = ModelContainerFactory.make(isInMemory: true)
         let context = ModelContext(container)
-        let challenge = DailyChallenge(date: Date(), secret: "00000", seed: 0)
+        let challenge = DailyChallenge(date: Date(), secret: "000", seed: 0)
         context.insert(challenge)
         try? context.save()
         return challenge.persistentModelID
@@ -278,9 +286,41 @@ struct DailyChallengeSnapshot: Sendable, Identifiable, Equatable {
             secret: nil,
             state: .inProgress,
             attemptsCount: 5,
+            attempts: [],
             isToday: true,
             isExpired: false,
             completedAt: nil
         )
     }
 }
+
+// MARK: - Daily Challenge Attempt Snapshot
+
+/// Snapshot inmutable de un intento de desafío diario para UI.
+struct DailyChallengeAttemptSnapshot: Sendable, Identifiable, Equatable {
+    let id: UUID
+    let guess: String
+    let good: Int
+    let fair: Int
+    let isPoor: Bool
+    let createdAt: Date
+    
+    init(from attempt: DailyChallengeAttempt) {
+        self.id = UUID()  // Generamos ID temporal para Identifiable
+        self.guess = attempt.guess
+        self.good = attempt.good
+        self.fair = attempt.fair
+        self.isPoor = attempt.isPoor
+        self.createdAt = attempt.createdAt
+    }
+    
+    init(guess: String, good: Int, fair: Int, isPoor: Bool, createdAt: Date = Date()) {
+        self.id = UUID()
+        self.guess = guess
+        self.good = good
+        self.fair = fair
+        self.isPoor = isPoor
+        self.createdAt = createdAt
+    }
+}
+

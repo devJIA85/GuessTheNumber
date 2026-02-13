@@ -52,4 +52,18 @@ enum GameConstants {
     /// Indica si debe mostrarse el resultado `Poor` cuando no hay Good ni Fair.
     /// Regla explícita del juego: solo mostrar `Poor` si el conteo de Good y Fair es 0.
     static let showPoorResultOnlyWhenNoMatches: Bool = true
+    
+    // MARK: - Desafío Diario
+    
+    /// Cantidad de dígitos para el desafío diario.
+    /// Regla: más corto (3 dígitos) para partidas rápidas compartidas.
+    static let dailyChallengeLength: Int = 3
+    
+    /// Indica si los dígitos del desafío diario deben ser únicos.
+    /// Regla: igual que el juego normal, no se permiten repetidos.
+    static let dailyChallengeRequiresUniqueDigits: Bool = true
+    
+    /// Máximo número de intentos permitidos en el desafío diario.
+    /// Regla: después de 10 intentos, el desafío se marca como fallado.
+    static let dailyChallengeMaxAttempts: Int = 10
 }

@@ -19,6 +19,12 @@ enum HapticFeedbackManager {
             generator.notificationOccurred(.success)
         }
     }
+    
+    static func attemptSubmitted() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(.success)
+    }
 
     static func validationFailed() {
         let generator = UINotificationFeedbackGenerator()

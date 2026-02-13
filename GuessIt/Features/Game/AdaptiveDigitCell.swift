@@ -40,6 +40,10 @@ struct AdaptiveDigitCell: View {
 
     /// Acción al tocar la celda (ciclar mark o no-op si read-only).
     let onTap: () -> Void
+    
+    /// Si está en modo input (los taps agregan dígitos al guess).
+    /// - Why: muestra hint visual sutil para guiar al usuario
+    var isInputMode: Bool = false
 
     // MARK: - State
 
@@ -57,6 +61,13 @@ struct AdaptiveDigitCell: View {
             .frame(height: cellHeight)
             .background(cellBackground)
             .overlay { cellBorder }
+            .overlay {
+                // Hint visual sutil en modo input
+                if isInputMode && mark == .unknown {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .strokeBorder(Color.appActionPrimary.opacity(0.4), lineWidth: 1.5, antialiased: true)
+                }
+            }
             .scaleEffect(isPressed ? 0.95 : 1.0)
             .animation(.smooth(duration: 0.2), value: mark)
             .animation(.easeInOut(duration: 0.1), value: isPressed)
@@ -69,8 +80,8 @@ struct AdaptiveDigitCell: View {
                 onTap()
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Dígito \(digit). Estado \(markSpokenText)")
-            .accessibilityHint("Doble toque para cambiar estado")
+            .accessibilityLabel(isInputMode ? "Dígito \(digit). Tocá para ingresar" : "Dígito \(digit). Estado \(markSpokenText)")
+            .accessibilityHint(isInputMode ? "Doble toque para agregar al número" : "Doble toque para cambiar estado")
             .accessibilityAddTraits(.isButton)
     }
 

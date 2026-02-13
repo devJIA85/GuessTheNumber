@@ -41,6 +41,10 @@ struct CollapsibleBoardHeader: View {
 
     /// Progreso de colapso (0.0 = expandido, 1.0 = colapsado).
     let collapseProgress: CGFloat
+    
+    /// Callback ejecutado cuando el usuario toca un dígito para ingresar (modo input).
+    /// - Why: permite usar el tablero como teclado custom
+    var onDigitTap: ((Int) -> Void)?
 
     // MARK: - Dependencies
 
@@ -59,7 +63,7 @@ struct CollapsibleBoardHeader: View {
             // Grilla adaptativa 2×5
             adaptiveGrid
         }
-        .padding(.horizontal, AppTheme.Spacing.medium)
+        .padding(.horizontal, AppTheme.Spacing.small)
         .padding(.vertical, verticalPadding)
         .background(.ultraThinMaterial)
         .accessibilityElement(children: .contain)
@@ -96,6 +100,7 @@ struct CollapsibleBoardHeader: View {
     /// Grilla 2×5 con celdas adaptativas.
     /// - La estructura de la grilla no cambia (siempre 2×5).
     /// - Solo cambian las dimensiones de las celdas.
+    /// - Modo dual: tap corto = input dígito, long press = marcar good/fair/poor
     private var adaptiveGrid: some View {
         let columns = Array(repeating: GridItem(.fixed(cellWidth), spacing: gridSpacing), count: 5)
 
@@ -108,8 +113,17 @@ struct CollapsibleBoardHeader: View {
                     cellHeight: cellHeight,
                     onTap: {
                         guard !isReadOnly else { return }
-                        cycleMark(forDigit: note.digit)
-                    }
+                        
+                        // MODO 1: Si hay callback de input, ejecutar (agregar dígito al guess)
+                        if let onDigitTap = onDigitTap {
+                            onDigitTap(note.digit)
+                        }
+                        // MODO 2: Si no hay callback, modo clásico (marcar good/fair/poor)
+                        else {
+                            cycleMark(forDigit: note.digit)
+                        }
+                    },
+                    isInputMode: onDigitTap != nil
                 )
             }
         }
@@ -131,9 +145,9 @@ struct CollapsibleBoardHeader: View {
     }
 
     /// Padding vertical del header completo.
-    /// Expandido: 12pt (compact), Colapsado: 6pt (xSmall).
+    /// Expandido: 8pt (small), Colapsado: 4pt (xxSmall).
     private var verticalPadding: CGFloat {
-        lerp(from: AppTheme.CardPadding.compact, to: AppTheme.Spacing.xSmall, progress: collapseProgress)
+        lerp(from: AppTheme.Spacing.small, to: 4, progress: collapseProgress)
     }
 
     /// Altura de cada celda.

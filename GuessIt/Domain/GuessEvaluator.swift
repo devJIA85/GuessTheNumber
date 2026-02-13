@@ -41,6 +41,23 @@ struct GuessEvaluator {
         precondition(secret.count == GameConstants.secretLength, "El secreto debe tener longitud \(GameConstants.secretLength).")
         precondition(guess.count == GameConstants.secretLength, "El guess debe tener longitud \(GameConstants.secretLength).")
 
+        return evaluateInternal(secret: secret, guess: guess, expectedLength: GameConstants.secretLength)
+    }
+    
+    /// Evalúa un intento del desafío diario contra el secreto.
+    /// - Parameters:
+    ///   - secret: Número secreto del desafío diario (3 dígitos).
+    ///   - guess: Intento del usuario (3 dígitos).
+    /// - Returns: `Evaluation` con conteos de Good/Fair y bandera de Poor.
+    static func evaluateDailyChallenge(secret: String, guess: String) -> Evaluation {
+        precondition(secret.count == GameConstants.dailyChallengeLength, "El secreto del desafío diario debe tener longitud \(GameConstants.dailyChallengeLength).")
+        precondition(guess.count == GameConstants.dailyChallengeLength, "El guess del desafío diario debe tener longitud \(GameConstants.dailyChallengeLength).")
+        
+        return evaluateInternal(secret: secret, guess: guess, expectedLength: GameConstants.dailyChallengeLength)
+    }
+    
+    /// Implementación interna compartida para evaluar intentos.
+    private static func evaluateInternal(secret: String, guess: String, expectedLength: Int) -> Evaluation {
         let secretChars = Array(secret)
         let guessChars = Array(guess)
 
@@ -49,10 +66,10 @@ struct GuessEvaluator {
         var secretRemainder: [Character] = []
         var guessRemainder: [Character] = []
 
-        secretRemainder.reserveCapacity(GameConstants.secretLength)
-        guessRemainder.reserveCapacity(GameConstants.secretLength)
+        secretRemainder.reserveCapacity(expectedLength)
+        guessRemainder.reserveCapacity(expectedLength)
 
-        for index in 0..<GameConstants.secretLength {
+        for index in 0..<expectedLength {
             if secretChars[index] == guessChars[index] {
                 goodCount += 1
             } else {
