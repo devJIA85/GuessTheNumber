@@ -147,52 +147,52 @@ struct SimpleBoardView: View {
     private func setMark(forDigit digit: Int, to mark: DigitMark) {
         // Buscar la nota localmente
         guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
+            #if DEBUG
             print("❌ No se encontró DigitNote para dígito \(digit)")
+            #endif
             return
         }
-        
+
         // Actualizar directamente en el objeto del @Query
         // - Why: SwiftUI observa automáticamente cambios en objetos de @Query
         // - No necesitamos pasar por el actor para cambios de UI
         note.mark = mark
-        
-        print("✅ Marca actualizada: dígito \(digit) → \(mark)")
-        
+
         // Haptic feedback
         let impact = UIImpactFeedbackGenerator(style: .medium)
         impact.impactOccurred()
-        
+
         // Persistir en background (sin bloquear la UI)
         Task {
             do {
                 try await env.modelActor.setDigitMark(digit: digit, mark: mark, gameID: game.persistentID)
-                print("💾 Marca guardada en SwiftData")
             } catch {
+                #if DEBUG
                 print("⚠️ Error al guardar marca: \(error)")
+                #endif
             }
         }
     }
-    
+
     /// Resetea todas las marcas del tablero a `.unknown`.
     private func resetBoard() {
         // Resetear todas las notas localmente (cambio inmediato en la UI)
         for note in game.digitNotes {
             note.mark = .unknown
         }
-        
-        print("🔄 Tablero reseteado localmente")
-        
+
         // Haptic feedback
         let impact = UIImpactFeedbackGenerator(style: .medium)
         impact.impactOccurred()
-        
+
         // Persistir en background
         Task {
             do {
                 try await env.modelActor.resetDigitNotes(gameID: game.persistentID)
-                print("💾 Reset guardado en SwiftData")
             } catch {
+                #if DEBUG
                 print("⚠️ Error al resetear tablero: \(error)")
+                #endif
             }
         }
     }
@@ -300,16 +300,16 @@ struct SimpleDigitCell: View {
         if isUsed {
             return Color.white.opacity(0.08)
         }
-        
+
         switch mark {
         case .unknown:
             return Color.white.opacity(0.12)
         case .poor:
-            return Color.red.opacity(0.30)
+            return Color.appMarkPoor.opacity(0.30)
         case .good:
-            return Color.green.opacity(0.30)
+            return Color.appMarkGood.opacity(0.30)
         case .fair:
-            return Color.yellow.opacity(0.35)
+            return Color.appMarkFair.opacity(0.35)
         }
     }
     
@@ -343,11 +343,11 @@ struct SimpleDigitCell: View {
         case .unknown:
             return .white
         case .poor:
-            return Color(red: 1.0, green: 0.2, blue: 0.2)
+            return .appMarkPoor
         case .fair:
-            return Color(red: 1.0, green: 0.7, blue: 0.0)
+            return .appMarkFair
         case .good:
-            return Color(red: 0.2, green: 0.9, blue: 0.3)
+            return .appMarkGood
         }
     }
     

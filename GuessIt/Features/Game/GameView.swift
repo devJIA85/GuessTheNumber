@@ -656,10 +656,14 @@ struct GameView: View {
             "Pista \(formattedTime)"
         }
 
-        private var formattedTime: String {
+        private static let timeFormatter: DateFormatter = {
             let formatter = DateFormatter()
             formatter.dateFormat = "HH:mm"
-            return formatter.string(from: createdAt)
+            return formatter
+        }()
+
+        private var formattedTime: String {
+            Self.timeFormatter.string(from: createdAt)
         }
     }
     
@@ -708,6 +712,10 @@ struct GameView: View {
                 return "No se pudo generar una pista en este momento. Intentá de nuevo más tarde."
             case .unsafeOutput:
                 return "La pista generada no cumplió con las reglas de seguridad. Intentá de nuevo."
+            case .timedOut:
+                return "La generación de la pista tardó demasiado. Intentá de nuevo."
+            case .rateLimited:
+                return "Alcanzaste el límite de pistas por sesión. Reiniciá la app para más pistas."
             }
         }
         return "Ocurrió un error inesperado al generar la pista."

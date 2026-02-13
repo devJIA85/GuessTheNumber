@@ -29,12 +29,18 @@ import FoundationModels
 /// - Necesitamos mantener estado mutable (telemetría) thread-safe.
 /// - Actor garantiza acceso serializado sin necesidad de locks explícitos.
 actor HintService {
-    
+
     private let builder: HintPromptBuilder
     private let engine: any HintEngine
-    
+
+    /// Timeout máximo para la generación de una pista (en segundos).
+    private static let generationTimeoutSeconds: UInt64 = 15
+
+    /// Límite de requests de pistas por sesión para evitar spam a Apple Intelligence.
+    private static let maxRequestsPerSession: Int = 20
+
     // MARK: - Telemetría (solo memoria)
-    
+
     /// Contador de requests de pistas en esta sesión.
     ///
     /// # Por qué en memoria
@@ -104,12 +110,18 @@ actor HintService {
     /// - Parameter input: contexto del juego (intentos y notas de dígitos).
     /// - Returns: pista generada (1-4 líneas).
     func generateHint(input: HintInput) async throws -> HintOutput {
+        // Rate limiting: prevenir spam a Apple Intelligence
+        guard requestCount < Self.maxRequestsPerSession else {
+            lastErrorDescription = "Límite de requests por sesión alcanzado"
+            throw HintError.rateLimited
+        }
+
         // Telemetría: incrementar contador
         requestCount += 1
-        
+
         // Check cancelación temprano
         try Task.checkCancellation()
-        
+
         do {
             // 1. Verificar disponibilidad
             guard engine.isAvailable else {
@@ -117,26 +129,29 @@ actor HintService {
                 lastErrorDescription = "Engine no disponible"
                 throw error
             }
-            
+
             try Task.checkCancellation()
-            
+
             // 2. Construir prompt
             let prompt = builder.makePrompt(input: input)
-            
+
             try Task.checkCancellation()
-            
-            // 3. Generar texto con engine (con fallback si Apple Intelligence dispara guardrails)
+
+            // 3. Generar texto con engine (con timeout y fallback)
             let usedEngine: any HintEngine
             let rawText: String
+            let currentEngine = self.engine
             do {
-                rawText = try await engine.generate(prompt: prompt)
-                usedEngine = engine
+                rawText = try await withTimeout(seconds: Self.generationTimeoutSeconds) {
+                    try await currentEngine.generate(prompt: prompt)
+                }
+                usedEngine = currentEngine
             } catch {
-                // Si falla Apple Intelligence por guardrails, usamos fallback para no dejar al usuario sin pista.
+                // Si falla Apple Intelligence por guardrails o timeout, usamos fallback.
                 if error is CancellationError {
                     throw error
                 }
-                if engine is AppleHintEngine {
+                if currentEngine is AppleHintEngine {
                     let fallbackEngine = FallbackHintEngine()
                     rawText = try await fallbackEngine.generate(prompt: prompt)
                     usedEngine = fallbackEngine
@@ -227,6 +242,10 @@ actor HintService {
             return "Fallo al generar pista"
         case .unsafeOutput:
             return "Output violó guardrails"
+        case .timedOut:
+            return "Timeout al generar pista"
+        case .rateLimited:
+            return "Límite de requests por sesión alcanzado"
         }
     }
 }
@@ -397,5 +416,33 @@ private struct FallbackHintEngine: HintEngine {
         let seed = Int(Date().timeIntervalSince1970 * 1000) + abs(prompt.count)
         let index = seed % hints.count
         return hints[index]
+    }
+}
+
+// MARK: - Timeout Utility
+
+/// Ejecuta una operación async con timeout.
+///
+/// Si la operación no completa en el tiempo indicado, cancela la task hija
+/// y lanza `HintError.timedOut`.
+private func withTimeout<T: Sendable>(
+    seconds: UInt64,
+    operation: @escaping @Sendable () async throws -> T
+) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask {
+            try await operation()
+        }
+        group.addTask {
+            try await Task.sleep(for: .seconds(seconds))
+            throw HintError.timedOut
+        }
+
+        // El primero que termine gana; cancelamos el otro.
+        guard let result = try await group.next() else {
+            throw HintError.timedOut
+        }
+        group.cancelAll()
+        return result
     }
 }

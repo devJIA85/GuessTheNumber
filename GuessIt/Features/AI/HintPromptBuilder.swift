@@ -254,24 +254,34 @@ struct HintPromptBuilder: Sendable {
     ///
     /// - Parameter text: salida del modelo de IA.
     /// - Returns: `true` si la salida es segura, `false` si viola guardrails.
+    // MARK: - Regex pre-compilados (compilar una sola vez)
+
+    /// Detecta exactamente 5 dígitos consecutivos (posible secreto revelado).
+    private static let fiveDigitsPattern = #"\b\d{5}\b"#
+
+    /// Patrones de dígito + posición (demasiado directos, actúan como "resolver").
+    private static let digitPositionPatterns = [
+        #"\b\d\b.{0,12}\b(pos(ición|icion)|pos|lugar)\s*(\d|1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b"#,
+        #"\b(pos(ición|icion)|pos|lugar)\s*(\d|1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b.{0,12}\b\d\b"#,
+        #"\b\d\b.{0,12}\b(en\s+la|en\s+el)\s+(1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b"#,
+        #"\b(en\s+la|en\s+el)\s+(1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b.{0,12}\b\d\b"#
+    ]
+
     func isOutputSafe(_ text: String) -> Bool {
         let lowercased = text.lowercased()
-        
+
         // Guardrail 1: detectar 5 dígitos consecutivos (posible secreto revelado)
-        // Regex: \b\d{5}\b → palabra completa de exactamente 5 dígitos
-        let fiveDigitsPattern = #"\b\d{5}\b"#
-        if let _ = lowercased.range(of: fiveDigitsPattern, options: .regularExpression) {
+        if let _ = lowercased.range(of: Self.fiveDigitsPattern, options: .regularExpression) {
             return false
         }
-        
+
         // Guardrail 2: detectar múltiples candidatos (listas de 5 dígitos)
         // Por qué: una lista de "candidatos" puede revelar el secreto por reducción
-        // Ejemplo bloqueado: "Probá 12345 o 54321"
-        let fiveDigitsMatches = text.ranges(of: #"\b\d{5}\b"#, options: .regularExpression)
+        let fiveDigitsMatches = text.ranges(of: Self.fiveDigitsPattern, options: .regularExpression)
         if fiveDigitsMatches.count >= 2 {
             return false
         }
-        
+
         // Guardrail 3: detectar frases de respuesta directa
         // Por qué: estas frases suelen preceder revelaciones del secreto
         let directAnswerPhrases = [
@@ -284,23 +294,15 @@ struct HintPromptBuilder: Sendable {
             "intenta este:",
             "intentá este:"
         ]
-        
+
         for phrase in directAnswerPhrases {
             if lowercased.contains(phrase) {
                 return false
             }
         }
-        
+
         // Guardrail 4: bloquear patrones de dígito + posición (demasiado directos)
-        // Por qué: evita que la IA indique ubicaciones específicas, que actúan como "resolver".
-        let digitPositionPatterns = [
-            #"\b\d\b.{0,12}\b(pos(ición|icion)|pos|lugar)\s*(\d|1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b"#,
-            #"\b(pos(ición|icion)|pos|lugar)\s*(\d|1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b.{0,12}\b\d\b"#,
-            #"\b\d\b.{0,12}\b(en\s+la|en\s+el)\s+(1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b"#,
-            #"\b(en\s+la|en\s+el)\s+(1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b.{0,12}\b\d\b"#
-        ]
-        
-        for pattern in digitPositionPatterns {
+        for pattern in Self.digitPositionPatterns {
             if let _ = lowercased.range(of: pattern, options: .regularExpression) {
                 return false
             }

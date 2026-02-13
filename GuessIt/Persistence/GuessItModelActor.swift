@@ -313,27 +313,30 @@ actor GuessItModelActor {
     /// - Returns: Lista de snapshots ordenados y filtrados.
     /// - Note: Este método no expone el secreto de las partidas.
     func fetchFinishedGameSummaries() throws -> [GameSummarySnapshot] {
+        let inProgressRaw = GameState.inProgress.rawValue
+        let predicate = #Predicate<Game> { game in
+            game.stateRaw != inProgressRaw
+        }
+
         let descriptor = FetchDescriptor<Game>(
+            predicate: predicate,
             sortBy: [
                 SortDescriptor(\Game.finishedAt, order: .reverse),
                 SortDescriptor(\Game.createdAt, order: .reverse)
             ]
         )
-        
-        let allGames = try modelContext.fetch(descriptor)
-        
-        // Filtrar solo partidas terminadas (won o abandoned)
-        return allGames
-            .filter { $0.state != .inProgress }
-            .map { game in
-                GameSummarySnapshot(
-                    id: game.persistentID,
-                    state: game.state,
-                    createdAt: game.createdAt,
-                    finishedAt: game.finishedAt,
-                    attemptsCount: game.attempts.count
-                )
-            }
+
+        let games = try modelContext.fetch(descriptor)
+
+        return games.map { game in
+            GameSummarySnapshot(
+                id: game.persistentID,
+                state: game.state,
+                createdAt: game.createdAt,
+                finishedAt: game.finishedAt,
+                attemptsCount: game.attempts.count
+            )
+        }
     }
     
     /// Obtiene un snapshot completo de una partida para vista de detalle.
@@ -575,7 +578,7 @@ actor GuessItModelActor {
         }
         
         // Evaluar intento (desafío diario usa 3 dígitos)
-        let evaluation = GuessEvaluator.evaluateDailyChallenge(secret: challenge.secret, guess: guess)
+        let evaluation = try GuessEvaluator.evaluateDailyChallenge(secret: challenge.secret, guess: guess)
         let feedback = AttemptFeedback(
             good: evaluation.good,
             fair: evaluation.fair,
@@ -631,7 +634,8 @@ actor GuessItModelActor {
         
         let challenges = try modelContext.fetch(descriptor)
         
-        // Filtrar en código (SwiftData no soporta comparación de enums en predicates)
+        // Filtrar en código: DailyChallenge no tiene stateRaw y el dataset es pequeño
+        // (~365 registros/año máx), por lo que filtrar en memoria es aceptable.
         return challenges
             .filter { $0.state == .completed || $0.state == .failed }
             .map { DailyChallengeSnapshot(from: $0, revealSecret: $0.state == .completed) }

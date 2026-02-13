@@ -12,14 +12,14 @@ import SwiftUI
 /// # Características
 /// - SOLO visualización (no hay TextField, no invoca teclado del sistema)
 /// - 5 celdas visuales que se llenan de izquierda a derecha
-/// - El input es manejado por CustomDigitPad (teclado numérico custom)
+/// - El input es manejado por SimpleBoardView (teclado numérico custom)
 /// - El borrado vacía de derecha a izquierda
 /// - Accesible: VoiceOver lee el valor completo como un número
 /// - Diseño limpio con bordes suaves
 ///
 /// # Importante
 /// Este componente NO tiene TextField. Es pura visualización.
-/// El input se maneja completamente a través del CustomDigitPad.
+/// El input se maneja completamente a través del SimpleBoardView.
 struct OTPStyleDigitInput: View {
     
     /// Texto del input (controlado por el padre).
@@ -34,7 +34,7 @@ struct OTPStyleDigitInput: View {
     
     var body: some View {
         // Solo mostramos las celdas visuales
-        // NO hay TextField - el input es 100% manejado por CustomDigitPad
+        // NO hay TextField - el input es 100% manejado por SimpleBoardView
         digitCellsView
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Ingreso de número de 5 dígitos")

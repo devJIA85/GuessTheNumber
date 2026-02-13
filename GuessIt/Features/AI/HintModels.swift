@@ -104,10 +104,14 @@ struct HintOutput: Sendable, Equatable {
 /// - `unavailable`: el dispositivo/entorno no soporta generación de pistas (sin Apple Intelligence).
 /// - `generationFailed`: la IA falló al generar la pista (timeout, red, etc.).
 /// - `unsafeOutput`: la salida de la IA violó los guardrails de seguridad (reveló el secreto, etc.).
+/// - `timedOut`: la generación excedió el tiempo máximo permitido.
+/// - `rateLimited`: se excedió el límite de requests por sesión.
 enum HintError: Error, Sendable {
     case unavailable
     case generationFailed
     case unsafeOutput
+    case timedOut
+    case rateLimited
 }
 
 // MARK: - Debug / Telemetría

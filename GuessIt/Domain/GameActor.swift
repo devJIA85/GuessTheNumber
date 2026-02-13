@@ -83,7 +83,7 @@ actor GameActor {
         try GuessValidator.validate(guess)
 
         // 3) Evaluar usando el secreto persistido.
-        let evaluation = GuessEvaluator.evaluate(secret: gameData.secret, guess: guess)
+        let evaluation = try GuessEvaluator.evaluate(secret: gameData.secret, guess: guess)
         let feedback = AttemptFeedback(
             good: evaluation.good,
             fair: evaluation.fair,

@@ -21,10 +21,10 @@ enum LoadState<Value>: Equatable where Value: Equatable {
             return true
         case let (.loaded(lhsValue), .loaded(rhsValue)):
             return lhsValue == rhsValue
-        case let (.failure(lhsError), .failure(rhsError)):
-            // Comparamos errors usando su representación completa (tipo + contenido)
-            // Nota: Error no es Equatable, así que usamos String(reflecting:) como proxy
-            return String(reflecting: lhsError) == String(reflecting: rhsError)
+        case (.failure, .failure):
+            // Dos failures siempre se consideran diferentes para que SwiftUI re-renderice.
+            // Error no es Equatable y String(reflecting:) es frágil entre versiones de OS.
+            return false
         default:
             return false
         }

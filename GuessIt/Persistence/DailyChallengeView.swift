@@ -188,6 +188,9 @@ struct DailyChallengeView: View {
     private func completedView(challenge: DailyChallengeSnapshot) -> some View {
         ScrollView {
             VStack(spacing: AppTheme.Spacing.medium) {
+                // Countdown arriba de todo
+                CountdownCard()
+                
                 VStack(spacing: AppTheme.Spacing.small) {
                     Text("🎉")
                         .font(.system(size: 60))
@@ -208,15 +211,13 @@ struct DailyChallengeView: View {
                             .fill(Color.appBackgroundSecondary.opacity(0.5))
                     )
                 }
+                .frame(maxWidth: .infinity)
                 .glassCard(tintColor: .appActionPrimary)
                 
                 // Historial de intentos
                 if !challenge.attempts.isEmpty {
                     AttemptsHistoryCard(attempts: challenge.attempts)
                 }
-                
-                // Countdown hasta mañana
-                CountdownCard()
             }
             .padding(.horizontal, AppTheme.Spacing.medium)
             .padding(.vertical, AppTheme.Spacing.small)
@@ -229,6 +230,9 @@ struct DailyChallengeView: View {
     private func failedView(challenge: DailyChallengeSnapshot) -> some View {
         ScrollView {
             VStack(spacing: AppTheme.Spacing.medium) {
+                // Countdown arriba de todo
+                CountdownCard()
+                
                 // Card principal con resultado
                 VStack(spacing: AppTheme.Spacing.medium) {
                     Text("😔")
@@ -279,6 +283,7 @@ struct DailyChallengeView: View {
                     }
                     .padding(.top, AppTheme.Spacing.small)
                 }
+                .frame(maxWidth: .infinity)
                 .padding(AppTheme.Spacing.medium)
                 .glassCard()
                 
@@ -288,7 +293,6 @@ struct DailyChallengeView: View {
                         Text("Tus intentos")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(Color.appTextPrimary)
-                            .padding(.horizontal, AppTheme.Spacing.medium)
                         
                         ScrollView {
                             VStack(spacing: AppTheme.Spacing.small) {
@@ -301,10 +305,12 @@ struct DailyChallengeView: View {
                                         )
                                 }
                             }
-                            .padding(.horizontal, AppTheme.Spacing.medium)
                         }
                         .frame(maxHeight: 200)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(AppTheme.Spacing.medium)
+                    .glassCard()
                 }
                 
                 // Motivación
@@ -321,11 +327,9 @@ struct DailyChallengeView: View {
                         .foregroundStyle(Color.appTextSecondary)
                         .multilineTextAlignment(.center)
                 }
+                .frame(maxWidth: .infinity)
                 .padding(AppTheme.Spacing.medium)
                 .glassCard()
-                
-                // Countdown hasta mañana
-                CountdownCard()
             }
             .padding(.horizontal, AppTheme.Spacing.medium)
             .padding(.vertical, AppTheme.Spacing.small)
@@ -434,6 +438,7 @@ struct AttemptsHistoryCard: View {
             }
             .frame(maxHeight: 150)  // Limitar altura (~3-4 intentos)
         }
+        .frame(maxWidth: .infinity)
         .glassCard()
     }
 }

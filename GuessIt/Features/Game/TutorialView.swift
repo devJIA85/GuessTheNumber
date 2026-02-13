@@ -54,7 +54,7 @@ struct TutorialView: View {
                     Button {
                         completeTutorial()
                     } label: {
-                        Text("Saltar")
+                        Text(String(localized: "tutorial.skip"))
                             .font(.subheadline)
                             .foregroundStyle(Color.appTextSecondary)
                     }
@@ -87,7 +87,7 @@ struct TutorialView: View {
                                 currentPage += 1
                             }
                         } label: {
-                            Text("Siguiente")
+                            Text(String(localized: "tutorial.next"))
                                 .font(AppTheme.Typography.headline())
                                 .frame(maxWidth: .infinity)
                         }
@@ -98,7 +98,7 @@ struct TutorialView: View {
                         Button {
                             completeTutorial()
                         } label: {
-                            Text("¡Comenzar a jugar!")
+                            Text(String(localized: "tutorial.start"))
                                 .font(AppTheme.Typography.headline())
                                 .frame(maxWidth: .infinity)
                         }
@@ -166,13 +166,13 @@ struct Page1View: View {
             .shadow(color: .black.opacity(0.2), radius: 20, y: 10)
             
             // Título
-            Text("Bienvenido a\nGuess It")
+            Text(String(localized: "tutorial.welcome.title"))
                 .font(.system(size: 36, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
-            
+
             // Descripción
-            Text("Un juego de deducción donde tenés que adivinar un número secreto de 5 dígitos")
+            Text(String(localized: "tutorial.welcome.description"))
                 .font(AppTheme.Typography.body())
                 .foregroundStyle(.white.opacity(0.9))
                 .multilineTextAlignment(.center)
@@ -194,7 +194,7 @@ struct Page2View: View {
             ExampleInputView()
             
             // Título
-            Text("¿Cómo jugar?")
+            Text(String(localized: "tutorial.how_to_play.title"))
                 .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
             
@@ -202,17 +202,17 @@ struct Page2View: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
                 InstructionRow(
                     number: "1",
-                    text: "Ingresá un número de 5 dígitos (sin repetir)"
+                    text: String(localized: "tutorial.how_to_play.step1")
                 )
-                
+
                 InstructionRow(
                     number: "2",
-                    text: "Recibís feedback sobre tu intento"
+                    text: String(localized: "tutorial.how_to_play.step2")
                 )
-                
+
                 InstructionRow(
                     number: "3",
-                    text: "Usá las pistas para deducir el secreto"
+                    text: String(localized: "tutorial.how_to_play.step3")
                 )
             }
             .padding(.horizontal, AppTheme.Spacing.xxLarge)
@@ -230,43 +230,43 @@ struct Page3View: View {
             Spacer()
             
             // Título
-            Text("Sistema de feedback")
+            Text(String(localized: "tutorial.feedback.title"))
                 .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
             
             // Ejemplos de feedback
             VStack(spacing: AppTheme.Spacing.medium) {
                 FeedbackExample(
-                    color: .green,
+                    color: .appMarkGood,
                     icon: "checkmark.circle.fill",
                     label: "GOOD",
-                    description: "Dígito correcto en posición correcta"
+                    description: String(localized: "tutorial.feedback.good")
                 )
-                
+
                 FeedbackExample(
-                    color: .yellow,
+                    color: .appMarkFair,
                     icon: "exclamationmark.circle.fill",
                     label: "FAIR",
-                    description: "Dígito correcto en posición incorrecta"
+                    description: String(localized: "tutorial.feedback.fair")
                 )
-                
+
                 FeedbackExample(
-                    color: .red,
+                    color: .appMarkPoor,
                     icon: "xmark.circle.fill",
                     label: "POOR",
-                    description: "Ningún dígito está en el secreto"
+                    description: String(localized: "tutorial.feedback.poor")
                 )
             }
             .padding(.horizontal, AppTheme.Spacing.medium)
             
             // Ejemplo visual
             VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-                Text("Ejemplo:")
+                Text(String(localized: "tutorial.feedback.example"))
                     .font(.caption.bold())
                     .foregroundStyle(.white.opacity(0.9))
-                
+
                 HStack(spacing: AppTheme.Spacing.small) {
-                    Text("Tu intento:")
+                    Text(String(localized: "tutorial.feedback.your_attempt"))
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.8))
                     
@@ -276,14 +276,14 @@ struct Page3View: View {
                 }
                 
                 HStack(spacing: 4) {
-                    Text("Feedback:")
+                    Text(String(localized: "tutorial.feedback.label"))
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.8))
                     
                     HStack(spacing: 2) {
-                        Circle().fill(.green).frame(width: 12, height: 12)
-                        Circle().fill(.green).frame(width: 12, height: 12)
-                        Circle().fill(.yellow).frame(width: 12, height: 12)
+                        Circle().fill(Color.appMarkGood).frame(width: 12, height: 12)
+                        Circle().fill(Color.appMarkGood).frame(width: 12, height: 12)
+                        Circle().fill(Color.appMarkFair).frame(width: 12, height: 12)
                         Circle().fill(.clear).stroke(.white.opacity(0.3), lineWidth: 1).frame(width: 12, height: 12)
                         Circle().fill(.clear).stroke(.white.opacity(0.3), lineWidth: 1).frame(width: 12, height: 12)
                     }
@@ -317,12 +317,12 @@ struct Page4View: View {
             Spacer()
             
             // Título
-            Text("Tablero de deducción")
+            Text(String(localized: "tutorial.board.title"))
                 .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
             
             // Descripción
-            Text("Usá el tablero superior para marcar dígitos que descartaste o confirmaste")
+            Text(String(localized: "tutorial.board.description"))
                 .font(AppTheme.Typography.body())
                 .foregroundStyle(.white.opacity(0.9))
                 .multilineTextAlignment(.center)
@@ -360,9 +360,9 @@ struct Page4View: View {
             
             // Leyenda
             VStack(alignment: .leading, spacing: 10) {
-                LegendRow(color: .red, label: "Descartado (no está en el secreto)")
-                LegendRow(color: .green, label: "Confirmado (posición correcta)")
-                LegendRow(color: .yellow, label: "En el secreto (posición incorrecta)")
+                LegendRow(color: .appMarkPoor, label: String(localized: "tutorial.board.legend.discard"))
+                LegendRow(color: .appMarkGood, label: String(localized: "tutorial.board.legend.confirmed"))
+                LegendRow(color: .appMarkFair, label: String(localized: "tutorial.board.legend.in_secret"))
             }
             .padding(AppTheme.Spacing.medium)
             .background(
@@ -466,18 +466,18 @@ struct DeductionCellExample: View {
     var backgroundColor: Color {
         switch mark {
         case .unknown: return .clear
-        case .poor: return .red.opacity(0.2)
-        case .good: return .green.opacity(0.2)
-        case .fair: return .yellow.opacity(0.2)
+        case .poor: return .appMarkPoor.opacity(0.2)
+        case .good: return .appMarkGood.opacity(0.2)
+        case .fair: return .appMarkFair.opacity(0.2)
         }
     }
-    
+
     var borderColor: Color {
         switch mark {
         case .unknown: return .appBorderSubtle
-        case .poor: return .red
-        case .good: return .green
-        case .fair: return .yellow
+        case .poor: return .appMarkPoor
+        case .good: return .appMarkGood
+        case .fair: return .appMarkFair
         }
     }
     

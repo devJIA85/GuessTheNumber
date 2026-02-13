@@ -63,11 +63,15 @@ final class DailyChallenge {
     
     // MARK: - Computed Properties
     
+    private static let challengeIDFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
     /// ID único del desafío (formato: YYYY-MM-DD).
     var challengeID: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: date)
+        Self.challengeIDFormatter.string(from: date)
     }
     
     /// Indica si el desafío es de hoy.
@@ -125,7 +129,8 @@ final class DailyChallengeAttempt {
     var isPoor: Bool
     
     /// Desafío al que pertenece este intento.
-    var challenge: DailyChallenge?
+    /// Non-optional: un intento siempre pertenece a un desafío (consistente con Attempt.game).
+    var challenge: DailyChallenge
     
     // MARK: - Init
     

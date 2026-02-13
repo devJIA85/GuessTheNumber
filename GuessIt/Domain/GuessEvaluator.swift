@@ -17,6 +17,21 @@ import Foundation
 /// - No tiene side-effects: es 100% pura y testeable.
 struct GuessEvaluator {
 
+    /// Errores de validación interna del evaluador.
+    enum EvaluatorError: Error, LocalizedError {
+        case invalidSecretLength(expected: Int, got: Int)
+        case invalidGuessLength(expected: Int, got: Int)
+
+        var errorDescription: String? {
+            switch self {
+            case .invalidSecretLength(let expected, let got):
+                return "El secreto debe tener longitud \(expected), pero tiene \(got)."
+            case .invalidGuessLength(let expected, let got):
+                return "El guess debe tener longitud \(expected), pero tiene \(got)."
+            }
+        }
+    }
+
     /// Resultado de la evaluación de un intento.
     struct Evaluation: Equatable, Sendable {
         /// Cantidad de dígitos en posición correcta.
@@ -35,24 +50,32 @@ struct GuessEvaluator {
     ///   - secret: Número secreto (por ejemplo: "50317").
     ///   - guess: Intento del usuario (por ejemplo: "57310").
     /// - Returns: `Evaluation` con conteos de Good/Fair y bandera de Poor.
-    static func evaluate(secret: String, guess: String) -> Evaluation {
-        // Nota: no validamos aquí para mantener responsabilidad única.
-        // Aun así, precondiciones ayudan a detectar errores de integración temprano.
-        precondition(secret.count == GameConstants.secretLength, "El secreto debe tener longitud \(GameConstants.secretLength).")
-        precondition(guess.count == GameConstants.secretLength, "El guess debe tener longitud \(GameConstants.secretLength).")
+    /// - Throws: `EvaluatorError` si las longitudes no coinciden.
+    static func evaluate(secret: String, guess: String) throws -> Evaluation {
+        guard secret.count == GameConstants.secretLength else {
+            throw EvaluatorError.invalidSecretLength(expected: GameConstants.secretLength, got: secret.count)
+        }
+        guard guess.count == GameConstants.secretLength else {
+            throw EvaluatorError.invalidGuessLength(expected: GameConstants.secretLength, got: guess.count)
+        }
 
         return evaluateInternal(secret: secret, guess: guess, expectedLength: GameConstants.secretLength)
     }
-    
+
     /// Evalúa un intento del desafío diario contra el secreto.
     /// - Parameters:
     ///   - secret: Número secreto del desafío diario (3 dígitos).
     ///   - guess: Intento del usuario (3 dígitos).
     /// - Returns: `Evaluation` con conteos de Good/Fair y bandera de Poor.
-    static func evaluateDailyChallenge(secret: String, guess: String) -> Evaluation {
-        precondition(secret.count == GameConstants.dailyChallengeLength, "El secreto del desafío diario debe tener longitud \(GameConstants.dailyChallengeLength).")
-        precondition(guess.count == GameConstants.dailyChallengeLength, "El guess del desafío diario debe tener longitud \(GameConstants.dailyChallengeLength).")
-        
+    /// - Throws: `EvaluatorError` si las longitudes no coinciden.
+    static func evaluateDailyChallenge(secret: String, guess: String) throws -> Evaluation {
+        guard secret.count == GameConstants.dailyChallengeLength else {
+            throw EvaluatorError.invalidSecretLength(expected: GameConstants.dailyChallengeLength, got: secret.count)
+        }
+        guard guess.count == GameConstants.dailyChallengeLength else {
+            throw EvaluatorError.invalidGuessLength(expected: GameConstants.dailyChallengeLength, got: guess.count)
+        }
+
         return evaluateInternal(secret: secret, guess: guess, expectedLength: GameConstants.dailyChallengeLength)
     }
     
