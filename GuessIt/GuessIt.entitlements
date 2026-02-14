@@ -2,14 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- 
-	Entitlements limpios - sin capacidades no usadas.
-	
-	ELIMINADO:
-	- aps-environment: no se usan push notifications
-	- com.apple.developer.icloud-*: no se usa CloudKit (SwiftData local-first)
-	
-	Si en el futuro necesitas CloudKit o push, agregar aquí y en Info.plist.
-	-->
+	<key>com.apple.developer.game-center</key>
+	<true/>
 </dict>
 </plist>

@@ -82,268 +82,307 @@ struct GameView: View {
 
 
     var body: some View {
+        navigationContent
+    }
+    
+    private var navigationContent: some View {
         NavigationStack {
-            ZStack {
-                // FONDO PREMIUM: Gradiente complejo que da profundidad sin saturar
-                // - Why: elimina el color plano y crea una base visual moderna
-                // - SwiftUI 2025: usa backgroundExtensionEffect() para continuidad visual
-                PremiumBackgroundGradient()
-                    .modernBackgroundExtension()
-
-                // LAYOUT PRINCIPAL: VStack(spacing: 0)
-                //
-                // # Estructura
-                // 1. CollapsibleBoardHeader: fijo arriba, se contrae con scroll
-                // 2. ScrollView: solo historial + victoria (contenido scrolleable)
-                // 3. InputSection via .safeAreaInset(edge: .bottom): fijo abajo
-                //
-                // CONTENIDO SCROLLEABLE: victoria + historial
-                // - Why: layout simplificado, sin header sticky
-                // - El tablero de dígitos ahora está en el input section abajo
-                ScrollView {
-                    // OPTIMIZACIÓN iOS 26+: GlassEffectContainer
-                    // - Why: Apple recomienda usar container para múltiples efectos Glass
-                    // - Mejora rendimiento al combinar renders en una sola pasada
-                    // - Permite morphing fluido entre shapes durante transiciones
-                    // - Spacing: controla cuándo los efectos comienzan a blend juntos
-                    glassContainer {
-                        LazyVStack(spacing: AppTheme.Spacing.large) {
-                            // SECCIÓN 1: Victoria (solo si ganó)
-                            // - Why: feedback celebratorio que merece destacarse
-                            // - tintColor: usa color de acción para énfasis
-                            if let game = currentGame, game.state == .won {
-                                VictorySectionView(game: game, onNewGame: startNewGame)
-                            }
-
-                            // SECCIÓN 2: Historial de Intentos (jerarquía secundaria)
-                            // - Why: información importante pero no debe dominar la pantalla
-                            // - Usa ContentUnavailableView cuando está vacío para mejorar UX
-                            if let game = currentGame {
-                                HistorySectionView(game: game)
-                            } else {
-                                EmptyStateSectionView()
-                            }
-                        }
-                        .padding(.horizontal, AppTheme.Spacing.small)
-                        .padding(.vertical, 4)
-                    }
+            contentWithOverlay
+                .task { await initializeGameIfNeeded() }
+                .onChange(of: currentGame?.state) { _, newValue in
+                    handleGameStateChange(newValue)
                 }
-                // INPUT FIJO ABAJO: siempre accesible, contenido scrollea detrás
-                // - Why: el input es la acción primaria, debe estar siempre visible
-                // - Incluye: slots + tablero de dígitos + botones de acción
-                // - .safeAreaInset ajusta automáticamente el scroll para no tapar contenido
-                .safeAreaInset(edge: .bottom) {
-                    VStack(spacing: 0) {
-                        if let game = currentGame {
-                            @Bindable var bindableGame = game
-                            
-                            if game.state == .inProgress {
-                                GuessInputView(
-                                    guessText: $guessText,
-                                    game: bindableGame,
-                                    onDigitTap: { digit in
-                                        // Agregar dígito al guess si no llegamos al máximo (5)
-                                        if guessText.count < 5 {
-                                            guessText.append("\(digit)")
-                                            
-                                            // Haptic feedback
-                                            let impact = UIImpactFeedbackGenerator(style: .light)
-                                            impact.impactOccurred()
-                                        }
-                                    },
-                                    onSubmit: submit
-                                )
-                                .padding(.horizontal, AppTheme.Spacing.small)
-                                .padding(.top, 8)
-                                .padding(.bottom, 8)
-                            } else {
-                                DisabledInputSectionView()
-                                    .padding(.horizontal, AppTheme.Spacing.small)
-                                    .padding(.top, 4)
-                                    .padding(.bottom, 4)
-                            }
-                        } else {
-                            GuessInputView(
-                                guessText: $guessText,
-                                game: nil,
-                                onDigitTap: nil,
-                                onSubmit: submit
-                            )
-                            .padding(.horizontal, AppTheme.Spacing.small)
-                            .padding(.top, 8)
-                            .padding(.bottom, 8)
-                        }
-                    }
-                    .background {
-                        if #available(iOS 26.0, *) {
-                            // iOS 26+: Fondo glass translúcido
-                            Color.clear
-                                .background(.ultraThinMaterial)
-                        } else {
-                            // iOS <26: Fondo sólido con blur
-                            Color.appBackgroundPrimary.opacity(0.95)
-                        }
-                    }
+                .onChange(of: currentGame?.id) { _, _ in
+                    resetHintUIState()
                 }
-            }
-            .overlay {
-                if victorySplash.isPresented, let game = currentGame {
-                    VictorySplashView(
-                        secret: game.secret,
-                        attempts: game.attempts.count
-                    ) {
-                        // Cerramos la splash antes de iniciar nueva partida para evitar flashes.
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            victorySplash.dismiss()
-                        }
-                        startNewGame()
+                .alert(
+                    "Error",
+                    isPresented: errorBinding,
+                    actions: {
+                        Button("OK", role: .cancel) { errorMessage = nil }
+                    },
+                    message: {
+                        Text(errorMessage ?? "")
                     }
-                    // Transición sutil: fade + scale.
-                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                )
+                #if DEBUG
+                .alert(
+                    "Secreto actual",
+                    isPresented: $isDebugSecretPresented,
+                    actions: {
+                        Button("Cerrar", role: .cancel) { isDebugSecretPresented = false }
+                    },
+                    message: {
+                        Text(currentGame?.secret ?? "Sin partida")
+                    }
+                )
+                #endif
+                .toolbar {
+                    leadingToolbarItems
+                    trailingToolbarItems
                 }
-            }
-            // Animación sutil para entrada/salida de la splash.
+                .toolbarTitleDisplayMode(.inline)
+                .sheet(isPresented: $isHintPresented, onDismiss: onHintDismiss) {
+                    hintSheet
+                }
+                .fullScreenCover(isPresented: $isTutorialPresented) {
+                    TutorialView(isPresented: $isTutorialPresented)
+                }
+        }
+    }
+    
+    private var contentWithOverlay: some View {
+        mainContent
+            .overlay { victorySplashOverlay }
             .animation(.easeOut(duration: 0.2), value: victorySplash.isPresented)
             .navigationTitle("game.title")
             .navigationSubtitle(statusText)
             .tint(.appActionPrimary)
-            .task {
-                // Asegurar que siempre hay una partida en progreso al abrir la app
-                if currentGame == nil {
-                    do {
-                        try await env.gameActor.resetGame()
-                    } catch {
-                        errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+    }
+    
+    private var errorBinding: Binding<Bool> {
+        Binding(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )
+    }
+    
+    private func onHintDismiss() {
+        hintTask?.cancel()
+        hintTask = nil
+    }
+    
+    // MARK: - Main Content Views
+    
+    private var mainContent: some View {
+        ZStack {
+            backgroundGradient
+            scrollableContent
+                .safeAreaInset(edge: .bottom) {
+                    inputSection
+                }
+        }
+    }
+    
+    private var backgroundGradient: some View {
+        PremiumBackgroundGradient()
+            .modernBackgroundExtension()
+    }
+    
+    private var scrollableContent: some View {
+        ScrollView {
+            glassContainer {
+                LazyVStack(spacing: AppTheme.Spacing.large) {
+                    if let game = currentGame, game.state == .won {
+                        VictorySectionView(game: game, onNewGame: startNewGame)
+                    }
+                    
+                    if let game = currentGame {
+                        HistorySectionView(game: game)
+                    } else {
+                        EmptyStateSectionView()
                     }
                 }
+                .padding(.horizontal, AppTheme.Spacing.small)
+                .padding(.vertical, 4)
             }
-            .onChange(of: currentGame?.state) { _, newValue in
-                if newValue == .won {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        victorySplash.present()
-                    }
-                    triggerVictoryHapticIfNeeded()
+        }
+    }
+    
+    private var inputSection: some View {
+        VStack(spacing: 0) {
+            if let game = currentGame {
+                @Bindable var bindableGame = game
+                
+                if game.state == .inProgress {
+                    GuessInputView(
+                        guessText: $guessText,
+                        game: bindableGame,
+                        onDigitTap: handleDigitTap,
+                        onSubmit: submit
+                    )
+                    .padding(.horizontal, AppTheme.Spacing.small)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
                 } else {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        victorySplash.dismiss()
-                    }
-                    victorySplash.resetHaptic()
+                    DisabledInputSectionView()
+                        .padding(.horizontal, AppTheme.Spacing.small)
+                        .padding(.top, 4)
+                        .padding(.bottom, 4)
                 }
-                if newValue == .inProgress {
-                    // Reiniciamos la pista para evitar contaminación entre partidas o estados.
-                    resetHintUIState()
-                }
+            } else {
+                GuessInputView(
+                    guessText: $guessText,
+                    game: nil,
+                    onDigitTap: nil,
+                    onSubmit: submit
+                )
+                .padding(.horizontal, AppTheme.Spacing.small)
+                .padding(.top, 8)
+                .padding(.bottom, 8)
             }
-            .onChange(of: currentGame?.id) { _, _ in
-                // Cambió la partida activa: limpiamos estado de pista para comenzar desde cero.
-                resetHintUIState()
+        }
+        .background {
+            inputSectionBackground
+        }
+    }
+    
+    @ViewBuilder
+    private var inputSectionBackground: some View {
+        if #available(iOS 26.0, *) {
+            Color.clear
+                .background(.ultraThinMaterial)
+        } else {
+            Color.appBackgroundPrimary.opacity(0.95)
+        }
+    }
+    
+    @ViewBuilder
+    private var victorySplashOverlay: some View {
+        if victorySplash.isPresented, let game = currentGame {
+            VictorySplashView(
+                secret: game.secret,
+                attempts: game.attempts.count
+            ) {
+                handleVictorySplashDismiss()
             }
-            .alert(
-                "Error",
-                isPresented: Binding(
-                    get: { errorMessage != nil },
-                    set: { if !$0 { errorMessage = nil } }
-                ),
-                actions: {
-                    Button("OK", role: .cancel) { errorMessage = nil }
-                },
-                message: {
-                    Text(errorMessage ?? "")
+            .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        }
+    }
+    
+    /// Maneja el dismiss de la splash de victoria y resetea el juego.
+    /// - Why: centraliza la lógica para asegurar que siempre funcione correctamente.
+    private func handleVictorySplashDismiss() {
+        // 1. Cerrar la splash con animación
+        withAnimation(.easeOut(duration: 0.2)) {
+            victorySplash.dismiss()
+        }
+        
+        // 2. Esperar a que la animación termine antes de iniciar nueva partida
+        // Why: evita conflictos de estado durante la transición
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            startNewGame()
+        }
+    }
+    
+    // MARK: - Toolbar Items
+    
+    @ToolbarContentBuilder
+    private var leadingToolbarItems: some ToolbarContent {
+        ToolbarItemGroup(placement: .topBarLeading) {
+            if env.gameCenterService.isAuthenticated {
+                Button {
+                    env.gameCenterService.showDashboard()
+                } label: {
+                    Label("Game Center", systemImage: "gamecontroller.fill")
+                        .labelStyle(.iconOnly)
                 }
-            )
+                .foregroundStyle(Color.appTextSecondary)
+            }
+
+            NavigationLink {
+                HistoryView()
+            } label: {
+                Label("Historial", systemImage: "clock.arrow.circlepath")
+                    .labelStyle(.iconOnly)
+            }
+            .foregroundStyle(Color.appTextSecondary)
+
+            NavigationLink {
+                StatsView()
+            } label: {
+                Label("Estadísticas", systemImage: "chart.bar.fill")
+                    .labelStyle(.iconOnly)
+            }
+            .foregroundStyle(Color.appTextSecondary)
+
+            NavigationLink {
+                DailyChallengeView()
+            } label: {
+                Label("Desafío Diario", systemImage: "calendar")
+                    .labelStyle(.iconOnly)
+            }
+            .foregroundStyle(Color.appTextSecondary)
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private var trailingToolbarItems: some ToolbarContent {
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            if let game = currentGame, game.state == .inProgress {
+                Button {
+                    prepareHintPresentation()
+                    isHintPresented = true
+                } label: {
+                    Label("Pista", systemImage: "lightbulb")
+                        .labelStyle(.iconOnly)
+                }
+                .foregroundStyle(Color.appTextSecondary)
+            }
+            
+            Button {
+                isTutorialPresented = true
+            } label: {
+                Label("Cómo jugar", systemImage: "questionmark.circle")
+                    .labelStyle(.iconOnly)
+            }
+            .foregroundStyle(Color.appTextSecondary)
+
+            Button {
+                startNewGame()
+            } label: {
+                Label("Reiniciar", systemImage: "arrow.counterclockwise")
+                    .labelStyle(.iconOnly)
+            }
+            .foregroundStyle(Color.appTextSecondary)
+
             #if DEBUG
-            .alert(
-                "Secreto actual",
-                isPresented: $isDebugSecretPresented,
-                actions: {
-                    Button("Cerrar", role: .cancel) { isDebugSecretPresented = false }
-                },
-                message: {
-                    Text(currentGame?.secret ?? "Sin partida")
-                }
-            )
+            Button {
+                isDebugSecretPresented = true
+            } label: {
+                Label("Debug Secreto", systemImage: "eye")
+                    .labelStyle(.iconOnly)
+            }
+            .foregroundStyle(Color.appTextSecondary)
             #endif
-            .toolbar {
-                ToolbarItemGroup(placement: .topBarLeading) {
-                    NavigationLink {
-                        HistoryView()
-                    } label: {
-                        Label("Historial", systemImage: "clock.arrow.circlepath")
-                            .labelStyle(.iconOnly)
-                    }
-                    .foregroundStyle(Color.appTextSecondary)
-                    
-                    NavigationLink {
-                        StatsView()
-                    } label: {
-                        Label("Estadísticas", systemImage: "chart.bar.fill")
-                            .labelStyle(.iconOnly)
-                    }
-                    .foregroundStyle(Color.appTextSecondary)
-                    
-                    NavigationLink {
-                        DailyChallengeView()
-                    } label: {
-                        Label("Desafío Diario", systemImage: "calendar")
-                            .labelStyle(.iconOnly)
-                    }
-                    .foregroundStyle(Color.appTextSecondary)
-                }
-
-                // WWDC25: ToolbarItemGroup agrupa botones trailing en un cluster
-                // Liquid Glass unificado. En iOS 26+ los botones agrupados comparten
-                // una superficie glass común, mejorando la coherencia visual.
-                // ToolbarSpacer(.fixed) separa acciones de juego (pista/reset) de debug.
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    if let game = currentGame, game.state == .inProgress {
-                        Button {
-                            prepareHintPresentation()
-                            isHintPresented = true
-                        } label: {
-                            Label("Pista", systemImage: "lightbulb")
-                                .labelStyle(.iconOnly)
-                        }
-                        .foregroundStyle(Color.appTextSecondary)
-                    }
-                    
-                    Button {
-                        isTutorialPresented = true
-                    } label: {
-                        Label("Cómo jugar", systemImage: "questionmark.circle")
-                            .labelStyle(.iconOnly)
-                    }
-                    .foregroundStyle(Color.appTextSecondary)
-
-                    Button {
-                        startNewGame()
-                    } label: {
-                        Label("Reiniciar", systemImage: "arrow.counterclockwise")
-                            .labelStyle(.iconOnly)
-                    }
-                    .foregroundStyle(Color.appTextSecondary)
-
-                    #if DEBUG
-                    Button {
-                        isDebugSecretPresented = true
-                    } label: {
-                        Label("Debug Secreto", systemImage: "eye")
-                            .labelStyle(.iconOnly)
-                    }
-                    .foregroundStyle(Color.appTextSecondary)
-                    #endif
-                }
+        }
+    }
+    
+    // MARK: - Action Handlers
+    
+    private func handleDigitTap(_ digit: Int) {
+        if guessText.count < 5 {
+            guessText.append("\(digit)")
+            
+            let impact = UIImpactFeedbackGenerator(style: .light)
+            impact.impactOccurred()
+        }
+    }
+    
+    private func initializeGameIfNeeded() async {
+        if currentGame == nil {
+            do {
+                try await env.gameActor.resetGame()
+            } catch {
+                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             }
-            .toolbarTitleDisplayMode(.inline)
-            .sheet(isPresented: $isHintPresented, onDismiss: {
-                // Cancelar la task de generación si el usuario cierra el sheet
-                hintTask?.cancel()
-                hintTask = nil
-            }) {
-                hintSheet
+        }
+    }
+    
+    private func handleGameStateChange(_ newValue: GameState?) {
+        if newValue == .won {
+            withAnimation(.easeOut(duration: 0.2)) {
+                victorySplash.present()
             }
-            .fullScreenCover(isPresented: $isTutorialPresented) {
-                TutorialView(isPresented: $isTutorialPresented)
+            triggerVictoryHapticIfNeeded()
+        } else {
+            withAnimation(.easeOut(duration: 0.2)) {
+                victorySplash.dismiss()
             }
+            victorySplash.resetHaptic()
+        }
+        if newValue == .inProgress {
+            resetHintUIState()
         }
     }
 
@@ -372,11 +411,16 @@ struct GameView: View {
         }
     }
 
-    /// La partida actual (en progreso o recién ganada).
-    /// - Note: filtramos abandonadas en código porque SwiftData no soporta
-    ///   comparaciones de enum en `#Predicate`.
+    /// La partida actual.
+    /// - Returns: la partida en progreso si existe, o la más reciente ganada si no hay ninguna en progreso.
+    /// - Why: después de ganar y crear una nueva, queremos mostrar la nueva (inProgress), no la ganada.
     private var currentGame: Game? {
-        allGames.first { $0.state != .abandoned }
+        // Prioridad 1: partida en progreso (la más reciente si hay varias)
+        if let inProgress = allGames.first(where: { $0.state == .inProgress }) {
+            return inProgress
+        }
+        // Prioridad 2: partida ganada (para mostrar la splash antes de crear nueva)
+        return allGames.first { $0.state == .won }
     }
 
     /// Texto de estado, basado en la partida persistida.
@@ -404,11 +448,16 @@ struct GameView: View {
         Task(name: "StartNewGame") {
             do {
                 try await env.gameActor.resetGame()
-                guessText = ""
-                // Limpiamos cualquier pista previa para que la nueva partida arranque en idle.
-                resetHintUIState()
+                // Limpiar el estado de UI solo después de que el reset sea exitoso
+                await MainActor.run {
+                    guessText = ""
+                    resetHintUIState()
+                }
             } catch {
-                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                await MainActor.run {
+                    errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                    print("❌ Error al resetear juego: \(error)")
+                }
             }
         }
     }

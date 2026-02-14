@@ -44,12 +44,25 @@ actor GameActor {
     /// Reinicia la partida.
     ///
     /// Implementación MVP:
-    /// - Si hay una partida en progreso, la marca como abandonada.
+    /// - Si hay una partida en progreso, intenta marcarla como abandonada.
+    /// - Las partidas ya terminadas (won/abandoned) se ignoran automáticamente.
     /// - Crea una partida nueva.
+    ///
+    /// - Note: Manejo robusto de errores - si falla marcar como abandonada, igual crea nueva partida.
     func resetGame() async throws {
+        // fetchInProgressGameID() solo devuelve partidas con estado .inProgress.
+        // Si la partida está ganada o abandonada, devuelve nil y simplemente creamos una nueva.
         if let existingID = try await modelActor.fetchInProgressGameID() {
-            try await modelActor.markGameAbandoned(gameID: existingID)
+            // Intentar marcar como abandonada, pero si falla (datos corruptos), continuar igual
+            do {
+                try await modelActor.markGameAbandoned(gameID: existingID)
+            } catch {
+                // Log del error pero continuar
+                print("⚠️ No se pudo marcar partida como abandonada: \(error)")
+                // No propagamos el error - crear nueva partida es más importante
+            }
         }
+        // Crear siempre una nueva partida
         _ = try await modelActor.createNewGame()
     }
 

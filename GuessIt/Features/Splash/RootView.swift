@@ -30,17 +30,22 @@ import SwiftData
 /// 5. `GameView` ya está listo y visible.
 struct RootView: View {
 
+    // MARK: - Dependencies
+
+    /// Acceso al composition root para Game Center.
+    @Environment(\.appEnvironment) private var env
+
     // MARK: - State
 
     /// Controla la visibilidad de la splash screen.
     /// - Inicia en `true` y se pone en `false` cuando la animación termina.
     @State private var isSplashActive = true
-    
+
     /// Controla si GameView ya fue cargado.
     /// OPTIMIZACIÓN: Diferir carga de GameView hasta que sea necesario
     /// - Why: evita montar GameView.task {} durante el lanzamiento
     @State private var isGameViewLoaded = false
-    
+
     /// Controla la visibilidad del tutorial.
     /// OPTIMIZACIÓN: Lazy loading via computed property
     /// - Why: evita acceso a UserDefaults en init
@@ -91,13 +96,19 @@ struct RootView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
                 isGameViewLoaded = true
             }
-            
+
             // OPTIMIZACIÓN: Check del tutorial diferido
             // - Why: no bloquea el lanzamiento inicial
             if !hasCheckedTutorial {
                 hasCheckedTutorial = true
                 isTutorialPresented = !UserDefaults.standard.bool(forKey: "hasCompletedTutorial")
             }
+
+            // Game Center: autenticación no bloqueante al lanzar la app.
+            // - Why: debe ejecutarse lo antes posible para que GKAccessPoint aparezca.
+            // - Si el usuario no está logueado, Game Center muestra su overlay nativo.
+            // - Si ya está logueado, se activa inmediatamente sin UI visible.
+            env.gameCenterService.authenticate()
         }
         .fullScreenCover(isPresented: $isTutorialPresented) {
             TutorialView(isPresented: $isTutorialPresented)

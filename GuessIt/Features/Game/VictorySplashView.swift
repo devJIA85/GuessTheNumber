@@ -63,6 +63,12 @@ struct VictorySplashView: View {
         ZStack {
             // CAPA 1: Fondo oscuro + gradiente ambiental
             backdrop
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    // Tap en el fondo también inicia nueva partida
+                    // Why: proporciona otra forma de interacción si el botón falla
+                    onNewGame()
+                }
 
             // CAPA 2: Confeti (partículas nativas con Canvas)
             if showConfetti {
@@ -93,6 +99,7 @@ struct VictorySplashView: View {
                     .frame(height: 20)
             }
             .padding(.horizontal, 32)
+            .allowsHitTesting(true)  // Asegura que el contenido reciba toques
         }
         .ignoresSafeArea()
         .accessibilityAddTraits(.isModal)
@@ -216,6 +223,7 @@ struct VictorySplashView: View {
                 .background(Capsule().fill(Color.white))
                 .shadow(color: Color.white.opacity(0.4), radius: 16, y: 4)
         }
+        .buttonStyle(.plain)  // Asegura que el botón responda correctamente en overlay
         .opacity(showButton ? 1.0 : 0.0)
         .scaleEffect(showButton ? 1.0 : 0.9)
     }

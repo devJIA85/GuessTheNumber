@@ -42,6 +42,30 @@ actor GuessItModelActor {
     /// - No contamina consola en release builds
     private static let logger = Logger(subsystem: "com.antolini.GuessIt", category: "ModelActor")
 
+    // MARK: - Game Center
+
+    /// Callback para reportar achievements a Game Center.
+    ///
+    /// # Por qué callback y no referencia directa
+    /// - `GameCenterService` es `@MainActor`, este actor tiene su propio aislamiento.
+    /// - No pueden llamarse directamente entre sí.
+    /// - El callback hace el puente: se ejecuta en el contexto del caller (AppEnvironment).
+    ///
+    /// # Configuración
+    /// - Se setea desde `AppEnvironment.init()` con `setAchievementReporter()`.
+    /// - Si es nil (no configurado), los achievements no se reportan (fallo graceful).
+    private var achievementReporter: (@Sendable ([GameCenterAchievements.AchievementProgress]) -> Void)?
+
+    /// Configura el callback para reportar achievements a Game Center.
+    ///
+    /// # Cuándo llamar
+    /// - Desde `AppEnvironment.init()` después de crear el `GameCenterService`.
+    ///
+    /// - Parameter reporter: closure que recibe achievements y los envía a Game Center.
+    func setAchievementReporter(_ reporter: @escaping @Sendable ([GameCenterAchievements.AchievementProgress]) -> Void) {
+        self.achievementReporter = reporter
+    }
+
     // MARK: - Games
 
     /// Devuelve la partida en progreso si existe.
@@ -501,15 +525,31 @@ actor GuessItModelActor {
         guard let game = modelContext.model(for: gameID) as? Game else {
             throw ModelActorError.gameNotFound(gameID)
         }
-        
+
         // Obtener o crear stats
         let stats = try fetchOrCreateStats()
-        
+
         // Actualizar stats con resultado de la partida
-        stats.update(after: game.state, attemptsCount: game.attempts.count)
-        
+        let attemptsCount = game.attempts.count
+        stats.update(after: game.state, attemptsCount: attemptsCount)
+
         // Guardar
         try modelContext.save()
+
+        // Reportar achievements a Game Center (fire-and-forget).
+        // Se evalúa DESPUÉS de persistir stats para garantizar consistencia.
+        if let reporter = achievementReporter {
+            let achievements = GameCenterAchievements.checkAchievements(
+                totalWins: stats.totalWins,
+                totalGames: stats.totalGames,
+                currentStreak: stats.currentStreak,
+                attemptsCount: attemptsCount,
+                gameState: game.state
+            )
+            if !achievements.isEmpty {
+                reporter(achievements)
+            }
+        }
     }
     
     // MARK: - Daily Challenges
@@ -599,6 +639,12 @@ actor GuessItModelActor {
         if evaluation.good == GameConstants.dailyChallengeLength {
             challenge.state = .completed
             challenge.completedAt = Date()
+
+            // Reportar achievement de daily challenge a Game Center
+            if let reporter = achievementReporter,
+               let achievement = GameCenterAchievements.checkDailyChallengeAchievement(challengeCompleted: true) {
+                reporter([achievement])
+            }
         }
         // Si alcanzó el límite de intentos sin ganar, marcar como fallado
         else if challenge.attempts.count >= GameConstants.dailyChallengeMaxAttempts {
