@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import GameKit
 
 // MARK: - RootView (Contenedor raíz con Splash)
 
@@ -109,10 +110,40 @@ struct RootView: View {
             // - Si el usuario no está logueado, Game Center muestra su overlay nativo.
             // - Si ya está logueado, se activa inmediatamente sin UI visible.
             env.gameCenterService.authenticate()
+            
+            // iOS 26+: Configurar GKAccessPoint (Liquid Glass badge)
+            // - Why: Apple Games requiere este badge visible para máxima visibilidad.
+            // - El badge aparece automáticamente cuando el usuario está autenticado.
+            // - Se auto-oculta si el usuario no está logueado o tiene restricciones.
+            if #available(iOS 26.0, *) {
+                configureGameCenterAccessPoint()
+            }
         }
         .fullScreenCover(isPresented: $isTutorialPresented) {
             TutorialView(isPresented: $isTutorialPresented)
         }
+    }
+    
+    // MARK: - Private Helpers
+    
+    /// Configura el GKAccessPoint para iOS 26+ (Liquid Glass badge).
+    ///
+    /// # Por qué existe
+    /// - Apple Games requiere que el badge de Game Center esté visible.
+    /// - El badge sirve como punto de entrada para el usuario a la app Apple Games.
+    /// - Se auto-oculta si el usuario no está autenticado.
+    ///
+    /// # Ubicación
+    /// - `.topLeading`: esquina superior izquierda (recomendación de Apple).
+    /// - No interfiere con otros controles de la app.
+    ///
+    /// # Highlights
+    /// - En iOS 26+, los highlights se gestionan automáticamente por el sistema.
+    /// - El badge tiene animación Liquid Glass al tocarlo.
+    @available(iOS 26.0, *)
+    private func configureGameCenterAccessPoint() {
+        GKAccessPoint.shared.location = .topLeading
+        GKAccessPoint.shared.isActive = true
     }
 }
 

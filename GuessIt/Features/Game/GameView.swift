@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import GameKit
 import UIKit
 
 /// Pantalla principal del juego.
@@ -127,6 +128,12 @@ struct GameView: View {
                 }
                 .fullScreenCover(isPresented: $isTutorialPresented) {
                     TutorialView(isPresented: $isTutorialPresented)
+                }
+                .fullScreenCover(isPresented: Binding(
+                    get: { env.gameCenterService.isShowingGameCenter },
+                    set: { env.gameCenterService.isShowingGameCenter = $0 }
+                )) {
+                    GameCenterDashboardView(state: .dashboard)
                 }
         }
     }
@@ -363,6 +370,11 @@ struct GameView: View {
         if currentGame == nil {
             do {
                 try await env.gameActor.resetGame()
+                
+                // Iniciar actividad de Game Center (Continue Playing)
+                await MainActor.run {
+                    env.activityService.startActivity(type: .mainGame)
+                }
             } catch {
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             }
@@ -375,6 +387,16 @@ struct GameView: View {
                 victorySplash.present()
             }
             triggerVictoryHapticIfNeeded()
+            
+            // Finalizar actividad con éxito
+            env.activityService.endActivity()
+            
+            // Enviar puntuación a leaderboards
+            if let game = currentGame {
+                Task {
+                    await env.leaderboardService.submitScore(attempts: game.attempts.count)
+                }
+            }
         } else {
             withAnimation(.easeOut(duration: 0.2)) {
                 victorySplash.dismiss()
@@ -383,6 +405,9 @@ struct GameView: View {
         }
         if newValue == .inProgress {
             resetHintUIState()
+            
+            // Iniciar nueva actividad
+            env.activityService.startActivity(type: .mainGame)
         }
     }
 

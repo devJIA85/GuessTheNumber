@@ -25,6 +25,8 @@ import SwiftData
 /// - GameActor: es actor (Sendable por definición).
 /// - HintService: es actor (Sendable por definición).
 /// - GameCenterService: @MainActor @Observable, Sendable por anotación.
+/// - GameCenterActivityService: @MainActor @Observable, Sendable por anotación.
+/// - GameCenterLeaderboardService: @MainActor @Observable, Sendable por anotación.
 /// - ModelContainer: no es Sendable, pero solo se usa en init y se delega al ModelActor.
 final class AppEnvironment: Sendable {
 
@@ -41,6 +43,12 @@ final class AppEnvironment: Sendable {
 
     /// Servicio de Game Center (autenticación, logros, GKAccessPoint).
     let gameCenterService: GameCenterService
+    
+    /// Servicio de actividades de Game Center (Continue Playing, Deep Links).
+    let activityService: GameCenterActivityService
+    
+    /// Servicio de leaderboards y desafíos de Game Center.
+    let leaderboardService: GameCenterLeaderboardService
 
     // MARK: - Init
 
@@ -61,6 +69,20 @@ final class AppEnvironment: Sendable {
 
         // Game Center: init nonisolated, autenticación se dispara en RootView.onAppear.
         self.gameCenterService = GameCenterService()
+        self.activityService = GameCenterActivityService()
+        self.leaderboardService = GameCenterLeaderboardService()
+        
+        // Configurar referencias cruzadas (weak refs para evitar retain cycles)
+        Task { @MainActor in
+            let gcService = self.gameCenterService
+            let actService = self.activityService
+            let lbService = self.leaderboardService
+            
+            gcService.configureServices(
+                activityService: actService,
+                leaderboardService: lbService
+            )
+        }
 
         // Configurar callback para reportar achievements desde el ModelActor.
         // El callback hace el puente entre el actor aislado y @MainActor.

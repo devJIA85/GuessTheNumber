@@ -46,11 +46,38 @@ final class GameCenterService: Sendable {
 
     /// Último error de autenticación (para debug/logging).
     private(set) var lastAuthError: String?
+    
+    // MARK: - Service References
+    
+    /// Referencia débil a servicios relacionados (se configuran después del init).
+    /// - Note: Weak para evitar retain cycles en AppEnvironment.
+    private weak var activityService: GameCenterActivityService?
+    private weak var leaderboardService: GameCenterLeaderboardService?
 
     // MARK: - Init
 
     /// Init vacío. La autenticación se dispara explícitamente con `authenticate()`.
     nonisolated init() {}
+    
+    // MARK: - Configuration
+    
+    /// Configura las referencias a servicios relacionados.
+    ///
+    /// # Por qué existe
+    /// - AppEnvironment crea todos los servicios en init.
+    /// - Necesitamos activarlos cuando la autenticación tenga éxito.
+    /// - Usamos referencias débiles para evitar retain cycles.
+    ///
+    /// - Parameters:
+    ///   - activityService: Servicio de actividades.
+    ///   - leaderboardService: Servicio de leaderboards.
+    func configureServices(
+        activityService: GameCenterActivityService,
+        leaderboardService: GameCenterLeaderboardService
+    ) {
+        self.activityService = activityService
+        self.leaderboardService = leaderboardService
+    }
 
     // MARK: - Authentication
 
@@ -94,8 +121,16 @@ final class GameCenterService: Sendable {
                     Self.logger.info("Authenticated: \(localPlayer.displayName)")
                     self.isAuthenticated = true
                     self.lastAuthError = nil
+                    
+                    // Activar servicios relacionados
+                    self.activityService?.activate()
+                    self.leaderboardService?.activate()
                 } else {
                     self.isAuthenticated = false
+                    
+                    // Desactivar servicios
+                    self.activityService?.deactivate()
+                    self.leaderboardService?.deactivate()
                 }
             }
         }
@@ -106,26 +141,40 @@ final class GameCenterService: Sendable {
     /// Indica si el dashboard de Game Center debe mostrarse.
     ///
     /// # SwiftUI Integration
-    /// - Vinculado al modificador `.gameCenter(isPresented:)` en SwiftUI.
+    /// - Vinculado a `.fullScreenCover(isPresented:)` en GameView.
     /// - Se setea en `true` cuando el usuario toca el botón de Game Center.
-    /// - SwiftUI lo vuelve a `false` automáticamente cuando se cierra el dashboard.
+    /// - Se vuelve a `false` cuando el usuario cierra el dashboard.
     var isShowingGameCenter: Bool = false
 
     /// Presenta el dashboard de Game Center (logros, leaderboards).
     ///
+    /// # iOS 26+
+    /// - Usa `GKAccessPoint.trigger(state:)` para abrir Apple Games app nativa.
+    /// - La transición es manejada por el sistema operativo (Liquid Glass).
+    /// - No se usa `UIViewControllerRepresentable` deprecado.
+    ///
+    /// # iOS 13-25 (Fallback)
+    /// - Setea `isShowingGameCenter = true`.
+    /// - GameView lo presenta via `.fullScreenCover` con `GameCenterDashboardView`.
+    ///
     /// # Cuándo llamar
     /// - Desde el botón de Game Center en la toolbar de `GameView`.
-    ///
-    /// # Implementación (iOS 26+)
-    /// - Usa el nuevo API de SwiftUI `.gameCenter(isPresented:)`.
-    /// - Simplemente setea `isShowingGameCenter = true`.
-    /// - SwiftUI maneja la presentación y el dismiss automáticamente.
     ///
     /// # Fallo graceful
     /// - Si no está autenticado, no hace nada.
     func showDashboard() {
         guard isAuthenticated else { return }
-        isShowingGameCenter = true
+        
+        if #available(iOS 26.0, *) {
+            // iOS 26+: Usar el Access Point para abrir Apple Games app
+            GKAccessPoint.shared.trigger(state: .dashboard) {
+                Self.logger.info("Apple Games dashboard dismissed")
+            }
+            Self.logger.info("Triggered Apple Games dashboard via GKAccessPoint")
+        } else {
+            // iOS 13-25: Usar el modal deprecado
+            isShowingGameCenter = true
+        }
     }
 
     // MARK: - Achievement Reporting
