@@ -40,13 +40,7 @@ struct HintPromptBuilderTests {
     /// Genera un PersistentIdentifier usando un container in-memory.
     /// - Why: SwiftData no expone un init público para PersistentIdentifier.
     private func makeInMemoryGameID() -> PersistentIdentifier {
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(
-            for: Game.self,
-            Attempt.self,
-            DigitNote.self,
-            configurations: configuration
-        )
+        let container = TestModelContainerFactory.makeIsolatedInMemoryContainer()
         let context = ModelContext(container)
         let game = Game(secret: "00000", digitNotes: [])
         context.insert(game)

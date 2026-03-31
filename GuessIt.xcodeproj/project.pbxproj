@@ -33,7 +33,20 @@
 		49BF8A862F32938E00DD4D4E /* Exceptions for "GuessIt" folder in "GuessIt" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Features/Game/FINAL_i18n_COMPLETE.md,
+				Features/Game/GAME_CENTER_CHECKLIST.md,
+				Features/Game/GAME_CENTER_IMPLEMENTATION_SUMMARY.md,
+				Features/Game/GAMEKIT_MIGRATION_IOS26.md,
+				Features/Game/GameView_IntegrationSnippets.swift,
+				Features/Game/IMPLEMENTATION_SUMMARY_FULL.md,
+				Features/Game/INTEGRATION_GUIDE_GAME_CENTER_ACTIVITIES.md,
+				Features/Game/PROJECT_COMPLETE.md,
+				Features/Game/README_FINAL.md,
 				Info.plist,
+				Persistence/EXECUTIVE_SUMMARY.md,
+				Persistence/FINAL_PROJECT_STATUS.md,
+				Persistence/SPRINT3_PROGRESS.md,
+				Shared/UI/COLORS_GUIDE.md,
 			);
 			target = 49BF8A622F32938E00DD4D4E /* GuessIt */;
 		};

@@ -562,7 +562,7 @@ actor GuessItModelActor {
     ///
     /// - Returns: desafío del día actual.
     func fetchOrCreateTodayChallenge() throws -> DailyChallenge {
-        let today = Calendar.current.startOfDay(for: Date())
+        let today = DailyChallengeService.generateToday()
         
         // Buscar desafío de hoy - filtramos en código porque #Predicate no soporta variables capturadas
         let descriptor = FetchDescriptor<DailyChallenge>(
@@ -571,14 +571,21 @@ actor GuessItModelActor {
         
         let challenges = try modelContext.fetch(descriptor)
         
-        // Filtrar en código
-        if let existing = challenges.first(where: { Calendar.current.isDate($0.date, inSameDayAs: today) }) {
+        // Camino principal: el seed UTC define de forma unívoca el desafío global del día.
+        if let existing = challenges.first(where: { $0.seed == today.seed }) {
             return existing
+        }
+
+        // Compatibilidad conservadora:
+        // si el usuario ya tiene un desafío "de hoy" persistido con la lógica vieja
+        // basada en timezone local, lo preservamos durante ese día para no resetearle el progreso.
+        let legacyToday = Calendar.current.startOfDay(for: Date())
+        if let legacy = challenges.first(where: { Calendar.current.isDate($0.date, inSameDayAs: legacyToday) }) {
+            return legacy
         }
         
         // No existe: crear nuevo
-        let (date, secret, seed) = DailyChallengeService.generateToday()
-        let newChallenge = DailyChallenge(date: date, secret: secret, seed: seed)
+        let newChallenge = DailyChallenge(date: today.date, secret: today.secret, seed: today.seed)
         modelContext.insert(newChallenge)
         try modelContext.save()
         
@@ -587,11 +594,11 @@ actor GuessItModelActor {
     
     /// Obtiene snapshot del desafío del día.
     ///
-    /// - Parameter revealSecret: si true, incluye el secreto en el snapshot (solo si completado).
+    /// - Parameter revealSecret: si true, incluye el secreto en el snapshot si el desafío ya cerró.
     /// - Returns: snapshot del desafío de hoy.
     func fetchTodayChallengeSnapshot(revealSecret: Bool = false) throws -> DailyChallengeSnapshot {
         let challenge = try fetchOrCreateTodayChallenge()
-        let shouldReveal = revealSecret && challenge.state == .completed
+        let shouldReveal = revealSecret && challenge.state.isClosed
         return DailyChallengeSnapshot(from: challenge, revealSecret: shouldReveal)
     }
     
@@ -606,9 +613,9 @@ actor GuessItModelActor {
             throw ModelActorError.gameNotFound(challengeID)
         }
         
-        // Validar que el desafío no está completado
-        guard challenge.state == .notStarted || challenge.state == .inProgress else {
-            throw GameDomainError.gameNotInProgress(currentState: .won)  // Reusar error existente
+        // Validar que el desafío sigue activo.
+        guard challenge.state.isActive else {
+            throw DailyChallengeError.challengeNotActive(currentState: challenge.state)
         }
         
         // Si es el primer intento, marcar como iniciado
@@ -683,7 +690,7 @@ actor GuessItModelActor {
         // Filtrar en código: DailyChallenge no tiene stateRaw y el dataset es pequeño
         // (~365 registros/año máx), por lo que filtrar en memoria es aceptable.
         return challenges
-            .filter { $0.state == .completed || $0.state == .failed }
-            .map { DailyChallengeSnapshot(from: $0, revealSecret: $0.state == .completed) }
+            .filter { $0.state.isClosed }
+            .map { DailyChallengeSnapshot(from: $0, revealSecret: true) }
     }
 }

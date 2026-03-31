@@ -29,7 +29,7 @@ struct GuessItModelActorTests {
     /// Crea un contenedor in-memory para tests.
     /// - Why: aislamiento total entre tests, sin efectos secundarios en disco.
     private func makeTestContainer() -> ModelContainer {
-        ModelContainerFactory.make(isInMemory: true)
+        TestModelContainerFactory.makeIsolatedInMemoryContainer()
     }
 
     /// Crea un actor de modelo con contenedor de test.
@@ -104,6 +104,54 @@ struct GuessItModelActorTests {
     }
 
     // MARK: - Tests de Reset de Tablero
+
+    @Test("setDigitMark persiste la marca solicitada")
+    func testSetDigitMarkPersistsRequestedMark() async throws {
+        // Arrange
+        let modelActor = makeTestModelActor()
+        let game = try await modelActor.fetchOrCreateInProgressGame()
+        let gameID = game.persistentID
+
+        // Act
+        try await modelActor.setDigitMark(digit: 4, mark: .fair, gameID: gameID)
+
+        // Assert
+        let snapshot = try await modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        let mark = snapshot.digitNotes.first { $0.digit == 4 }?.mark
+        #expect(mark == .fair, "La marca persistida debe coincidir con la solicitada")
+    }
+
+    @Test("cycleDigitMark recorre unknown → poor → fair → good → unknown")
+    func testCycleDigitMarkTraversesExpectedOrder() async throws {
+        // Arrange
+        let modelActor = makeTestModelActor()
+        let game = try await modelActor.fetchOrCreateInProgressGame()
+        let gameID = game.persistentID
+
+        // Assert inicial
+        var snapshot = try await modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        #expect(snapshot.digitNotes.first { $0.digit == 7 }?.mark == .unknown)
+
+        // unknown -> poor
+        try await modelActor.cycleDigitMark(digit: 7, gameID: gameID)
+        snapshot = try await modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        #expect(snapshot.digitNotes.first { $0.digit == 7 }?.mark == .poor)
+
+        // poor -> fair
+        try await modelActor.cycleDigitMark(digit: 7, gameID: gameID)
+        snapshot = try await modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        #expect(snapshot.digitNotes.first { $0.digit == 7 }?.mark == .fair)
+
+        // fair -> good
+        try await modelActor.cycleDigitMark(digit: 7, gameID: gameID)
+        snapshot = try await modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        #expect(snapshot.digitNotes.first { $0.digit == 7 }?.mark == .good)
+
+        // good -> unknown
+        try await modelActor.cycleDigitMark(digit: 7, gameID: gameID)
+        snapshot = try await modelActor.fetchGameDetailSnapshot(gameID: gameID)
+        #expect(snapshot.digitNotes.first { $0.digit == 7 }?.mark == .unknown)
+    }
 
     @Test("resetDigitNotes establece todas las marcas en .unknown")
     func testResetDigitNotesSetsAllToUnknown() async throws {

@@ -21,9 +21,10 @@ struct SimpleBoardView: View {
     
     // MARK: - Input
     
-    /// El juego actual (para acceder a digitNotes y marcarlos).
-    /// - Why @Bindable: necesitamos observar cambios en digitNotes cuando se marcan
-    @Bindable var game: Game
+    /// El juego actual usado solo para renderizar el tablero.
+    /// - Important: la vista no escribe `DigitNote` directamente.
+    ///   Toda persistencia del tablero pasa por el `GuessItModelActor`.
+    let game: Game
     
     /// Set de dígitos ya usados en el guess actual.
     /// - Why: para mostrarlos en gris y prevenir duplicados
@@ -145,54 +146,30 @@ struct SimpleBoardView: View {
     ///   - digit: El dígito a marcar (0-9)
     ///   - mark: La marca a establecer (good/fair/poor/unknown)
     private func setMark(forDigit digit: Int, to mark: DigitMark) {
-        // Buscar la nota localmente
-        guard let note = game.digitNotes.first(where: { $0.digit == digit }) else {
-            #if DEBUG
-            print("❌ No se encontró DigitNote para dígito \(digit)")
-            #endif
-            return
-        }
-
-        // Actualizar directamente en el objeto del @Query
-        // - Why: SwiftUI observa automáticamente cambios en objetos de @Query
-        // - No necesitamos pasar por el actor para cambios de UI
-        note.mark = mark
-
-        // Haptic feedback
-        let impact = UIImpactFeedbackGenerator(style: .medium)
-        impact.impactOccurred()
-
-        // Persistir en background (sin bloquear la UI)
         Task {
             do {
                 try await env.modelActor.setDigitMark(digit: digit, mark: mark, gameID: game.persistentID)
+
+                // Feedback sólo después de persistir para mantener single writer real.
+                let impact = UIImpactFeedbackGenerator(style: .medium)
+                impact.impactOccurred()
             } catch {
-                #if DEBUG
-                print("⚠️ Error al guardar marca: \(error)")
-                #endif
+                assertionFailure("No se pudo establecer la marca del dígito \(digit): \(error)")
             }
         }
     }
 
     /// Resetea todas las marcas del tablero a `.unknown`.
     private func resetBoard() {
-        // Resetear todas las notas localmente (cambio inmediato en la UI)
-        for note in game.digitNotes {
-            note.mark = .unknown
-        }
-
-        // Haptic feedback
-        let impact = UIImpactFeedbackGenerator(style: .medium)
-        impact.impactOccurred()
-
-        // Persistir en background
         Task {
             do {
                 try await env.modelActor.resetDigitNotes(gameID: game.persistentID)
+
+                // Feedback sólo cuando la persistencia terminó correctamente.
+                let impact = UIImpactFeedbackGenerator(style: .medium)
+                impact.impactOccurred()
             } catch {
-                #if DEBUG
-                print("⚠️ Error al resetear tablero: \(error)")
-                #endif
+                assertionFailure("No se pudo resetear el tablero: \(error)")
             }
         }
     }

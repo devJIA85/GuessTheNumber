@@ -40,10 +40,11 @@ final class Game {
 
     /// Estado actual de la partida.
     /// Controla si acepta intentos, si fue ganada o abandonada.
-    /// El `didSet` sincroniza automáticamente `stateRaw` para mantener consistencia.
-    var state: GameState {
-        didSet { stateRaw = state.rawValue }
-    }
+    ///
+    /// - Important: no dependemos de observers (`didSet`) para sincronizar `stateRaw`.
+    ///   En modelos `@Model` esa sincronización no resultó confiable para queries persistidas.
+    ///   Los call sites deben usar `updateState(_:)`.
+    var state: GameState
 
     /// Representación raw del estado para queries eficientes.
     ///
@@ -52,7 +53,7 @@ final class Game {
     /// - Esta propiedad permite filtrar por estado en queries sin cargar todos los juegos.
     ///
     /// # Sincronización
-    /// - Se actualiza automáticamente vía el `didSet` de `state`.
+    /// - Se actualiza explícitamente desde `updateState(_:)`.
     /// - No debe modificarse directamente, solo leer para queries.
     ///
     /// # Acceso interno
@@ -97,13 +98,14 @@ final class Game {
     
     // MARK: - Helpers
     
-    /// Actualiza el estado de la partida.
+    /// Actualiza el estado de la partida y mantiene sincronizado `stateRaw`.
     ///
-    /// La sincronización de `stateRaw` es automática vía `didSet` en `state`.
-    /// Este método existe como API semántica para los call sites del actor.
+    /// - Important: no usar `game.state = ...` si luego una query depende de `stateRaw`.
+    ///   En `@Model`, los observers implícitos no garantizan esa sincronización.
     ///
     /// - Parameter newState: nuevo estado a asignar.
     func updateState(_ newState: GameState) {
         self.state = newState
+        self.stateRaw = newState.rawValue
     }
 }

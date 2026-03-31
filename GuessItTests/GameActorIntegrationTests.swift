@@ -27,7 +27,7 @@ struct GameActorIntegrationTests {
 
     /// Crea un contenedor in-memory para tests.
     private func makeTestContainer() -> ModelContainer {
-        ModelContainerFactory.make(isInMemory: true)
+        TestModelContainerFactory.makeIsolatedInMemoryContainer()
     }
 
     /// Crea un GameActor configurado para tests.

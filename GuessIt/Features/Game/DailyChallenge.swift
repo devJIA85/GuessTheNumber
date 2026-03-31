@@ -13,7 +13,7 @@ import SwiftData
 /// # Concepto
 /// - Cada día hay un secreto único generado con seed determinístico.
 /// - Todos los usuarios del mundo comparten el mismo secreto ese día.
-/// - El secreto cambia a medianoche (timezone del usuario).
+/// - El secreto cambia a medianoche UTC.
 ///
 /// # Persistencia
 /// - Se guarda el progreso del usuario en el desafío actual.
@@ -27,7 +27,7 @@ final class DailyChallenge {
     
     // MARK: - Stored Properties
     
-    /// Fecha del desafío (solo día, hora en 00:00:00).
+    /// Fecha del desafío normalizada a 00:00:00 UTC.
     var date: Date
     
     /// Secreto del día (generado con seed determinístico).
@@ -52,7 +52,7 @@ final class DailyChallenge {
     // MARK: - Init
     
     init(date: Date, secret: String, seed: UInt64) {
-        self.date = Calendar.current.startOfDay(for: date)
+        self.date = DailyChallengeService.challengeDayStart(for: date)
         self.secret = secret
         self.seed = seed
         self.state = .notStarted
@@ -66,6 +66,8 @@ final class DailyChallenge {
     private static let challengeIDFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = DailyChallengeService.utcTimeZone
         return f
     }()
 
@@ -76,19 +78,19 @@ final class DailyChallenge {
     
     /// Indica si el desafío es de hoy.
     var isToday: Bool {
-        Calendar.current.isDateInToday(date)
+        date == DailyChallengeService.challengeDayStart(for: Date())
     }
     
     /// Indica si el desafío ya expiró (es de un día anterior).
     var isExpired: Bool {
-        !isToday && date < Date()
+        date < DailyChallengeService.challengeDayStart(for: Date())
     }
 }
 
 // MARK: - Challenge State
 
 /// Estado del desafío diario para el usuario.
-enum ChallengeState: String, Codable {
+enum ChallengeState: String, Codable, Sendable {
     /// No iniciado: el usuario no ha enviado ningún intento.
     case notStarted
     
@@ -100,6 +102,36 @@ enum ChallengeState: String, Codable {
     
     /// Fallado: el usuario abandonó o perdió.
     case failed
+
+    /// Indica si todavía acepta intentos.
+    var isActive: Bool {
+        self == .notStarted || self == .inProgress
+    }
+
+    /// Indica si el desafío ya está cerrado.
+    var isClosed: Bool {
+        !isActive
+    }
+}
+
+/// Errores específicos del desafío diario.
+enum DailyChallengeError: LocalizedError, Equatable, Sendable {
+    /// El desafío existe, pero ya no acepta más intentos.
+    case challengeNotActive(currentState: ChallengeState)
+
+    var errorDescription: String? {
+        switch self {
+        case .challengeNotActive(let currentState):
+            switch currentState {
+            case .completed:
+                return "Ya completaste el desafío diario de hoy."
+            case .failed:
+                return "El desafío diario de hoy ya está cerrado."
+            case .notStarted, .inProgress:
+                return "El desafío diario está activo."
+            }
+        }
+    }
 }
 
 // MARK: - Daily Challenge Attempt
@@ -153,6 +185,25 @@ final class DailyChallengeAttempt {
 /// - Verificar si el usuario ya jugó hoy.
 /// - Proveer stats del desafío (global + personal).
 struct DailyChallengeService {
+
+    // MARK: - UTC Helpers
+
+    /// Zona horaria fija del contrato del desafío diario.
+    static let utcTimeZone = TimeZone(secondsFromGMT: 0)!
+
+    /// Calendario gregoriano fijo en UTC para evitar depender del timezone local.
+    static var utcCalendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = utcTimeZone
+        return calendar
+    }
+
+    /// Normaliza cualquier `Date` al inicio del día UTC.
+    ///
+    /// - Important: este helper define el "día del challenge".
+    static func challengeDayStart(for date: Date) -> Date {
+        utcCalendar.startOfDay(for: date)
+    }
     
     // MARK: - Public API
     
@@ -165,21 +216,7 @@ struct DailyChallengeService {
     ///
     /// - Returns: desafío del día.
     static func generateToday() -> (date: Date, secret: String, seed: UInt64) {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        // Convertir a UTC para consistencia global
-        let utcCalendar = Calendar(identifier: .gregorian)
-        let utcToday = utcCalendar.startOfDay(for: today)
-        
-        // Seed = timestamp en segundos desde epoch
-        let seed = UInt64(utcToday.timeIntervalSince1970)
-        
-        // Generar secreto de 3 dígitos con seed
-        var rng = SeededRandomNumberGenerator(seed: seed)
-        let secret = SecretGenerator.generateDailyChallenge(using: &rng)
-        
-        return (today, secret, seed)
+        generate(for: Date())
     }
     
     /// Genera el desafío de una fecha específica (para debugging).
@@ -187,18 +224,13 @@ struct DailyChallengeService {
     /// - Parameter date: fecha del desafío.
     /// - Returns: desafío de esa fecha.
     static func generate(for date: Date) -> (date: Date, secret: String, seed: UInt64) {
-        let calendar = Calendar.current
-        let dayStart = calendar.startOfDay(for: date)
-        
-        let utcCalendar = Calendar(identifier: .gregorian)
-        let utcDayStart = utcCalendar.startOfDay(for: dayStart)
-        
+        let utcDayStart = challengeDayStart(for: date)
         let seed = UInt64(utcDayStart.timeIntervalSince1970)
         
         var rng = SeededRandomNumberGenerator(seed: seed)
         let secret = SecretGenerator.generateDailyChallenge(using: &rng)
         
-        return (dayStart, secret, seed)
+        return (utcDayStart, secret, seed)
     }
     
     /// Verifica si un secreto es correcto para el desafío del día.
@@ -224,7 +256,7 @@ struct DailyChallengeSnapshot: Sendable, Identifiable, Equatable {
     let id: PersistentIdentifier
     let challengeID: String
     let date: Date
-    let secret: String?  // Nil si no está completado
+    let secret: String?  // Nil si el challenge sigue activo
     let state: ChallengeState
     let attemptsCount: Int
     let attempts: [DailyChallengeAttemptSnapshot]  // Historial de intentos
@@ -303,7 +335,7 @@ struct DailyChallengeSnapshot: Sendable, Identifiable, Equatable {
 
 /// Snapshot inmutable de un intento de desafío diario para UI.
 struct DailyChallengeAttemptSnapshot: Sendable, Identifiable, Equatable {
-    let id: UUID
+    let id: PersistentIdentifier
     let guess: String
     let good: Int
     let fair: Int
@@ -311,21 +343,11 @@ struct DailyChallengeAttemptSnapshot: Sendable, Identifiable, Equatable {
     let createdAt: Date
     
     init(from attempt: DailyChallengeAttempt) {
-        self.id = UUID()  // Generamos ID temporal para Identifiable
+        self.id = attempt.persistentModelID
         self.guess = attempt.guess
         self.good = attempt.good
         self.fair = attempt.fair
         self.isPoor = attempt.isPoor
         self.createdAt = attempt.createdAt
     }
-    
-    init(guess: String, good: Int, fair: Int, isPoor: Bool, createdAt: Date = Date()) {
-        self.id = UUID()
-        self.guess = guess
-        self.good = good
-        self.fair = fair
-        self.isPoor = isPoor
-        self.createdAt = createdAt
-    }
 }
-

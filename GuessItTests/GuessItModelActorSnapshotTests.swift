@@ -23,7 +23,7 @@ struct GuessItModelActorSnapshotTests {
     /// Crea un contenedor in-memory para tests.
     /// - Why: aislamiento total y cero I/O en disco.
     private func makeTestContainer() -> ModelContainer {
-        ModelContainerFactory.make(isInMemory: true)
+        TestModelContainerFactory.makeIsolatedInMemoryContainer()
     }
 
     /// Crea un actor de modelo conectado al contenedor de test.
@@ -102,7 +102,8 @@ struct GuessItModelActorSnapshotTests {
         marksByDigit: [Int: DigitMark] = [:]
     ) throws -> GameIdentifier {
         let game = Game(secret: secret, digitNotes: [])
-        game.state = state
+        // Mantener sincronizado `stateRaw` porque el historial filtra por esa columna.
+        game.updateState(state)
         game.createdAt = createdAt
         game.finishedAt = finishedAt
         game.attempts = makeAttempts(for: game, seeds: attemptSeeds)
