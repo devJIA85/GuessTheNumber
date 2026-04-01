@@ -21,10 +21,9 @@ struct SimpleBoardView: View {
     
     // MARK: - Input
     
-    /// El juego actual usado solo para renderizar el tablero.
-    /// - Important: la vista no escribe `DigitNote` directamente.
-    ///   Toda persistencia del tablero pasa por el `GuessItModelActor`.
-    let game: Game
+    /// Snapshot del juego actual.
+    /// - Important: este tablero renderiza estado derivado; no es dueño de la persistencia.
+    let game: GameDetailSnapshot
     
     /// Set de dígitos ya usados en el guess actual.
     /// - Why: para mostrarlos en gris y prevenir duplicados
@@ -33,9 +32,14 @@ struct SimpleBoardView: View {
     /// Callback cuando el usuario toca un dígito (modo input).
     var onDigitTap: ((Int) -> Void)?
     
-    // MARK: - Dependencies
+    /// Callback para ciclar la marca de un dígito.
+    var onCycleMark: ((Int) -> Void)?
     
-    @Environment(\.appEnvironment) private var env
+    /// Callback para establecer una marca específica.
+    var onSetMark: ((Int, DigitMark) -> Void)?
+    
+    /// Callback para resetear todo el tablero.
+    var onResetBoard: (() -> Void)?
     
     // MARK: - Body
     
@@ -119,7 +123,7 @@ struct SimpleBoardView: View {
     // MARK: - Data
     
     /// Notas de dígitos ordenadas (0-9).
-    private var sortedNotes: [DigitNote] {
+    private var sortedNotes: [DigitNoteSnapshot] {
         game.digitNotes.sorted { $0.digit < $1.digit }
     }
     
@@ -128,17 +132,7 @@ struct SimpleBoardView: View {
     /// Cicla el mark del dígito al siguiente estado.
     /// Orden: unknown → poor → fair → good → unknown.
     private func cycleMark(forDigit digit: Int) {
-        Task {
-            do {
-                try await env.modelActor.cycleDigitMark(digit: digit, gameID: game.persistentID)
-                
-                // Haptic feedback
-                let impact = UIImpactFeedbackGenerator(style: .medium)
-                impact.impactOccurred()
-            } catch {
-                assertionFailure("No se pudo ciclar la marca del dígito \(digit): \(error)")
-            }
-        }
+        onCycleMark?(digit)
     }
     
     /// Establece directamente la marca de un dígito.
@@ -146,32 +140,12 @@ struct SimpleBoardView: View {
     ///   - digit: El dígito a marcar (0-9)
     ///   - mark: La marca a establecer (good/fair/poor/unknown)
     private func setMark(forDigit digit: Int, to mark: DigitMark) {
-        Task {
-            do {
-                try await env.modelActor.setDigitMark(digit: digit, mark: mark, gameID: game.persistentID)
-
-                // Feedback sólo después de persistir para mantener single writer real.
-                let impact = UIImpactFeedbackGenerator(style: .medium)
-                impact.impactOccurred()
-            } catch {
-                assertionFailure("No se pudo establecer la marca del dígito \(digit): \(error)")
-            }
-        }
+        onSetMark?(digit, mark)
     }
 
     /// Resetea todas las marcas del tablero a `.unknown`.
     private func resetBoard() {
-        Task {
-            do {
-                try await env.modelActor.resetDigitNotes(gameID: game.persistentID)
-
-                // Feedback sólo cuando la persistencia terminó correctamente.
-                let impact = UIImpactFeedbackGenerator(style: .medium)
-                impact.impactOccurred()
-            } catch {
-                assertionFailure("No se pudo resetear el tablero: \(error)")
-            }
-        }
+        onResetBoard?()
     }
 }
 

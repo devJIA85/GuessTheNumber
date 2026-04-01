@@ -117,6 +117,88 @@ struct GuessItModelActorSnapshotTests {
 
     // MARK: - Tests
 
+    @Test("fetchCurrentGameDetailSnapshot prioriza la partida en progreso")
+    @MainActor
+    func test_fetchCurrentGameDetailSnapshot_prioritizesInProgressGame() async throws {
+        let container = makeTestContainer()
+        let context = container.mainContext
+        let modelActor = makeTestModelActor(container: container)
+
+        let inProgressGameID = try insertGame(
+            context: context,
+            state: .inProgress,
+            secret: "01234",
+            createdAt: makeDate(year: 2026, month: 1, day: 10),
+            finishedAt: nil,
+            attemptSeeds: [
+                AttemptSeed(
+                    guess: "56789",
+                    good: 0,
+                    fair: 0,
+                    isPoor: true,
+                    isRepeated: false,
+                    createdAt: makeDate(year: 2026, month: 1, day: 10, hour: 1)
+                )
+            ]
+        )
+
+        _ = try insertGame(
+            context: context,
+            state: .won,
+            secret: "98765",
+            createdAt: makeDate(year: 2026, month: 1, day: 8),
+            finishedAt: makeDate(year: 2026, month: 1, day: 9),
+            attemptSeeds: []
+        )
+
+        let currentGame = try await modelActor.fetchCurrentGameDetailSnapshot()
+
+        #expect(currentGame?.id == inProgressGameID)
+        #expect(currentGame?.state == .inProgress)
+    }
+
+    @Test("fetchCurrentGameDetailSnapshot usa la victoria más reciente si no hay partida en progreso")
+    @MainActor
+    func test_fetchCurrentGameDetailSnapshot_fallsBackToLatestWonGame() async throws {
+        let container = makeTestContainer()
+        let context = container.mainContext
+        let modelActor = makeTestModelActor(container: container)
+
+        let olderWonID = try insertGame(
+            context: context,
+            state: .won,
+            secret: "11111",
+            createdAt: makeDate(year: 2026, month: 1, day: 3),
+            finishedAt: makeDate(year: 2026, month: 1, day: 4),
+            attemptSeeds: []
+        )
+
+        let latestWonID = try insertGame(
+            context: context,
+            state: .won,
+            secret: "22222",
+            createdAt: makeDate(year: 2026, month: 1, day: 5),
+            finishedAt: makeDate(year: 2026, month: 1, day: 6),
+            attemptSeeds: []
+        )
+
+        _ = try insertGame(
+            context: context,
+            state: .abandoned,
+            secret: "33333",
+            createdAt: makeDate(year: 2026, month: 1, day: 7),
+            finishedAt: makeDate(year: 2026, month: 1, day: 8),
+            attemptSeeds: []
+        )
+
+        let currentGame = try await modelActor.fetchCurrentGameDetailSnapshot()
+
+        #expect(currentGame?.id == latestWonID)
+        #expect(currentGame?.id != olderWonID)
+        #expect(currentGame?.state == .won)
+        #expect(currentGame?.secret == "22222")
+    }
+
     @Test("fetchFinishedGameSummaries excluye inProgress")
     @MainActor
     func test_fetchFinishedGameSummaries_excludesInProgress() async throws {

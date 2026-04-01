@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 /// Componente reutilizable para capturar y enviar un intento (guess).
 ///
@@ -28,22 +27,33 @@ struct GuessInputView: View {
     /// Se pasa el string ya normalizado (trim).
     let onSubmit: (String) -> Void
     
-    /// El juego actual (para renderizar el tablero de dígitos).
-    /// - Why @Bindable: necesitamos observar cambios en digitNotes
-    var game: Game?
+    /// Snapshot del juego actual para renderizar el tablero.
+    /// - Important: el ownership vive en `GameView`, no en este componente.
+    var game: GameDetailSnapshot?
     
     /// Callback para agregar un dígito al guess (tap en tablero).
     let onDigitTap: ((Int) -> Void)?
+    
+    /// Callbacks de edición del tablero, delegados al dueño del estado.
+    let onCycleDigitMark: ((Int) -> Void)?
+    let onSetDigitMark: ((Int, DigitMark) -> Void)?
+    let onResetBoard: (() -> Void)?
 
     init(
         guessText: Binding<String>,
-        game: Game? = nil,
+        game: GameDetailSnapshot? = nil,
         onDigitTap: ((Int) -> Void)? = nil,
+        onCycleDigitMark: ((Int) -> Void)? = nil,
+        onSetDigitMark: ((Int, DigitMark) -> Void)? = nil,
+        onResetBoard: (() -> Void)? = nil,
         onSubmit: @escaping (String) -> Void
     ) {
         self._guessText = guessText
         self.game = game
         self.onDigitTap = onDigitTap
+        self.onCycleDigitMark = onCycleDigitMark
+        self.onSetDigitMark = onSetDigitMark
+        self.onResetBoard = onResetBoard
         self.onSubmit = onSubmit
     }
 
@@ -62,7 +72,10 @@ struct GuessInputView: View {
                 SimpleBoardView(
                     game: game,
                     usedDigits: Set(guessText.compactMap { Int(String($0)) }),
-                    onDigitTap: onDigitTap
+                    onDigitTap: onDigitTap,
+                    onCycleMark: onCycleDigitMark,
+                    onSetMark: onSetDigitMark,
+                    onResetBoard: onResetBoard
                 )
                 .padding(.vertical, 4)
             }

@@ -136,6 +136,40 @@ actor GuessItModelActor {
     func fetchInProgressGameID() throws -> GameIdentifier? {
         return try fetchInProgressGame()?.persistentID
     }
+
+    /// Obtiene el snapshot del juego que debe mostrar la pantalla principal.
+    ///
+    /// # Prioridad de selección
+    /// 1. Partida en progreso actual.
+    /// 2. Partida ganada más reciente (para conservar la victoria visible).
+    /// 3. `nil` si no hay nada para mostrar.
+    ///
+    /// - Important: este método define la fuente de verdad del flujo principal en `GameView`.
+    func fetchCurrentGameDetailSnapshot() throws -> GameDetailSnapshot? {
+        if let inProgressGame = try fetchInProgressGame() {
+            return try fetchGameDetailSnapshot(gameID: inProgressGame.persistentID)
+        }
+
+        let wonRaw = GameState.won.rawValue
+        let predicate = #Predicate<Game> { game in
+            game.stateRaw == wonRaw
+        }
+
+        var descriptor = FetchDescriptor<Game>(
+            predicate: predicate,
+            sortBy: [
+                SortDescriptor(\Game.finishedAt, order: .reverse),
+                SortDescriptor(\Game.createdAt, order: .reverse)
+            ]
+        )
+        descriptor.fetchLimit = 1
+
+        guard let latestWonGame = try modelContext.fetch(descriptor).first else {
+            return nil
+        }
+
+        return try fetchGameDetailSnapshot(gameID: latestWonGame.persistentID)
+    }
     
     /// Obtiene datos específicos de una partida para el dominio.
     /// - Parameter gameID: identificador de la partida.
