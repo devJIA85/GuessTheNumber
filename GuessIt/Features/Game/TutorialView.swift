@@ -83,7 +83,8 @@ struct TutorialView: View {
                 VStack(spacing: AppTheme.Spacing.medium) {
                     if currentPage < totalPages - 1 {
                         Button {
-                            withAnimation {
+                            // Reduce Motion: cambio de página instantáneo (sin animación).
+                            withAnimation(reduceMotion ? nil : .default) {
                                 currentPage += 1
                             }
                         } label: {
@@ -119,8 +120,8 @@ struct TutorialView: View {
         // Marcar tutorial como completado
         UserDefaults.standard.set(true, forKey: "hasCompletedTutorial")
         
-        // Cerrar con animación
-        withAnimation(.easeOut(duration: 0.3)) {
+        // Cerrar con animación (instantáneo si Reduce Motion está activo).
+        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.3)) {
             isPresented = false
         }
     }

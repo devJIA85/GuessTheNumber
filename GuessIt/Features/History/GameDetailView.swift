@@ -205,7 +205,7 @@ struct GameDetailView: View {
             Text(String(localized: "common.attempts") + " (\(snapshot.attempts.count))")
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Intentos, lista de \(snapshot.attempts.count) elementos")
+        .accessibilityLabel(String(format: String(localized: "accessibility.attempts_list"), snapshot.attempts.count))
     }
 
     // MARK: - Digit Board
@@ -245,7 +245,7 @@ struct GameDetailView: View {
         let state = stateText(for: snapshot.state).lowercased()
         let date = displayDate(for: snapshot).formatted(.dateTime.year().month().day().hour().minute())
         let attempts = snapshot.attempts.count
-        return "Detalle de partida, \(state), fecha \(date), \(attempts) intentos."
+        return String(format: String(localized: "accessibility.game_detail_header"), state, date, attempts)
     }
 }
 

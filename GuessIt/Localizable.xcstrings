@@ -18,6 +18,22 @@
         }
       }
     },
+    "accessibility.attempts_list": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attempts, list of %lld items"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intentos, lista de %lld elementos"
+          }
+        }
+      }
+    },
     "accessibility.delete_last": {
       "localizations": {
         "en": {
@@ -94,6 +110,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tablero final de dígitos"
+          }
+        }
+      }
+    },
+    "accessibility.game_detail_header": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Game details, %@, date %@, %lld attempts."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalle de partida, %@, fecha %@, %lld intentos."
           }
         }
       }
@@ -206,6 +238,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Probar número"
+          }
+        }
+      }
+    },
+    "accessibility.victory_summary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Victory. %@ Secret: %@. Attempts: %lld."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Victoria. %@ Secreto: %@. Intentos: %lld."
           }
         }
       }
@@ -734,6 +782,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Detalle de partida"
+          }
+        }
+      }
+    },
+    "game.attempts_one": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 attempt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 intento"
+          }
+        }
+      }
+    },
+    "game.attempts_other": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld attempts"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld intentos"
           }
         }
       }

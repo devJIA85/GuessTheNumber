@@ -47,6 +47,10 @@ struct VictorySplashView: View {
     let attempts: Int
     let onNewGame: () -> Void
 
+    /// Preferencia del sistema para reducir movimiento.
+    /// - Why: si está activa, evitamos confeti, shimmer y rotaciones (HIG Accessibility).
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     // MARK: - Staggered Animation State
 
     @State private var showBackground = false
@@ -104,7 +108,7 @@ struct VictorySplashView: View {
         .ignoresSafeArea()
         .accessibilityAddTraits(.isModal)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Victoria. \(rank.title) Secreto: \(secret). Intentos: \(attempts).")
+        .accessibilityLabel(String(format: String(localized: "accessibility.victory_summary"), rank.title, secret, attempts))
         .onAppear {
             triggerStaggeredAnimations()
         }
@@ -140,7 +144,8 @@ struct VictorySplashView: View {
             Color.black.opacity(showBackground ? 0.85 : 0)
                 .ignoresSafeArea()
 
-            if showBackground {
+            // El gradiente rotatorio solo se muestra si el usuario no pidió reducir movimiento.
+            if showBackground && !reduceMotion {
                 AmbientGradientLoop(color: rank.color)
                     .ignoresSafeArea()
             }
@@ -200,7 +205,7 @@ struct VictorySplashView: View {
     /// Métricas secundarias (intentos + subtítulo).
     private var metricsSection: some View {
         VStack(spacing: 6) {
-            Text("\(attempts) \(attempts == 1 ? "intento" : "intentos")")
+            Text(attempts == 1 ? String(localized: "game.attempts_one") : String(format: String(localized: "game.attempts_other"), attempts))
                 .font(.system(.title3, design: .rounded, weight: .semibold))
                 .foregroundStyle(Color.white.opacity(0.8))
 
@@ -241,6 +246,17 @@ struct VictorySplashView: View {
     /// - t=1.0s: Botón CTA aparece
     /// - t=0.6s: Shimmer empieza a loopear
     private func triggerStaggeredAnimations() {
+        // Reduce Motion: mostramos todo el contenido en su estado final, de inmediato,
+        // sin confeti, sin shimmer en loop, sin springs escalonados ni rotación de fondo.
+        guard !reduceMotion else {
+            showBackground = true
+            showRank = true
+            showSecret = true
+            showMetrics = true
+            showButton = true
+            return
+        }
+
         // Fondo
         withAnimation(.easeOut(duration: 0.4)) {
             showBackground = true
