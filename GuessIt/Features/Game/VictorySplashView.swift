@@ -246,41 +246,51 @@ struct VictorySplashView: View {
             showBackground = true
         }
 
+        // Cada etapa es un Task independiente: su delay se mide desde "ahora", igual que
+        // los asyncAfter originales. Un único Task con sleeps secuenciales acumularía los
+        // tiempos y rompería el escalonado, por eso se mantienen separados.
+
         // Confeti
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(200))
             showConfetti = true
         }
 
         // Rango con bounce
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
                 showRank = true
             }
         }
 
         // Número secreto
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                 showSecret = true
             }
         }
 
         // Shimmer loop
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
             withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: false)) {
                 shimmerOffset = 200
             }
         }
 
         // Métricas
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(800))
             withAnimation(.easeOut(duration: 0.3)) {
                 showMetrics = true
             }
         }
 
         // Botón CTA
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                 showButton = true
             }

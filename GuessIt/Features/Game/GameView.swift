@@ -254,7 +254,8 @@ struct GameView: View {
         
         // 2. Esperar a que la animación termine antes de iniciar nueva partida
         // Why: evita conflictos de estado durante la transición
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(250))
             startNewGame()
         }
     }
