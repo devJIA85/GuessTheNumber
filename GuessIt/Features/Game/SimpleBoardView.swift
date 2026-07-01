@@ -174,7 +174,9 @@ struct SimpleDigitCell: View {
             .onTapGesture {
                 if !isUsed {
                     isPressed = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    // Liberamos el estado "pressed" tras 100ms con concurrencia estructurada.
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(100))
                         isPressed = false
                     }
                     onTap()

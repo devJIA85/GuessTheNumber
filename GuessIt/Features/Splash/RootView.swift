@@ -94,7 +94,8 @@ struct RootView: View {
             // - Why: la splash comienza a disolverse en ~0.75s y termina en ~1.2s
             // - Cargamos GameView en 0.9s para que esté listo cuando la splash desaparezca
             // - Esto evita que se vea GameView detrás de la splash mientras anima
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(900))
                 isGameViewLoaded = true
             }
 

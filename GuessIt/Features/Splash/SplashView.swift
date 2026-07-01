@@ -114,9 +114,11 @@ struct SplashView: View {
     /// ```
     ///
     /// # Patrón
-    /// - Usa `DispatchQueue.main.asyncAfter` + `withAnimation` (mismo patrón que `VictorySplashView`).
-    /// - Why: no usamos `Task.sleep` porque no necesitamos cancelación y el patrón
-    ///   de dispatch es más predecible para timing de animaciones.
+    /// - Usa `Task { @MainActor in try? await Task.sleep(...) }` + `withAnimation`
+    ///   (concurrencia estructurada, mismo patrón que `VictorySplashView`).
+    /// - Timing: cada fase mide su delay desde "ahora"; las fases hermanas van en
+    ///   Tasks separados y los delays anidados como sleeps secuenciales, preservando
+    ///   exactamente el timeline original.
     private func triggerAnimationSequence() {
         // FASE 1: Fade-in + scale-up del ícono con spring.
         // - Spring con damping 0.75: rebote mínimo, se asienta rápido.
@@ -127,32 +129,36 @@ struct SplashView: View {
 
         // FASE 2: Micro-pop del ícono.
         // - t=0.42s: empieza después de que el spring de entrada se estabilice.
-        DispatchQueue.main.asyncAfter(deadline: .now() + SplashStyle.Duration.delayBeforePop) {
+        // FASE 2 y FASE 3 miden su delay desde el mismo "ahora", por eso son Tasks
+        // SEPARADOS: un único Task con sleeps secuenciales volvería los tiempos
+        // acumulativos y rompería el timing. Los delays anidados (relativos al padre)
+        // sí se modelan como sleeps secuenciales dentro del mismo Task.
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(Double(SplashStyle.Duration.delayBeforePop)))
             // Pop del ícono: spring con damping bajo para rebote visible.
             withAnimation(.spring(response: SplashStyle.Duration.symbolPop, dampingFraction: 0.5)) {
                 iconPopScale = SplashStyle.Scale.popPeak
             }
 
-            // Ícono vuelve a escala normal después del pico.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
-                    iconPopScale = SplashStyle.Scale.target
-                }
+            // Ícono vuelve a escala normal después del pico (0.15s relativo al pop).
+            try? await Task.sleep(for: .seconds(0.15))
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
+                iconPopScale = SplashStyle.Scale.target
             }
         }
 
         // FASE 3: Disolución + crossfade a contenido principal.
         // - t=0.75s: el pop ya terminó, empezamos la salida.
-        DispatchQueue.main.asyncAfter(deadline: .now() + SplashStyle.Duration.delayBeforeDissolve) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(Double(SplashStyle.Duration.delayBeforeDissolve)))
             withAnimation(.easeOut(duration: SplashStyle.Duration.dissolve)) {
                 dissolveOpacity = 0
             }
 
-            // Marcar splash como inactiva al final de la disolución.
+            // Marcar splash como inactiva al final de la disolución (relativo al inicio del dissolve).
             // - Why: esperamos a que la opacidad llegue a 0 para evitar cortes visuales.
-            DispatchQueue.main.asyncAfter(deadline: .now() + SplashStyle.Duration.dissolve) {
-                isActive = false
-            }
+            try? await Task.sleep(for: .seconds(Double(SplashStyle.Duration.dissolve)))
+            isActive = false
         }
     }
 
@@ -172,15 +178,16 @@ struct SplashView: View {
         iconScale = SplashStyle.Scale.target
 
         // Después de un momento breve, fade-out.
-        DispatchQueue.main.asyncAfter(deadline: .now() + SplashStyle.Duration.reduceMotionTotal) {
+        // Un solo outer con un delay anidado -> un Task con dos sleeps secuenciales.
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(Double(SplashStyle.Duration.reduceMotionTotal)))
             withAnimation(.easeOut(duration: SplashStyle.Duration.reduceMotionTotal)) {
                 dissolveOpacity = 0
             }
 
-            // Remover splash al final del fade.
-            DispatchQueue.main.asyncAfter(deadline: .now() + SplashStyle.Duration.reduceMotionTotal) {
-                isActive = false
-            }
+            // Remover splash al final del fade (relativo al inicio del fade).
+            try? await Task.sleep(for: .seconds(Double(SplashStyle.Duration.reduceMotionTotal)))
+            isActive = false
         }
     }
 }
