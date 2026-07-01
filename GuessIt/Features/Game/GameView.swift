@@ -348,9 +348,8 @@ struct GameView: View {
     private func handleDigitTap(_ digit: Int) {
         if guessText.count < 5 {
             guessText.append("\(digit)")
-            
-            let impact = UIImpactFeedbackGenerator(style: .light)
-            impact.impactOccurred()
+
+            HapticFeedbackManager.keypadTap()
         }
     }
     
@@ -516,8 +515,7 @@ struct GameView: View {
                 notes[index] = DigitNoteSnapshot(id: note.id, digit: note.digit, mark: note.mark.next())
             }
 
-            let impact = UIImpactFeedbackGenerator(style: .medium)
-            impact.impactOccurred()
+            HapticFeedbackManager.markChanged()
 
             do {
                 try await env.modelActor.cycleDigitMark(digit: digit, gameID: game.id)
@@ -540,8 +538,7 @@ struct GameView: View {
                 notes[index] = DigitNoteSnapshot(id: note.id, digit: note.digit, mark: mark)
             }
 
-            let impact = UIImpactFeedbackGenerator(style: .medium)
-            impact.impactOccurred()
+            HapticFeedbackManager.markChanged()
 
             do {
                 try await env.modelActor.setDigitMark(digit: digit, mark: mark, gameID: game.id)
@@ -564,8 +561,7 @@ struct GameView: View {
                 }
             }
 
-            let impact = UIImpactFeedbackGenerator(style: .medium)
-            impact.impactOccurred()
+            HapticFeedbackManager.markChanged()
 
             do {
                 try await env.modelActor.resetDigitNotes(gameID: game.id)
@@ -581,8 +577,7 @@ struct GameView: View {
     /// - Why: refuerza el feedback sin ser intrusivo.
     private func triggerVictoryHapticIfNeeded() {
         guard !victorySplash.didFireHaptic else { return }
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        HapticFeedbackManager.victory()
         victorySplash.markHapticFired()
     }
 

@@ -537,9 +537,7 @@ struct DailyChallengeInputView: View {
                     if guessText.count < 3 {
                         guessText.append("\(digit)")
                         
-                        // Haptic feedback
-                        let impact = UIImpactFeedbackGenerator(style: .light)
-                        impact.impactOccurred()
+                        HapticFeedbackManager.keypadTap()
                     }
                 }
             )
@@ -552,9 +550,7 @@ struct DailyChallengeInputView: View {
                     if !guessText.isEmpty {
                         guessText.removeLast()
                         
-                        // Haptic feedback
-                        let impact = UIImpactFeedbackGenerator(style: .light)
-                        impact.impactOccurred()
+                        HapticFeedbackManager.keypadTap()
                     }
                 } label: {
                     HStack(spacing: 4) {
