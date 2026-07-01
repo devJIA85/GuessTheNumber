@@ -148,14 +148,8 @@ final class GameCenterService: Sendable {
 
     /// Presenta el dashboard de Game Center (logros, leaderboards).
     ///
-    /// # iOS 26+
-    /// - Usa `GKAccessPoint.trigger(state:)` para abrir Apple Games app nativa.
+    /// - Usa `GKAccessPoint.trigger(state:)` para abrir la app nativa Apple Games.
     /// - La transición es manejada por el sistema operativo (Liquid Glass).
-    /// - No se usa `UIViewControllerRepresentable` deprecado.
-    ///
-    /// # iOS 13-25 (Fallback)
-    /// - Setea `isShowingGameCenter = true`.
-    /// - GameView lo presenta via `.fullScreenCover` con `GameCenterDashboardView`.
     ///
     /// # Cuándo llamar
     /// - Desde el botón de Game Center en la toolbar de `GameView`.
@@ -164,17 +158,11 @@ final class GameCenterService: Sendable {
     /// - Si no está autenticado, no hace nada.
     func showDashboard() {
         guard isAuthenticated else { return }
-        
-        if #available(iOS 26.0, *) {
-            // iOS 26+: Usar el Access Point para abrir Apple Games app
-            GKAccessPoint.shared.trigger(state: .dashboard) {
-                Self.logger.info("Apple Games dashboard dismissed")
-            }
-            Self.logger.info("Triggered Apple Games dashboard via GKAccessPoint")
-        } else {
-            // iOS 13-25: Usar el modal deprecado
-            isShowingGameCenter = true
+
+        GKAccessPoint.shared.trigger(state: .dashboard) {
+            Self.logger.info("Apple Games dashboard dismissed")
         }
+        Self.logger.info("Triggered Apple Games dashboard via GKAccessPoint")
     }
 
     // MARK: - Achievement Reporting

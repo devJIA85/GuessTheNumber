@@ -227,14 +227,9 @@ struct GameView: View {
         }
     }
     
-    @ViewBuilder
     private var inputSectionBackground: some View {
-        if #available(iOS 26.0, *) {
-            Color.clear
-                .background(.ultraThinMaterial)
-        } else {
-            Color.appBackgroundPrimary.opacity(0.95)
-        }
+        Color.clear
+            .background(.ultraThinMaterial)
     }
     
     @ViewBuilder
@@ -400,20 +395,11 @@ struct GameView: View {
 
     // MARK: - Helpers
 
-    /// Envuelve el contenido en un GlassEffectContainer en iOS 26+.
+    /// Envuelve el contenido en un GlassEffectContainer.
     /// - Why: Apple recomienda usar container para mejor rendimiento con múltiples efectos
-    /// - Fallback: En iOS <26 retorna el contenido sin wrapper
-    @ViewBuilder
+    /// - spacing: AppTheme.Spacing.medium (16pt) evita que efectos separados se mezclen
     private func glassContainer<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        if #available(iOS 26.0, *) {
-            // iOS 26+: Usar GlassEffectContainer para optimizar rendimiento
-            // - spacing: controla cuándo los efectos comienzan a blend
-            // - AppTheme.Spacing.medium (16pt) permite que efectos separados no se mezclen
-            GlassEffectContainer(spacing: AppTheme.Spacing.medium) {
-                content()
-            }
-        } else {
-            // iOS 13-25: No hay container, renderizar contenido directamente
+        GlassEffectContainer(spacing: AppTheme.Spacing.medium) {
             content()
         }
     }

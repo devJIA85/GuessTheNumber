@@ -303,12 +303,8 @@ private struct AppleHintEngine: HintEngine {
     func generate(prompt: String) async throws -> String {
         try Task.checkCancellation()
 
-        // iOS 26+: Usar Guided Generation para output estructurado
-        if #available(iOS 26.0, *) {
-            return try await generateStructured(prompt: prompt)
-        } else {
-            return try await generatePlainText(prompt: prompt)
-        }
+        // Guided Generation para output estructurado.
+        return try await generateStructured(prompt: prompt)
     }
 
     /// Genera pista con Guided Generation (iOS 26+).
@@ -339,25 +335,6 @@ private struct AppleHintEngine: HintEngine {
             - Próximo intento: \(hint.proximoIntento)
             - Por qué: \(hint.porQue)
             """
-        } catch {
-            if error is CancellationError { throw error }
-            throw HintError.generationFailed
-        }
-    }
-
-    /// Genera pista con texto plano (iOS <26 fallback).
-    private func generatePlainText(prompt: String) async throws -> String {
-        let session = LanguageModelSession()
-
-        do {
-            var options = GenerationOptions()
-            options.temperature = 0.7
-
-            let response = try await session.respond(to: prompt, options: options)
-
-            try Task.checkCancellation()
-
-            return response.content
         } catch {
             if error is CancellationError { throw error }
             throw HintError.generationFailed

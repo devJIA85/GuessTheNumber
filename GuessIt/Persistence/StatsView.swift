@@ -205,11 +205,7 @@ struct StatsView: View {
                 .foregroundStyle(Color.appTextPrimary)
             
             // Gráfico de barras horizontal estilo Wordle
-            if #available(iOS 16.0, *) {
-                distributionChart(stats: stats)
-            } else {
-                distributionLegacy(stats: stats)
-            }
+            distributionChart(stats: stats)
         }
         .glassCard()
     }
@@ -252,45 +248,7 @@ struct StatsView: View {
         }
         .frame(height: CGFloat(sortedData.count) * 32 + 20)
     }
-    
-    private func distributionLegacy(stats: GameStatsSnapshot) -> some View {
-        let sortedData = stats.attemptsDistribution
-            .sorted { $0.key < $1.key }
-        
-        return VStack(alignment: .leading, spacing: 8) {
-            ForEach(sortedData, id: \.key) { item in
-                HStack(spacing: 8) {
-                    Text("\(item.key)")
-                        .font(.caption)
-                        .fontDesign(.rounded)
-                        .foregroundStyle(Color.appTextSecondary)
-                        .frame(width: 24, alignment: .trailing)
-                    
-                    GeometryReader { geometry in
-                        let maxCount = stats.attemptsDistribution.values.max() ?? 1
-                        let width = geometry.size.width * (Double(item.value) / Double(maxCount))
-                        
-                        HStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                .fill(
-                                    item.key == stats.bestResult
-                                        ? Color.green
-                                        : Color.appActionPrimary
-                                )
-                                .frame(width: max(width, 20))
-                            
-                            Text("\(item.value)")
-                                .font(.caption2)
-                                .fontDesign(.rounded)
-                                .foregroundStyle(Color.appTextSecondary)
-                        }
-                    }
-                    .frame(height: 24)
-                }
-            }
-        }
-    }
-    
+
     // MARK: - Streaks Section
     
     private func streaksSection(stats: GameStatsSnapshot) -> some View {
