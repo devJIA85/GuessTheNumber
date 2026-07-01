@@ -63,9 +63,9 @@ struct GuessInputView: View {
             OTPStyleDigitInput(text: $guessText)
                 .frame(maxWidth: .infinity)
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("Ingreso de número de 5 dígitos")
-                .accessibilityValue(guessText.isEmpty ? "Vacío" : guessText)
-                .accessibilityHint("Tocá los números del tablero abajo para ingresar")
+                .accessibilityLabel("accessibility.guess_input_5")
+                .accessibilityValue(guessText.isEmpty ? String(localized: "accessibility.empty") : guessText)
+                .accessibilityHint("accessibility.keypad_hint")
 
             // SECCIÓN 2: Tablero de dígitos 0-9 (clickeable para input)
             if let game = game {
@@ -93,7 +93,7 @@ struct GuessInputView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "delete.left")
                             .font(.caption)
-                        Text("Borrar")
+                        Text("common.delete")
                             .font(.caption)
                             .fontWeight(.medium)
                     }
@@ -105,8 +105,8 @@ struct GuessInputView: View {
                 .controlSize(.small)
                 .disabled(guessText.isEmpty)
                 .opacity(guessText.isEmpty ? 0.4 : 0.7)
-                .accessibilityLabel("Borrar último dígito")
-                .accessibilityHint("Elimina el último dígito ingresado")
+                .accessibilityLabel("accessibility.delete_last")
+                .accessibilityHint("accessibility.delete_last_hint")
                 
                 // Botón "Probar" - PROTAGONISTA, más grande y prominente
                 Button {
@@ -114,7 +114,7 @@ struct GuessInputView: View {
                     let normalized = guessText.trimmingCharacters(in: .whitespacesAndNewlines)
                     onSubmit(normalized)
                 } label: {
-                    Text("Probar")
+                    Text("game.submit")
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                 }
@@ -130,8 +130,8 @@ struct GuessInputView: View {
                 .scaleEffect(isButtonDisabled ? 0.98 : 1.0)
                 .opacity(isButtonDisabled ? 0.75 : 1.0)
                 .animation(.easeOut(duration: 0.2), value: isButtonDisabled)
-                .accessibilityLabel("Probar número")
-                .accessibilityHint(isButtonDisabled ? "Ingresá 5 dígitos para habilitar" : "Presioná para verificar tu número")
+                .accessibilityLabel("accessibility.submit_guess")
+                .accessibilityHint(isButtonDisabled ? Text("accessibility.submit_disabled_hint") : Text("accessibility.submit_enabled_hint"))
             }
         }
     }

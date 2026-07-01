@@ -52,7 +52,7 @@ struct HistoryView: View {
                     }
                 }
             }
-            .navigationTitle("Historial")
+            .navigationTitle("history.title")
             .task {
                 await loadGames()
             }
@@ -75,18 +75,18 @@ struct HistoryView: View {
     
     /// Vista de carga.
     private var loadingView: some View {
-        ProgressView("Cargando historial...")
+        ProgressView("history.loading")
             .tint(.appActionPrimary)
     }
 
     /// Vista cuando no hay partidas terminadas todavía.
     private var emptyStateView: some View {
         VStack(spacing: 12) {
-            Text("Todavía no hay partidas terminadas.")
+            Text("history.empty.finished")
                 .font(.headline)
                 .foregroundStyle(Color.appTextSecondary)
 
-            Text("Jugá una partida para que aparezca en el historial.")
+            Text("history.empty.finished_description")
                 .font(.subheadline)
                 .foregroundStyle(Color.appTextSecondary)
                 .multilineTextAlignment(.center)
@@ -97,11 +97,11 @@ struct HistoryView: View {
     /// Vista de error con opción de reintentar.
     private func failureView(error: Error) -> some View {
         VStack(spacing: 16) {
-            Text("No se pudo cargar el historial.")
+            Text("history.load_error")
                 .font(.headline)
                 .foregroundStyle(Color.appTextSecondary)
 
-            Button("Reintentar") {
+            Button("common.retry") {
                 Task(name: "RetryLoadGames") { @MainActor in
                     await loadGames()
                 }

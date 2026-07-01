@@ -204,7 +204,7 @@ struct VictorySplashView: View {
                 .font(.system(.title3, design: .rounded, weight: .semibold))
                 .foregroundStyle(Color.white.opacity(0.8))
 
-            Text("Excelente lectura del feedback")
+            Text("game.victory.subtitle")
                 .font(.system(.caption, design: .rounded))
                 .foregroundStyle(Color.white.opacity(0.5))
         }
@@ -215,7 +215,7 @@ struct VictorySplashView: View {
     /// Botón "Nueva partida" en forma de pill con glow difuso.
     private var ctaButton: some View {
         Button(action: onNewGame) {
-            Label("Nueva partida", systemImage: "plus.circle.fill")
+            Label("game.victory.new_game", systemImage: "plus.circle.fill")
                 .font(.system(.headline, design: .rounded, weight: .semibold))
                 .foregroundStyle(Color.black)
                 .padding(.horizontal, 32)
