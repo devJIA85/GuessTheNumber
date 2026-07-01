@@ -64,14 +64,17 @@ struct HintPromptBuilderTests {
         #expect(!builder.isOutputSafe("La respuesta es 67890"))
     }
     
-    @Test("isOutputSafe permite 5 dígitos con separadores (no consecutivos)")
-    func testIsOutputSafeAllowsFiveDigitsWithSeparators() {
-        // Estos casos son seguros: los dígitos están separados por espacios/comas
-        #expect(builder.isOutputSafe("Probá los dígitos 1, 2, 3, 4 y 5 en distintas posiciones."))
-        #expect(builder.isOutputSafe("Los números 6 7 8 9 0 podrían estar en el secreto."))
+    @Test("isOutputSafe BLOQUEA 5 dígitos con separadores (política endurecida PR 11)")
+    func testIsOutputSafeBlocksFiveDigitsWithSeparators() {
+        // Antes se permitían; ahora 5 dígitos (aunque estén separados) se consideran
+        // una posible revelación del secreto y se bloquean.
+        #expect(!builder.isOutputSafe("Probá los dígitos 1, 2, 3, 4 y 5 en distintas posiciones."))
+        #expect(!builder.isOutputSafe("Los números 6 7 8 9 0 podrían estar en el secreto."))
+        #expect(!builder.isOutputSafe("Considerá 1-2-3-4-5 en algún orden."))
+        #expect(!builder.isOutputSafe("Quizás 1.2.3.4.5 sea la base."))
     }
-    
-    @Test("isOutputSafe permite menos de 5 dígitos consecutivos")
+
+    @Test("isOutputSafe permite menos de 5 dígitos")
     func testIsOutputSafeAllowsLessThanFiveDigits() {
         #expect(builder.isOutputSafe("Probá permutar 123 con 4."))
         #expect(builder.isOutputSafe("El patrón es 45xx."))
@@ -205,5 +208,51 @@ struct HintPromptBuilderTests {
         #expect(prompt.contains("Resumen táctico (derivado"))
         #expect(prompt.contains("Mejor hit (GOOD+FAIR): 2"))
         #expect(prompt.contains("Repetidos: 1"))
+    }
+
+    // MARK: - Guardrails endurecidos (PR 11)
+
+    @Test("isOutputSafe bloquea el secreto completo")
+    func testIsOutputSafeBlocksFullSecret() {
+        #expect(!builder.isOutputSafe("50317"))
+        #expect(!builder.isOutputSafe("Pensá en 50317."))
+    }
+
+    @Test("isOutputSafe bloquea dígitos repartidos entre campos (texto concatenado)")
+    func testIsOutputSafeBlocksDigitsSplitAcrossFields() {
+        // Simula el texto final del @Generable con dígitos repartidos: 12 + 345 = 5 dígitos.
+        let concatenated = """
+        - Diagnóstico: empezá por 12
+        - Próximo intento: sumá 345
+        - Por qué: cubre el espacio
+        """
+        #expect(!builder.isOutputSafe(concatenated))
+    }
+
+    @Test("isOutputSafe bloquea el secreto escrito en palabras")
+    func testIsOutputSafeBlocksNumberWords() {
+        #expect(!builder.isOutputSafe("Probá uno dos tres cuatro cinco."))
+        #expect(!builder.isOutputSafe("Sería algo como cinco cero tres uno siete."))
+    }
+
+    @Test("isOutputSafe normaliza acentos y mayúsculas antes de validar")
+    func testIsOutputSafeNormalizesAccentsAndCase() {
+        // Sin tilde ni mayúsculas: igualmente debe detectar la frase prohibida.
+        #expect(!builder.isOutputSafe("Creo que el numero es correcto."))
+        #expect(!builder.isOutputSafe("EL NÚMERO ES la clave."))
+        #expect(!builder.isOutputSafe("la RESPUESTA es evidente"))
+    }
+
+    @Test("isOutputSafe bloquea outputs excesivamente largos")
+    func testIsOutputSafeBlocksExcessiveLength() {
+        let longText = String(repeating: "pista estratégica sin dígitos. ", count: 40)
+        #expect(longText.count > 600)
+        #expect(!builder.isOutputSafe(longText))
+    }
+
+    @Test("isOutputSafe permite una pista estratégica breve con pocos dígitos")
+    func testIsOutputSafeAllowsShortStrategicHintWithFewDigits() {
+        #expect(builder.isOutputSafe("Conservá 3 dígitos de tu mejor intento y cambiá 1 posición."))
+        #expect(builder.isOutputSafe("Enfocate en los dígitos FAIR y variá su orden."))
     }
 }
