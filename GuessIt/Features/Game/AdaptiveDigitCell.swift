@@ -80,7 +80,7 @@ struct AdaptiveDigitCell: View {
                 onTap()
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(isInputMode ? "Dígito \(digit). Tocá para ingresar" : "Dígito \(digit). Estado \(markSpokenText)")
+            .accessibilityLabel(isInputMode ? "Dígito \(digit). Tocá para ingresar" : "Dígito \(digit). Estado \(mark.spokenText)")
             .accessibilityHint(isInputMode ? "Doble toque para agregar al número" : "Doble toque para cambiar estado")
             .accessibilityAddTraits(.isButton)
     }
@@ -167,16 +167,6 @@ struct AdaptiveDigitCell: View {
         }
     }
 
-    // MARK: - Accesibilidad
-
-    private var markSpokenText: String {
-        switch mark {
-        case .unknown: return "sin estado"
-        case .poor:    return "POOR"
-        case .fair:    return "FAIR"
-        case .good:    return "GOOD"
-        }
-    }
 
 }
 

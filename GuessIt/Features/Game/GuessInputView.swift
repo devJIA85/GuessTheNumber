@@ -86,10 +86,8 @@ struct GuessInputView: View {
                 Button {
                     if !guessText.isEmpty {
                         guessText.removeLast()
-                        
-                        // Haptic feedback
-                        let impact = UIImpactFeedbackGenerator(style: .light)
-                        impact.impactOccurred()
+
+                        HapticFeedbackManager.keypadTap()
                     }
                 } label: {
                     HStack(spacing: 4) {

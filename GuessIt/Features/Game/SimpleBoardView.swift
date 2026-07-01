@@ -226,7 +226,7 @@ struct SimpleDigitCell: View {
             }
             .opacity(isUsed ? 0.4 : 1.0)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(isInputMode ? "Dígito \(digit). \(isUsed ? "Ya usado" : "Tocá para ingresar")" : "Dígito \(digit). Estado \(markSpokenText)")
+            .accessibilityLabel(isInputMode ? "Dígito \(digit). \(isUsed ? "Ya usado" : "Tocá para ingresar")" : "Dígito \(digit). Estado \(mark.spokenText)")
             .accessibilityHint(isUsed ? "" : (isInputMode ? "Doble toque para agregar. Mantén presionado para marcar" : "Doble toque para cambiar estado"))
             .accessibilityAddTraits(isUsed ? [] : .isButton)
     }
@@ -297,12 +297,4 @@ struct SimpleDigitCell: View {
         }
     }
     
-    private var markSpokenText: String {
-        switch mark {
-        case .unknown: return "sin estado"
-        case .poor:    return "POOR"
-        case .fair:    return "FAIR"
-        case .good:    return "GOOD"
-        }
-    }
 }
