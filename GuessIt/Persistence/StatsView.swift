@@ -48,7 +48,7 @@ struct StatsView: View {
                         .padding(.vertical, AppTheme.Spacing.small)
                 }
             }
-            .navigationTitle("Estadísticas")
+            .navigationTitle("stats.title")
             .navigationBarTitleDisplayMode(.inline)
             .tint(.appActionPrimary)
             .task {
@@ -66,7 +66,7 @@ struct StatsView: View {
             // Loading state
             VStack(spacing: AppTheme.Spacing.medium) {
                 ProgressView()
-                Text("Cargando estadísticas...")
+                Text("stats.loading")
                     .foregroundStyle(Color.appTextSecondary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -87,7 +87,7 @@ struct StatsView: View {
                     .font(.largeTitle)
                     .foregroundStyle(Color.appTextSecondary)
                 
-                Text("Error al cargar estadísticas")
+                Text("stats.load_error")
                     .font(AppTheme.Typography.headline())
                     .foregroundStyle(Color.appTextPrimary)
                 
@@ -96,7 +96,7 @@ struct StatsView: View {
                     .foregroundStyle(Color.appTextSecondary)
                     .multilineTextAlignment(.center)
                 
-                Button("Reintentar") {
+                Button("common.retry") {
                     Task { await loadStats() }
                 }
                 .buttonStyle(.bordered)
@@ -116,11 +116,11 @@ struct StatsView: View {
                 .font(.system(size: 60))
                 .foregroundStyle(Color.appTextSecondary.opacity(0.6))
             
-            Text("Sin estadísticas")
+            Text("stats.empty.title")
                 .font(AppTheme.Typography.title())
                 .foregroundStyle(Color.appTextPrimary)
             
-            Text("Jugá tu primera partida para ver tus estadísticas")
+            Text("stats.empty.description")
                 .font(AppTheme.Typography.body())
                 .foregroundStyle(Color.appTextSecondary)
                 .multilineTextAlignment(.center)
@@ -152,7 +152,7 @@ struct StatsView: View {
     
     private func metricsSection(stats: GameStatsSnapshot) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            Text("Resumen")
+            Text("stats.summary")
                 .font(AppTheme.Typography.headline())
                 .foregroundStyle(Color.appTextPrimary)
             
@@ -166,28 +166,28 @@ struct StatsView: View {
             ) {
                 MetricCard(
                     icon: "flag.checkered",
-                    label: "Partidas",
+                    label: String(localized: "stats.games"),
                     value: "\(stats.totalGames)",
                     color: .appActionPrimary
                 )
                 
                 MetricCard(
                     icon: "trophy.fill",
-                    label: "Victorias",
+                    label: String(localized: "stats.wins"),
                     value: "\(stats.totalWins)",
                     color: .green
                 )
                 
                 MetricCard(
                     icon: "percent",
-                    label: "Win Rate",
+                    label: String(localized: "stats.win_rate"),
                     value: String(format: "%.0f%%", stats.winRate),
                     color: .appActionPrimary
                 )
                 
                 MetricCard(
                     icon: "chart.line.uptrend.xyaxis",
-                    label: "Promedio",
+                    label: String(localized: "stats.average"),
                     value: String(format: "%.1f", stats.averageAttemptsPerWin),
                     color: .orange
                 )
@@ -200,7 +200,7 @@ struct StatsView: View {
     
     private func distributionSection(stats: GameStatsSnapshot) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            Text("Distribución de victorias")
+            Text("stats.distribution")
                 .font(AppTheme.Typography.headline())
                 .foregroundStyle(Color.appTextPrimary)
             
@@ -253,21 +253,21 @@ struct StatsView: View {
     
     private func streaksSection(stats: GameStatsSnapshot) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            Text("Rachas")
+            Text("stats.streaks")
                 .font(AppTheme.Typography.headline())
                 .foregroundStyle(Color.appTextPrimary)
             
             HStack(spacing: AppTheme.Spacing.small) {
                 StreakCard(
                     icon: "flame.fill",
-                    label: "Racha actual",
+                    label: String(localized: "stats.current_streak"),
                     value: "\(stats.currentStreak)",
                     color: stats.currentStreak > 0 ? .orange : .appTextSecondary
                 )
                 
                 StreakCard(
                     icon: "star.fill",
-                    label: "Mejor racha",
+                    label: String(localized: "stats.best_streak"),
                     value: "\(stats.bestStreak)",
                     color: .yellow
                 )

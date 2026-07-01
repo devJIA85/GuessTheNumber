@@ -43,7 +43,7 @@ struct GameDetailView: View {
             Group {
                 switch state {
                 case .loading:
-                    ProgressView("Cargando detalle...")
+                    ProgressView("detail.loading")
                         .tint(.appActionPrimary)
                 case .loaded(let snapshot):
                     detailContent(snapshot: snapshot)
@@ -55,7 +55,7 @@ struct GameDetailView: View {
                 }
             }
         }
-        .navigationTitle("Detalle de partida")
+        .navigationTitle("detail.title")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: gameID) {
             await loadGameDetail()
@@ -77,11 +77,11 @@ struct GameDetailView: View {
     /// Vista de error con opción de reintentar.
     private func failureView(error: Error) -> some View {
         VStack(spacing: 16) {
-            Text("No se pudo cargar la partida.")
+            Text("detail.load_error")
                 .font(.headline)
                 .foregroundStyle(Color.appTextSecondary)
 
-            Button("Reintentar") {
+            Button("common.retry") {
                 Task(name: "RetryLoadGameDetail") {
                     await loadGameDetail()
                 }
@@ -95,7 +95,7 @@ struct GameDetailView: View {
     /// Vista cuando no se encuentra la partida.
     private var emptyStateView: some View {
         VStack(spacing: 12) {
-            Text("No se encontró la partida.")
+            Text("detail.not_found")
                 .font(.headline)
                 .foregroundStyle(Color.appTextSecondary)
         }
@@ -127,7 +127,7 @@ struct GameDetailView: View {
             VStack(alignment: .leading, spacing: 12) {
                 // Estado de la partida
                 HStack {
-                    Text("Estado")
+                    Text("detail.state")
                         .font(.subheadline)
                         .foregroundStyle(Color.appTextSecondary)
 
@@ -140,7 +140,7 @@ struct GameDetailView: View {
 
                 // Fecha de finalización
                 HStack {
-                    Text("Fecha")
+                    Text("detail.date")
                         .font(.subheadline)
                         .foregroundStyle(Color.appTextSecondary)
 
@@ -153,7 +153,7 @@ struct GameDetailView: View {
 
                 // Cantidad de intentos
                 HStack {
-                    Text("Intentos")
+                    Text("common.attempts")
                         .font(.subheadline)
                         .foregroundStyle(Color.appTextSecondary)
 
@@ -167,7 +167,7 @@ struct GameDetailView: View {
                 // Número secreto (solo si está ganada, para no spoilear)
                 if let secret = snapshot.secret {
                     HStack {
-                        Text("Número secreto")
+                        Text("detail.secret")
                             .font(.subheadline)
                             .foregroundStyle(Color.appTextSecondary)
 
@@ -181,7 +181,7 @@ struct GameDetailView: View {
                 }
             }
         } header: {
-            Text("Resumen")
+            Text("stats.summary")
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(headerAccessibilityLabel(for: snapshot))
@@ -194,7 +194,7 @@ struct GameDetailView: View {
     private func attemptsSection(snapshot: GameDetailSnapshot) -> some View {
         Section {
             if snapshot.attempts.isEmpty {
-                Text("No hay intentos registrados.")
+                Text("detail.no_attempts")
                     .foregroundStyle(Color.appTextSecondary)
             } else {
                 ForEach(snapshot.attempts) { attemptSnapshot in
@@ -202,7 +202,7 @@ struct GameDetailView: View {
                 }
             }
         } header: {
-            Text("Intentos (\(snapshot.attempts.count))")
+            Text(String(localized: "common.attempts") + " (\(snapshot.attempts.count))")
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Intentos, lista de \(snapshot.attempts.count) elementos")
@@ -214,7 +214,7 @@ struct GameDetailView: View {
     private func digitBoardSection(snapshot: GameDetailSnapshot) -> some View {
         DigitBoardSnapshotView(digitNotes: snapshot.digitNotes)
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Tablero final de dígitos")
+            .accessibilityLabel("accessibility.final_board")
     }
 
     // MARK: - Helpers
@@ -223,12 +223,12 @@ struct GameDetailView: View {
     private func stateText(for state: GameState) -> String {
         switch state {
         case .won:
-            return "Ganada"
+            return String(localized: "game.status.won")
         case .abandoned:
-            return "Abandonada"
+            return String(localized: "game.status.abandoned")
         case .inProgress:
             // No debería aparecer aquí, pero lo manejamos por completitud
-            return "En progreso"
+            return String(localized: "game.status.in_progress")
         }
     }
 

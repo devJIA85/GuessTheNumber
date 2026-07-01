@@ -51,7 +51,7 @@ struct DailyChallengeView: View {
                 
                 content
             }
-            .navigationTitle("Desafío Diario")
+            .navigationTitle("daily.title")
             .navigationBarTitleDisplayMode(.inline)
             .tint(.appActionPrimary)
             .task {
@@ -67,7 +67,7 @@ struct DailyChallengeView: View {
                     set: { if !$0 { errorMessage = nil } }
                 ),
                 actions: {
-                    Button("OK", role: .cancel) { errorMessage = nil }
+                    Button("common.ok", role: .cancel) { errorMessage = nil }
                 },
                 message: {
                     Text(errorMessage ?? "")
@@ -84,7 +84,7 @@ struct DailyChallengeView: View {
         case .empty, .loading:
             VStack(spacing: AppTheme.Spacing.medium) {
                 ProgressView()
-                Text("Cargando desafío...")
+                Text("daily.loading")
                     .foregroundStyle(Color.appTextSecondary)
             }
             
@@ -103,14 +103,14 @@ struct DailyChallengeView: View {
                     .font(.largeTitle)
                     .foregroundStyle(Color.appTextSecondary)
                 
-                Text("Error al cargar desafío")
+                Text("daily.load_error")
                     .font(AppTheme.Typography.headline())
                 
                 Text(error.localizedDescription)
                     .font(AppTheme.Typography.caption())
                     .foregroundStyle(Color.appTextSecondary)
                 
-                Button("Reintentar") {
+                Button("common.retry") {
                     Task { await loadChallenge() }
                 }
                 .buttonStyle(.bordered)
@@ -134,7 +134,7 @@ struct DailyChallengeView: View {
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
                     .foregroundStyle(Color.appTextPrimary)
                 
-                Text("Desafío global del día")
+                Text("daily.global_today")
                     .font(.system(size: 13))
                     .foregroundStyle(Color.appTextSecondary)
             }
@@ -196,15 +196,15 @@ struct DailyChallengeView: View {
                     Text("🎉")
                         .font(.system(size: 60))
                     
-                    Text("¡Desafío completado!")
+                    Text("daily.completed")
                         .font(AppTheme.Typography.title())
                         .foregroundStyle(Color.appActionPrimary)
                     
                     VStack(spacing: AppTheme.Spacing.small) {
                         if let secret = challenge.secret {
-                            MetricRow(label: "Secreto", value: secret, isMonospaced: true)
+                            MetricRow(label: String(localized: "game.victory.secret"), value: secret, isMonospaced: true)
                         }
-                        MetricRow(label: "Intentos", value: "\(challenge.attemptsCount)", isMonospaced: false)
+                        MetricRow(label: String(localized: "common.attempts"), value: "\(challenge.attemptsCount)", isMonospaced: false)
                     }
                     .padding(AppTheme.Spacing.medium)
                     .background(
@@ -239,11 +239,11 @@ struct DailyChallengeView: View {
                     Text("😔")
                         .font(.system(size: 60))
                     
-                    Text("Desafío no completado")
+                    Text("daily.failed")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundStyle(Color.appTextPrimary)
                     
-                    Text("Alcanzaste el límite de 10 intentos")
+                    Text("daily.failed_limit")
                         .font(.system(size: 15))
                         .foregroundStyle(Color.appTextSecondary)
                         .multilineTextAlignment(.center)
@@ -251,7 +251,7 @@ struct DailyChallengeView: View {
                     // Mostrar el secreto
                     if let secret = challenge.secret {
                         VStack(spacing: AppTheme.Spacing.small) {
-                            Text("El número era:")
+                            Text("daily.secret_was")
                                 .font(.system(size: 14))
                                 .foregroundStyle(Color.appTextSecondary)
                             
@@ -277,7 +277,7 @@ struct DailyChallengeView: View {
                             Text("\(challenge.attemptsCount)")
                                 .font(.system(size: 28, weight: .bold, design: .rounded))
                                 .foregroundStyle(Color.orange)
-                            Text("Intentos")
+                            Text("common.attempts")
                                 .font(.system(size: 12))
                                 .foregroundStyle(Color.appTextSecondary)
                         }
@@ -291,7 +291,7 @@ struct DailyChallengeView: View {
                 // Historial de intentos
                 if !challenge.attempts.isEmpty {
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-                        Text("Tus intentos")
+                        Text("daily.your_attempts")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(Color.appTextPrimary)
                         
@@ -319,11 +319,11 @@ struct DailyChallengeView: View {
                     Text("💪")
                         .font(.system(size: 32))
                     
-                    Text("¡No te rindas!")
+                    Text("daily.dont_give_up")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(Color.appTextPrimary)
                     
-                    Text("Mañana es un nuevo día para probar suerte")
+                    Text("daily.try_tomorrow")
                         .font(.system(size: 14))
                         .foregroundStyle(Color.appTextSecondary)
                         .multilineTextAlignment(.center)
@@ -417,7 +417,7 @@ struct AttemptsHistoryCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-            Text("Historial")
+            Text("history.title")
                 .font(AppTheme.Typography.headline())
                 .foregroundStyle(Color.appTextPrimary)
             
@@ -556,7 +556,7 @@ struct DailyChallengeInputView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "delete.left")
                             .font(.caption)
-                        Text("Borrar")
+                        Text("common.delete")
                             .font(.caption)
                             .fontWeight(.medium)
                     }
@@ -573,7 +573,7 @@ struct DailyChallengeInputView: View {
                 Button {
                     onSubmit(guessText)
                 } label: {
-                    Text("Probar")
+                    Text("game.submit")
                         .font(AppTheme.Typography.headline())
                         .frame(maxWidth: .infinity)
                 }
@@ -705,7 +705,7 @@ struct CountdownCard: View {
             Text("⏰")
                 .font(.system(size: 32))
             
-            Text("Próximo desafío en:")
+            Text("daily.next_in")
                 .font(AppTheme.Typography.body())
                 .foregroundStyle(Color.appTextSecondary)
             
