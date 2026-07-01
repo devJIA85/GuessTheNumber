@@ -7,33 +7,6 @@
 
 import Foundation
 
-// MARK: - String Extension (regex helper)
-
-/// Extensión privada para contar matches de regex en una string.
-/// 
-/// # Por qué esta extensión
-/// - Swift no provee un método built-in para contar matches de regex.
-/// - Necesitamos esta funcionalidad para detectar múltiples candidatos (5 dígitos).
-private extension String {
-    /// Retorna todas las ocurrencias de un patrón regex en la string.
-    ///
-    /// - Parameters:
-    ///   - pattern: patrón regex.
-    ///   - options: opciones de búsqueda (default: []).
-    /// - Returns: array de rangos donde se encontró el patrón.
-    func ranges(of pattern: String, options: String.CompareOptions = []) -> [Range<String.Index>] {
-        var ranges: [Range<String.Index>] = []
-        var searchRange = startIndex..<endIndex
-        
-        while let range = range(of: pattern, options: options, range: searchRange) {
-            ranges.append(range)
-            searchRange = range.upperBound..<endIndex
-        }
-        
-        return ranges
-    }
-}
-
 // MARK: - HintPromptBuilder
 
 /// Constructor de prompts para la generación de pistas y validación de salida.
@@ -254,95 +227,95 @@ struct HintPromptBuilder: Sendable {
     ///
     /// - Parameter text: salida del modelo de IA.
     /// - Returns: `true` si la salida es segura, `false` si viola guardrails.
-    // MARK: - Regex pre-compilados (compilar una sola vez)
+    // MARK: - Guardrails: constantes
 
-    /// Detecta exactamente 5 dígitos consecutivos (posible secreto revelado).
-    private static let fiveDigitsPattern = #"\b\d{5}\b"#
+    /// Longitud máxima del output. Una pista es breve (1-4 líneas); un texto largo
+    /// sugiere volcado de candidatos o explicaciones que pueden filtrar información.
+    private static let maxOutputLength = 600
+
+    /// Palabras-número (es/en) para detectar el secreto escrito con letras.
+    private static let numberWords: Set<String> = [
+        "cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve",
+        "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"
+    ]
 
     /// Patrones de dígito + posición (demasiado directos, actúan como "resolver").
+    /// - Note: se evalúan sobre texto normalizado (minúsculas y sin acentos), por eso
+    ///   los patrones usan formas sin tilde (p. ej. `posicion`).
     private static let digitPositionPatterns = [
-        #"\b\d\b.{0,12}\b(pos(ición|icion)|pos|lugar)\s*(\d|1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b"#,
-        #"\b(pos(ición|icion)|pos|lugar)\s*(\d|1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b.{0,12}\b\d\b"#,
+        #"\b\d\b.{0,12}\b(posicion|pos|lugar)\s*(\d|1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b"#,
+        #"\b(posicion|pos|lugar)\s*(\d|1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b.{0,12}\b\d\b"#,
         #"\b\d\b.{0,12}\b(en\s+la|en\s+el)\s+(1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b"#,
         #"\b(en\s+la|en\s+el)\s+(1ra|2da|3ra|4ta|5ta|primera|segunda|tercera|cuarta|quinta)\b.{0,12}\b\d\b"#
     ]
 
+    /// Frases de respuesta directa (ya normalizadas: minúsculas, sin acentos).
+    private static let directAnswerPhrases = [
+        "el numero es", "la respuesta es", "el secreto es", "es el",
+        "prueba este:", "proba este:", "intenta este:"
+    ]
+
+    /// Lenguaje tipo solver / enumeración de candidatos (normalizado, sin acentos).
+    private static let solverLanguagePhrases = [
+        "combinaciones posibles son", "lista de numeros", "posibles numeros son",
+        "las opciones son", "todas las combinaciones", "enumerar numeros",
+        "voy a enumerar las opciones", "los candidatos principales",
+        "posibles numeros incluyen", "los posibles numeros incluyen",
+        "prueba estas", "proba estas", "intenta estas", "cualquier orden de estos"
+    ]
+
+    /// Normaliza el texto antes de validar: minúsculas, sin acentos y espacios colapsados.
+    /// - Why: cierra bypass triviales como "El Número Es" (mayúsculas) o "el numero es"
+    ///   (sin tilde), y colapsa dobles espacios/saltos de línea.
+    private static func normalize(_ text: String) -> String {
+        text.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "es"))
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+    }
+
+    /// Valida que la salida del modelo NO viole las reglas del juego.
+    ///
+    /// # Filosofía
+    /// - Reglas simples, testeables y explicables (no un parser gigante).
+    /// - Conservador: preferimos una pista no disponible a una que rompe el juego.
+    /// - Se aplica sobre el TEXTO FINAL concatenado (todos los campos del `@Generable`),
+    ///   por eso el conteo de dígitos detecta también dígitos repartidos entre campos.
+    ///
+    /// - Parameter text: salida del modelo (o del fallback).
+    /// - Returns: `true` si es segura, `false` si viola guardrails.
     func isOutputSafe(_ text: String) -> Bool {
-        let lowercased = text.lowercased()
+        // Cap de longitud: una pista es breve; un texto largo huele a volcado de candidatos.
+        guard text.count <= Self.maxOutputLength else { return false }
 
-        // Guardrail 1: detectar 5 dígitos consecutivos (posible secreto revelado)
-        if let _ = lowercased.range(of: Self.fiveDigitsPattern, options: .regularExpression) {
+        let normalized = Self.normalize(text)
+
+        // Regla de dígitos: contamos TODOS los dígitos sin importar separadores, saltos
+        // de línea o campos. 5 o más ⇒ posible revelación del secreto, ya sea completo
+        // ("12345"), con separadores ("1 2 3 4 5", "1-2-3-4-5") o repartido entre campos.
+        if text.filter(\.isNumber).count >= GameConstants.secretLength {
             return false
         }
 
-        // Guardrail 2: detectar múltiples candidatos (listas de 5 dígitos)
-        // Por qué: una lista de "candidatos" puede revelar el secreto por reducción
-        let fiveDigitsMatches = text.ranges(of: Self.fiveDigitsPattern, options: .regularExpression)
-        if fiveDigitsMatches.count >= 2 {
+        // Secreto escrito en palabras: "uno dos tres cuatro cinco" / "one two three...".
+        let words = normalized.split { !$0.isLetter }.map(String.init)
+        if words.filter(Self.numberWords.contains).count >= GameConstants.secretLength {
             return false
         }
 
-        // Guardrail 3: detectar frases de respuesta directa
-        // Por qué: estas frases suelen preceder revelaciones del secreto
-        let directAnswerPhrases = [
-            "el número es",
-            "la respuesta es",
-            "el secreto es",
-            "es el",
-            "prueba este:",
-            "probá este:",
-            "intenta este:",
-            "intentá este:"
-        ]
-
-        for phrase in directAnswerPhrases {
-            if lowercased.contains(phrase) {
-                return false
-            }
+        // Frases de respuesta directa (preceden revelaciones del secreto).
+        for phrase in Self.directAnswerPhrases where normalized.contains(phrase) {
+            return false
         }
 
-        // Guardrail 4: bloquear patrones de dígito + posición (demasiado directos)
-        for pattern in Self.digitPositionPatterns {
-            if let _ = lowercased.range(of: pattern, options: .regularExpression) {
-                return false
-            }
+        // Dígito + posición (demasiado directo, actúa como "resolver").
+        for pattern in Self.digitPositionPatterns where normalized.range(of: pattern, options: .regularExpression) != nil {
+            return false
         }
-        
-        // Guardrail 5: detectar lenguaje tipo solver / enumeración de candidatos
-        // Por qué: estas frases indican que el modelo está intentando resolver el juego
-        // en lugar de dar pistas estratégicas, o puede revelar el secreto por reducción
-        // Nota: removimos algunas frases genéricas para reducir falsos positivos
-        let solverLanguagePhrases = [
-            "combinaciones posibles son",
-            "lista de números",
-            "posibles números son",
-            "las opciones son:",
-            "las opciones son",
-            "las opciones son limitadas",
-            "todas las combinaciones",
-            "enumerar números",
-            "voy a enumerar las opciones",
-            "los candidatos principales",
-            "posibles números incluyen",
-            "los posibles números incluyen",
-            "prueba estas:",
-            "prueba estas soluciones",
-            "probá estas:",
-            "probá estas opciones",
-            "probá estas soluciones",
-            "intentá estas:",
-            "intentá estas combinaciones",
-            "intenta estas:",
-            "intenta estas combinaciones",
-            "cualquier orden de estos"
-        ]
-        
-        for phrase in solverLanguagePhrases {
-            if lowercased.contains(phrase) {
-                return false
-            }
+
+        // Lenguaje tipo solver / enumeración de candidatos.
+        for phrase in Self.solverLanguagePhrases where normalized.contains(phrase) {
+            return false
         }
-        
+
         return true
     }
 }

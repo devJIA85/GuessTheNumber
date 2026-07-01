@@ -7,6 +7,7 @@
 
 import Foundation
 import FoundationModels
+import OSLog
 
 /// Servicio de generación de pistas usando Apple Intelligence (Foundation Models).
 ///
@@ -296,6 +297,10 @@ private protocol HintEngine: Sendable {
 /// - Crear session por cada hint es limpio y no tiene overhead significativo.
 private struct AppleHintEngine: HintEngine {
 
+    /// Logger para preservar el error original de FoundationModels antes de mapearlo
+    /// a `HintError.generationFailed` (el enum tipado no lleva el error subyacente).
+    private static let logger = Logger(subsystem: "com.antolini.GuessIt", category: "Hints")
+
     var isAvailable: Bool {
         SystemLanguageModel.default.isAvailable
     }
@@ -337,6 +342,9 @@ private struct AppleHintEngine: HintEngine {
             """
         } catch {
             if error is CancellationError { throw error }
+            // Preservamos el error real de FoundationModels en el log antes de mapearlo
+            // al error tipado (que no lo transporta), para no perder la causa raíz.
+            Self.logger.error("FoundationModels generation failed: \(error.localizedDescription, privacy: .public)")
             throw HintError.generationFailed
         }
     }
