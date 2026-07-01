@@ -54,13 +54,8 @@ struct SimpleBoardView: View {
         .padding(.horizontal, AppTheme.Spacing.small)
         .padding(.vertical, 8)
         .background {
-            if #available(iOS 26.0, *) {
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .fill(.ultraThinMaterial)
-            } else {
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .fill(Color.appSurfaceCard.opacity(0.95))
-            }
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
+                .fill(.ultraThinMaterial)
         }
     }
     

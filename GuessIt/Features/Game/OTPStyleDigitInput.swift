@@ -64,68 +64,32 @@ struct OTPStyleDigitInput: View {
     /// - Borde: más sutil porque el material ya proporciona distinción visual.
     /// - Tipografía: `.foregroundStyle(.primary)` para vibrancia semántica automática
     ///   sobre el material (Apple recomienda no usar colores sólidos sobre glass).
-    ///
-    /// # Fallback (iOS <26)
-    /// - Mantiene fondos sólidos originales y bordes más marcados.
     private func digitCell(at index: Int) -> some View {
         let digit = digitAt(index: index)
         let isActive = index == text.count
 
         return ZStack {
-            // Fondo de la celda - MEJORADO para mejor contraste
-            if #available(iOS 26.0, *) {
-                // iOS 26+: Fondo blanco semitransparente para mejor visibilidad
-                // - Why: .ultraThinMaterial era demasiado transparente, casi invisible
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                    .fill(Color.white.opacity(isActive ? 0.35 : 0.25))
-            } else {
-                // iOS <26: fondos sólidos (comportamiento original)
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                    .fill(isActive ? Color.appSurfaceCard : Color.appBackgroundSecondary)
-            }
+            // Fondo de la celda: blanco semitransparente para mejor visibilidad sobre glass.
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
+                .fill(Color.white.opacity(isActive ? 0.35 : 0.25))
 
-            // Borde reactivo al estado activo/inactivo - MEJORADO
-            if #available(iOS 26.0, *) {
-                // iOS 26+: borde más visible para mejor contraste
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                    .strokeBorder(
-                        isActive ? Color.appActionPrimary : Color.white.opacity(0.5),
-                        lineWidth: isActive ? 2.5 : 1.5
-                    )
-            } else {
-                // iOS <26: borde original más marcado
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                    .strokeBorder(
-                        isActive ? Color.appActionPrimary : Color.appBorderSubtle.opacity(0.5),
-                        lineWidth: isActive ? 2 : 1
-                    )
-            }
+            // Borde reactivo al estado activo/inactivo.
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
+                .strokeBorder(
+                    isActive ? Color.appActionPrimary : Color.white.opacity(0.5),
+                    lineWidth: isActive ? 2.5 : 1.5
+                )
 
-            // Contenido: dígito o placeholder - MEJORADO para mejor contraste
+            // Contenido: dígito o placeholder.
             if let digit {
-                if #available(iOS 26.0, *) {
-                    // iOS 26+: texto negro para máximo contraste sobre fondo blanco
-                    Text(String(digit))
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.black.opacity(0.9))
-                } else {
-                    Text(String(digit))
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.appTextPrimary)
-                }
+                Text(String(digit))
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.black.opacity(0.9))
             } else {
-                if #available(iOS 26.0, *) {
-                    // iOS 26+: placeholder más visible
-                    Text("·")
-                        .font(.title2)
-                        .foregroundStyle(Color.black.opacity(0.3))
-                } else {
-                    Text("·")
-                        .font(.title2)
-                        .foregroundStyle(Color.appTextSecondary.opacity(0.2))
-                }
+                Text("·")
+                    .font(.title2)
+                    .foregroundStyle(Color.black.opacity(0.3))
             }
         }
         .frame(width: 44, height: 44)

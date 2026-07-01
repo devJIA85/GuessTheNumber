@@ -370,16 +370,12 @@ struct GlassCardStyle: ViewModifier {
     }
     
     func body(content: Content) -> some View {
-        // ESTRATEGIA: Detección de iOS 26+ para usar Liquid Glass
-        // - iOS 26+: .glassEffect() proporciona Liquid Glass nativo con reflexiones y profundidad 3D
-        // - iOS 13-25: Material + sombras manuales para simular glassmorphism
-        // - Ambos se ven bien, pero Liquid Glass es superior en iOS 26+
-        
-        if #available(iOS 26.0, *), useLiquidGlass {
-            // iOS 26+: LIQUID GLASS (efecto premium)
-            // - Why: Apple recomienda usar .glassEffect() en custom views para iOS 26+
+        // ESTRATEGIA: Liquid Glass vs Material clásico según `useLiquidGlass`.
+
+        if useLiquidGlass {
+            // LIQUID GLASS (efecto premium)
+            // - Why: Apple recomienda usar .glassEffect() en custom views
             // - Proporciona reflexiones, profundidad 3D, y reacciona a interacciones
-            // - Se integra perfectamente con el sistema de diseño de iOS 26
             content
                 .padding(padding)
                 .glassEffect(
@@ -392,8 +388,7 @@ struct GlassCardStyle: ViewModifier {
                 // Nota: Liquid Glass incluye bordes y sombras automáticamente
                 // por lo que no necesitamos agregarlos manualmente
         } else {
-            // iOS 13-25: MATERIAL FALLBACK (glassmorphism clásico)
-            // - Why: Material existe desde iOS 13 y proporciona blur + vibrancy
+            // MATERIAL clásico (glassmorphism con blur + vibrancy)
             // - Agregamos borde y sombra manualmente para simular el look moderno
             content
                 .padding(padding)
@@ -516,16 +511,7 @@ extension View {
     ///
     /// - Returns: Vista con button style aplicado
     func modernProminentButton() -> some View {
-        if #available(iOS 26.0, *) {
-            // iOS 26+: Liquid Glass button (SwiftUI 2025)
-            // - Why: .glass es el button style oficial para Liquid Glass
-            // - Proporciona reflexiones, profundidad 3D, y responde a interacciones
-            return AnyView(self.buttonStyle(.glass))
-        } else {
-            // iOS 13-25: Bordered prominent fallback
-            // - Why: .borderedProminent existe desde iOS 15, se ve bien
-            return AnyView(self.buttonStyle(.borderedProminent))
-        }
+        AnyView(self.buttonStyle(.glass))
     }
 
     /// Aplica `.glassProminent` en iOS 26+ (Liquid Glass con énfasis alto).
@@ -543,11 +529,7 @@ extension View {
     /// > ".glassProminent allows adopting the look and feel of the material
     /// > with a high visual emphasis, ideal for the primary action."
     func modernGlassProminentButton() -> some View {
-        if #available(iOS 26.0, *) {
-            return AnyView(self.buttonStyle(.glassProminent))
-        } else {
-            return AnyView(self.buttonStyle(.borderedProminent))
-        }
+        AnyView(self.buttonStyle(.glassProminent))
     }
 }
 
@@ -659,15 +641,7 @@ extension View {
     ///
     /// - Returns: Vista con background extension aplicado (iOS 26+) o sin cambios
     func modernBackgroundExtension() -> some View {
-        if #available(iOS 26.0, *) {
-            // iOS 26+: Background extension effect
-            // - Why: crea continuidad visual en bordes con safe areas
-            // - Duplica, refleja y blur automáticamente
-            return AnyView(self.backgroundExtensionEffect())
-        } else {
-            // iOS 13-25: No hay efecto, retornar vista sin cambios
-            return AnyView(self)
-        }
+        AnyView(self.backgroundExtensionEffect())
     }
 }
 

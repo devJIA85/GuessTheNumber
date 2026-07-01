@@ -120,15 +120,10 @@ struct GuessInputView: View {
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                 }
-                // iOS 26+: .glassProminent — Liquid Glass con énfasis alto (CTA principal)
-                // iOS <26: .borderedProminent (fallback clásico)
+                // .glassProminent — Liquid Glass con énfasis alto (CTA principal)
                 .modernGlassProminentButton()
                 .tint(.appActionPrimary)
                 .controlSize(.large)
-                // iOS <26: border sutil y shadow manuales para darle punch visual.
-                // iOS 26+: Liquid Glass provee borde y profundidad 3D automáticamente,
-                //          por lo que estos modifiers son redundantes y se omiten.
-                .modifier(LegacyButtonAccentsModifier())
                 // Evitamos acciones inútiles cuando el input está incompleto.
                 .disabled(isButtonDisabled)
                 // Micro-animación sutil cuando el botón pasa a enabled
@@ -148,37 +143,6 @@ struct GuessInputView: View {
     /// Estado del botón: disabled cuando el input no tiene exactamente 5 dígitos.
     private var isButtonDisabled: Bool {
         guessText.count != 5
-    }
-}
-
-// MARK: - Legacy Button Accents (pre-iOS 26)
-
-/// Aplica overlay de borde blanco y shadow solo en iOS <26.
-///
-/// # Por qué existe
-/// - En iOS 26+, Liquid Glass provee borde y profundidad 3D automáticamente.
-///   Agregar overlay/shadow manuales sería redundante y podría interferir.
-/// - En iOS <26, `.borderedProminent` no tiene suficiente "punch" visual,
-///   por lo que agregamos borde sutil y shadow manualmente.
-///
-/// # Por qué un ViewModifier
-/// - SwiftUI no permite `if #available` dentro de un modifier chain.
-/// - Un ViewModifier condicional es la forma idiomática de hacer branching visual.
-private struct LegacyButtonAccentsModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        if #available(iOS 26.0, *) {
-            // iOS 26+: Liquid Glass provee todo — no agregar nada
-            content
-        } else {
-            // iOS <26: borde sutil + shadow para darle más punch visual
-            content
-                .overlay {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
-                        .allowsHitTesting(false)
-                }
-                .shadow(color: Color.appActionPrimary.opacity(0.3), radius: 8, x: 0, y: 4)
-        }
     }
 }
 

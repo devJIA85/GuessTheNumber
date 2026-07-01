@@ -111,13 +111,11 @@ struct RootView: View {
             // - Si ya está logueado, se activa inmediatamente sin UI visible.
             env.gameCenterService.authenticate()
             
-            // iOS 26+: Configurar GKAccessPoint (Liquid Glass badge)
+            // Configurar GKAccessPoint (Liquid Glass badge)
             // - Why: Apple Games requiere este badge visible para máxima visibilidad.
             // - El badge aparece automáticamente cuando el usuario está autenticado.
             // - Se auto-oculta si el usuario no está logueado o tiene restricciones.
-            if #available(iOS 26.0, *) {
-                configureGameCenterAccessPoint()
-            }
+            configureGameCenterAccessPoint()
         }
         .fullScreenCover(isPresented: $isTutorialPresented) {
             TutorialView(isPresented: $isTutorialPresented)
