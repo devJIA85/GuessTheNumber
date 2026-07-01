@@ -25,16 +25,12 @@ struct GameView: View {
 
     // MARK: - UI State
 
-    /// Fuente de verdad explícita del flujo principal.
-    /// - Important: `GameView` ya no deriva el juego actual desde un `@Query` amplio.
-    ///   Este snapshot se carga/refresca de forma explícita vía `GuessItModelActor`.
-    @State private var currentGame: GameDetailSnapshot?
+    /// Store observable del flujo principal: dueño del snapshot de partida y del error.
+    /// - Why: separa la orquestación (carga/submit/reset/notas) de la vista declarativa.
+    @State private var vm = GameViewModel()
 
     /// Input del usuario (string crudo).
     @State private var guessText: String = ""
-
-    /// Manejo simple de errores para mostrar en un alert.
-    @State private var errorMessage: String?
     
     #if DEBUG
     /// Controla el alert de debug para revelar el secreto actual.
@@ -81,21 +77,24 @@ struct GameView: View {
     private var navigationContent: some View {
         NavigationStack {
             contentWithOverlay
-                .task { await initializeGameIfNeeded() }
-                .onChange(of: currentGame?.state) { _, newValue in
+                .task {
+                    vm.configure(env: env)
+                    await vm.initialize()
+                }
+                .onChange(of: vm.currentGame?.state) { _, newValue in
                     handleGameStateChange(newValue)
                 }
-                .onChange(of: currentGame?.id) { _, _ in
+                .onChange(of: vm.currentGame?.id) { _, _ in
                     resetHintUIState()
                 }
                 .alert(
                     "Error",
                     isPresented: errorBinding,
                     actions: {
-                        Button("OK", role: .cancel) { errorMessage = nil }
+                        Button("OK", role: .cancel) { vm.errorMessage = nil }
                     },
                     message: {
-                        Text(errorMessage ?? "")
+                        Text(vm.errorMessage ?? "")
                     }
                 )
                 #if DEBUG
@@ -135,14 +134,14 @@ struct GameView: View {
             .overlay { victorySplashOverlay }
             .animation(.easeOut(duration: 0.2), value: victorySplash.isPresented)
             .navigationTitle("game.title")
-            .navigationSubtitle(statusText)
+            .navigationSubtitle(vm.statusText)
             .tint(.appActionPrimary)
     }
-    
+
     private var errorBinding: Binding<Bool> {
         Binding(
-            get: { errorMessage != nil },
-            set: { if !$0 { errorMessage = nil } }
+            get: { vm.errorMessage != nil },
+            set: { if !$0 { vm.errorMessage = nil } }
         )
     }
     
@@ -172,11 +171,11 @@ struct GameView: View {
         ScrollView {
             glassContainer {
                 LazyVStack(spacing: AppTheme.Spacing.large) {
-                    if let game = currentGame, game.state == .won {
+                    if let game = vm.currentGame, game.state == .won {
                         VictorySectionView(game: game, onNewGame: startNewGame)
                     }
                     
-                    if let game = currentGame {
+                    if let game = vm.currentGame {
                         HistorySectionView(game: game)
                     } else {
                         EmptyStateSectionView()
@@ -190,7 +189,7 @@ struct GameView: View {
     
     private var inputSection: some View {
         VStack(spacing: 0) {
-            if let game = currentGame {
+            if let game = vm.currentGame {
                 if game.state == .inProgress {
                     GuessInputView(
                         guessText: $guessText,
@@ -234,7 +233,7 @@ struct GameView: View {
     
     @ViewBuilder
     private var victorySplashOverlay: some View {
-        if victorySplash.isPresented, let game = currentGame {
+        if victorySplash.isPresented, let game = vm.currentGame {
             VictorySplashView(
                 secret: game.secret ?? "",
                 attempts: game.attempts.count
@@ -304,7 +303,7 @@ struct GameView: View {
     @ToolbarContentBuilder
     private var trailingToolbarItems: some ToolbarContent {
         ToolbarItemGroup(placement: .topBarTrailing) {
-            if let game = currentGame, game.state == .inProgress {
+            if let game = vm.currentGame, game.state == .inProgress {
                 Button {
                     prepareHintPresentation()
                     isHintPresented = true
@@ -353,10 +352,6 @@ struct GameView: View {
         }
     }
     
-    private func initializeGameIfNeeded() async {
-        await loadCurrentGame(createIfMissing: true)
-    }
-    
     private func handleGameStateChange(_ newValue: GameState?) {
         if newValue == .won {
             withAnimation(.easeOut(duration: 0.2)) {
@@ -368,7 +363,7 @@ struct GameView: View {
             env.activityService.endActivity()
             
             // Enviar puntuación a leaderboards
-            if let game = currentGame {
+            if let game = vm.currentGame {
                 Task {
                     await env.leaderboardService.submitScore(attempts: game.attempts.count)
                 }
@@ -403,174 +398,42 @@ struct GameView: View {
         }
     }
 
-    /// Carga o refresca el snapshot que gobierna la pantalla principal.
-    ///
-    /// - Parameter createIfMissing: si no hay partida visible, crea una nueva antes de refrescar.
-    private func loadCurrentGame(createIfMissing: Bool = false) async {
-        do {
-            if let snapshot = try await env.modelActor.fetchCurrentGameDetailSnapshot() {
-                currentGame = snapshot
-                return
-            }
-
-            guard createIfMissing else {
-                currentGame = nil
-                return
-            }
-
-            try await env.gameActor.resetGame()
-            let snapshot = try await env.modelActor.fetchCurrentGameDetailSnapshot()
-            currentGame = snapshot
-        } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-        }
-    }
-
-    /// Reemplaza las `digitNotes` locales para mantener feedback inmediato en pantalla.
-    ///
-    /// - Important: este estado es efímero de UI; la persistencia sigue pasando por el actor.
-    @MainActor
-    private func replaceCurrentDigitNotes(_ notes: [DigitNoteSnapshot]) {
-        guard let game = currentGame else { return }
-        currentGame = GameDetailSnapshot(
-            id: game.id,
-            state: game.state,
-            createdAt: game.createdAt,
-            finishedAt: game.finishedAt,
-            secret: game.secret,
-            attempts: game.attempts,
-            digitNotes: notes
-        )
-    }
-
-    /// Aplica una transformación local sobre el tablero del snapshot actual.
-    @MainActor
-    private func mutateCurrentDigitNotes(_ transform: (inout [DigitNoteSnapshot]) -> Void) {
-        guard let game = currentGame else { return }
-        var notes = game.digitNotes
-        transform(&notes)
-        replaceCurrentDigitNotes(notes)
-    }
-
-    /// Texto de estado, basado en la partida persistida.
-    private var statusText: String {
-        guard let game = currentGame else {
-            return String(localized: "game.status.none")
-        }
-
-        switch game.state {
-        case .inProgress:
-            return String(localized: "game.status.in_progress")
-        case .won:
-            return String(localized: "game.status.won")
-        case .abandoned:
-            return String(localized: "game.status.abandoned")
-        }
-    }
-
-    /// Inicia una nueva partida.
-    /// - Why: resetea el juego y limpia el estado UI local.
+    /// Inicia una nueva partida y limpia el estado de UI local solo si el reinicio fue exitoso.
+    /// - Why: la orquestación (reset + reload) vive en la VM; la vista solo limpia su input/hint.
     private func startNewGame() {
         // Cerramos la splash antes de resetear para evitar el flash de “ganaste”.
         victorySplash.dismiss()
-        
-        Task(name: "StartNewGame") { @MainActor in
-            do {
-                try await env.gameActor.resetGame()
-                await loadCurrentGame()
 
-                // Limpiar el estado de UI solo después de que el reset sea exitoso
+        Task { @MainActor in
+            if await vm.startNewGame() {
                 guessText = ""
                 resetHintUIState()
-            } catch {
-                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-                print("❌ Error al resetear juego: \(error)")
             }
         }
     }
 
-    /// Envía el guess al actor del dominio.
-    /// - Note: hacemos `Task` porque cruzamos aislamiento de actor.
-    /// - Why no se guarda lastResult: la lista de intentos ya muestra el historial completo.
+    /// Envía el guess al dominio (vía VM) y limpia el input solo si se procesó sin error.
     private func submit(_ guess: String) {
-        Task(name: "SubmitGuess") { @MainActor in
-            do {
-                _ = try await env.gameActor.submitGuess(guess)
-                await loadCurrentGame()
+        Task { @MainActor in
+            if await vm.submitGuess(guess) {
                 guessText = ""
-            } catch {
-                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             }
         }
     }
 
-    /// Cicla el estado visual/persistido de una `DigitNote`.
+    /// Cicla la marca de un dígito (delegado en la VM).
     private func cycleDigitMark(_ digit: Int) {
-        guard let game = currentGame else { return }
-
-        Task(name: "CycleDigitMark") { @MainActor in
-            mutateCurrentDigitNotes { notes in
-                guard let index = notes.firstIndex(where: { $0.digit == digit }) else { return }
-                let note = notes[index]
-                notes[index] = DigitNoteSnapshot(id: note.id, digit: note.digit, mark: note.mark.next())
-            }
-
-            HapticFeedbackManager.markChanged()
-
-            do {
-                try await env.modelActor.cycleDigitMark(digit: digit, gameID: game.id)
-                await loadCurrentGame()
-            } catch {
-                await loadCurrentGame()
-                assertionFailure("No se pudo ciclar la marca del dígito \(digit): \(error)")
-            }
-        }
+        Task { @MainActor in await vm.cycleDigitMark(digit) }
     }
 
-    /// Establece una marca puntual en el tablero y luego reconcilia con persistencia.
+    /// Establece una marca puntual (delegado en la VM).
     private func setDigitMark(_ digit: Int, _ mark: DigitMark) {
-        guard let game = currentGame else { return }
-
-        Task(name: "SetDigitMark") { @MainActor in
-            mutateCurrentDigitNotes { notes in
-                guard let index = notes.firstIndex(where: { $0.digit == digit }) else { return }
-                let note = notes[index]
-                notes[index] = DigitNoteSnapshot(id: note.id, digit: note.digit, mark: mark)
-            }
-
-            HapticFeedbackManager.markChanged()
-
-            do {
-                try await env.modelActor.setDigitMark(digit: digit, mark: mark, gameID: game.id)
-                await loadCurrentGame()
-            } catch {
-                await loadCurrentGame()
-                assertionFailure("No se pudo establecer la marca del dígito \(digit): \(error)")
-            }
-        }
+        Task { @MainActor in await vm.setDigitMark(digit, mark) }
     }
 
-    /// Resetea el tablero localmente y persiste el cambio por la ruta central.
+    /// Resetea el tablero de notas (delegado en la VM).
     private func resetDigitBoard() {
-        guard let game = currentGame else { return }
-
-        Task(name: "ResetDigitBoard") { @MainActor in
-            mutateCurrentDigitNotes { notes in
-                notes = notes.map { note in
-                    DigitNoteSnapshot(id: note.id, digit: note.digit, mark: .unknown)
-                }
-            }
-
-            HapticFeedbackManager.markChanged()
-
-            do {
-                try await env.modelActor.resetDigitNotes(gameID: game.id)
-                await loadCurrentGame()
-            } catch {
-                await loadCurrentGame()
-                assertionFailure("No se pudo resetear el tablero: \(error)")
-            }
-        }
+        Task { @MainActor in await vm.resetDigitBoard() }
     }
 
     /// Dispara el haptic de éxito una sola vez por victoria.
@@ -584,13 +447,10 @@ struct GameView: View {
     #if DEBUG
     /// Carga el secreto actual bajo demanda para el alert de debug.
     private func revealDebugSecret() {
-        Task(name: "RevealDebugSecret") { @MainActor in
-            do {
-                let secret = try await env.gameActor.debugSecret()
+        Task { @MainActor in
+            if let secret = await vm.debugSecret() {
                 debugSecretValue = secret
                 isDebugSecretPresented = true
-            } catch {
-                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             }
         }
     }
@@ -737,7 +597,7 @@ struct GameView: View {
         hintTask = Task(name: "GenerateHint") { @MainActor in
             do {
                 // 1. Usar el snapshot actual como fuente de verdad de la pantalla.
-                guard let currentGame, currentGame.state == .inProgress else {
+                guard let currentGame = vm.currentGame, currentGame.state == .inProgress else {
                     hintState = .failure(HintError.unavailable)
                     return
                 }
