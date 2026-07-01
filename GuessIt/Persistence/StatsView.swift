@@ -19,6 +19,7 @@ import Charts
 /// - Usa Swift Charts para el histogram.
 /// - Cards con glassmorphism para las métricas.
 /// - Iconos SF Symbols para comunicación visual rápida.
+@MainActor
 struct StatsView: View {
     
     // MARK: - Dependencies

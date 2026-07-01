@@ -18,6 +18,7 @@ import SwiftData
 /// # Fuente de verdad
 /// - Los datos vienen de `GuessItModelActor` como snapshots Sendable.
 /// - No cruza objetos @Model entre vistas (respeta aislamiento de SwiftData).
+@MainActor
 struct HistoryView: View {
 
     // MARK: - Dependencies
@@ -101,7 +102,7 @@ struct HistoryView: View {
                 .foregroundStyle(Color.appTextSecondary)
 
             Button("Reintentar") {
-                Task(name: "RetryLoadGames") {
+                Task(name: "RetryLoadGames") { @MainActor in
                     await loadGames()
                 }
             }

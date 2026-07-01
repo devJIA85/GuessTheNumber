@@ -20,6 +20,7 @@ import UIKit
 /// - No se puede resetear: un desafío por día.
 /// - No hay tablero de deducción (modo más puro).
 /// - Usa 3 dígitos en lugar de 5.
+@MainActor
 struct DailyChallengeView: View {
     
     // MARK: - Dependencies
@@ -352,7 +353,7 @@ struct DailyChallengeView: View {
     private func submitGuess(_ guess: String) {
         guard case .loaded(let challenge) = loadState else { return }
         
-        Task {
+        Task { @MainActor in
             do {
                 // Validar input para desafío diario (3 dígitos)
                 try GuessValidator.validateDailyChallenge(guess)

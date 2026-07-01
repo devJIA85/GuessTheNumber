@@ -15,6 +15,7 @@ import UIKit
 /// - Es la vista raíz que se monta desde `GuessItApp`.
 /// - Consume `GameActor` a través de `AppEnvironment`.
 /// - Renderiza un único snapshot explícito del juego actual.
+@MainActor
 struct GameView: View {
 
     // MARK: - Dependencies
@@ -423,29 +424,20 @@ struct GameView: View {
     private func loadCurrentGame(createIfMissing: Bool = false) async {
         do {
             if let snapshot = try await env.modelActor.fetchCurrentGameDetailSnapshot() {
-                await MainActor.run {
-                    currentGame = snapshot
-                }
+                currentGame = snapshot
                 return
             }
 
             guard createIfMissing else {
-                await MainActor.run {
-                    currentGame = nil
-                }
+                currentGame = nil
                 return
             }
 
             try await env.gameActor.resetGame()
             let snapshot = try await env.modelActor.fetchCurrentGameDetailSnapshot()
-
-            await MainActor.run {
-                currentGame = snapshot
-            }
+            currentGame = snapshot
         } catch {
-            await MainActor.run {
-                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            }
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
 
@@ -497,21 +489,17 @@ struct GameView: View {
         // Cerramos la splash antes de resetear para evitar el flash de “ganaste”.
         victorySplash.dismiss()
         
-        Task(name: "StartNewGame") {
+        Task(name: "StartNewGame") { @MainActor in
             do {
                 try await env.gameActor.resetGame()
                 await loadCurrentGame()
 
                 // Limpiar el estado de UI solo después de que el reset sea exitoso
-                await MainActor.run {
-                    guessText = ""
-                    resetHintUIState()
-                }
+                guessText = ""
+                resetHintUIState()
             } catch {
-                await MainActor.run {
-                    errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-                    print("❌ Error al resetear juego: \(error)")
-                }
+                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                print("❌ Error al resetear juego: \(error)")
             }
         }
     }
@@ -520,17 +508,13 @@ struct GameView: View {
     /// - Note: hacemos `Task` porque cruzamos aislamiento de actor.
     /// - Why no se guarda lastResult: la lista de intentos ya muestra el historial completo.
     private func submit(_ guess: String) {
-        Task(name: "SubmitGuess") {
+        Task(name: "SubmitGuess") { @MainActor in
             do {
                 _ = try await env.gameActor.submitGuess(guess)
                 await loadCurrentGame()
-                await MainActor.run {
-                    guessText = ""
-                }
+                guessText = ""
             } catch {
-                await MainActor.run {
-                    errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-                }
+                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             }
         }
     }
@@ -539,17 +523,15 @@ struct GameView: View {
     private func cycleDigitMark(_ digit: Int) {
         guard let game = currentGame else { return }
 
-        Task(name: "CycleDigitMark") {
-            await MainActor.run {
-                mutateCurrentDigitNotes { notes in
-                    guard let index = notes.firstIndex(where: { $0.digit == digit }) else { return }
-                    let note = notes[index]
-                    notes[index] = DigitNoteSnapshot(id: note.id, digit: note.digit, mark: note.mark.next())
-                }
-
-                let impact = UIImpactFeedbackGenerator(style: .medium)
-                impact.impactOccurred()
+        Task(name: "CycleDigitMark") { @MainActor in
+            mutateCurrentDigitNotes { notes in
+                guard let index = notes.firstIndex(where: { $0.digit == digit }) else { return }
+                let note = notes[index]
+                notes[index] = DigitNoteSnapshot(id: note.id, digit: note.digit, mark: note.mark.next())
             }
+
+            let impact = UIImpactFeedbackGenerator(style: .medium)
+            impact.impactOccurred()
 
             do {
                 try await env.modelActor.cycleDigitMark(digit: digit, gameID: game.id)
@@ -565,17 +547,15 @@ struct GameView: View {
     private func setDigitMark(_ digit: Int, _ mark: DigitMark) {
         guard let game = currentGame else { return }
 
-        Task(name: "SetDigitMark") {
-            await MainActor.run {
-                mutateCurrentDigitNotes { notes in
-                    guard let index = notes.firstIndex(where: { $0.digit == digit }) else { return }
-                    let note = notes[index]
-                    notes[index] = DigitNoteSnapshot(id: note.id, digit: note.digit, mark: mark)
-                }
-
-                let impact = UIImpactFeedbackGenerator(style: .medium)
-                impact.impactOccurred()
+        Task(name: "SetDigitMark") { @MainActor in
+            mutateCurrentDigitNotes { notes in
+                guard let index = notes.firstIndex(where: { $0.digit == digit }) else { return }
+                let note = notes[index]
+                notes[index] = DigitNoteSnapshot(id: note.id, digit: note.digit, mark: mark)
             }
+
+            let impact = UIImpactFeedbackGenerator(style: .medium)
+            impact.impactOccurred()
 
             do {
                 try await env.modelActor.setDigitMark(digit: digit, mark: mark, gameID: game.id)
@@ -591,17 +571,15 @@ struct GameView: View {
     private func resetDigitBoard() {
         guard let game = currentGame else { return }
 
-        Task(name: "ResetDigitBoard") {
-            await MainActor.run {
-                mutateCurrentDigitNotes { notes in
-                    notes = notes.map { note in
-                        DigitNoteSnapshot(id: note.id, digit: note.digit, mark: .unknown)
-                    }
+        Task(name: "ResetDigitBoard") { @MainActor in
+            mutateCurrentDigitNotes { notes in
+                notes = notes.map { note in
+                    DigitNoteSnapshot(id: note.id, digit: note.digit, mark: .unknown)
                 }
-
-                let impact = UIImpactFeedbackGenerator(style: .medium)
-                impact.impactOccurred()
             }
+
+            let impact = UIImpactFeedbackGenerator(style: .medium)
+            impact.impactOccurred()
 
             do {
                 try await env.modelActor.resetDigitNotes(gameID: game.id)
@@ -625,17 +603,13 @@ struct GameView: View {
     #if DEBUG
     /// Carga el secreto actual bajo demanda para el alert de debug.
     private func revealDebugSecret() {
-        Task(name: "RevealDebugSecret") {
+        Task(name: "RevealDebugSecret") { @MainActor in
             do {
                 let secret = try await env.gameActor.debugSecret()
-                await MainActor.run {
-                    debugSecretValue = secret
-                    isDebugSecretPresented = true
-                }
+                debugSecretValue = secret
+                isDebugSecretPresented = true
             } catch {
-                await MainActor.run {
-                    errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-                }
+                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             }
         }
     }
@@ -779,13 +753,11 @@ struct GameView: View {
         hintState = .loading
         
         // Crear nueva task
-        hintTask = Task(name: "GenerateHint") {
+        hintTask = Task(name: "GenerateHint") { @MainActor in
             do {
                 // 1. Usar el snapshot actual como fuente de verdad de la pantalla.
                 guard let currentGame, currentGame.state == .inProgress else {
-                    await MainActor.run {
-                        hintState = .failure(HintError.unavailable)
-                    }
+                    hintState = .failure(HintError.unavailable)
                     return
                 }
                 
@@ -805,10 +777,8 @@ struct GameView: View {
                 try Task.checkCancellation()
                 
                 // 4. Registrar pista en historial local antes de mostrarla.
-                await MainActor.run {
-                    hintHistory.append(HintHistoryEntry(text: output.text, createdAt: Date()))
-                    hintState = .loaded(output)
-                }
+                hintHistory.append(HintHistoryEntry(text: output.text, createdAt: Date()))
+                hintState = .loaded(output)
                 
                 // 5. Cargar debug info (solo en DEBUG)
                 #if DEBUG
@@ -820,9 +790,7 @@ struct GameView: View {
                 return
             } catch {
                 // Error al generar pista
-                await MainActor.run {
-                    hintState = .failure(error)
-                }
+                hintState = .failure(error)
             }
         }
     }
