@@ -22,6 +22,10 @@ enum ModelContainerFactory {
     /// La app puede leer este flag para mostrar una alerta al usuario.
     static private(set) var didRecoverFromCorruption = false
 
+    /// URL del backup del store corrupto generado durante la última recuperación (si hubo).
+    /// - Why: permite que una UI futura informe al usuario dónde quedó respaldada su data.
+    static private(set) var lastCorruptionBackupURL: URL?
+
     /// Construye un `ModelContainer` listo para usarse.
     /// - Parameter isInMemory: `true` para previews/tests (no escribe en disco), `false` para ejecución real.
     static func make(isInMemory: Bool) -> ModelContainer {
@@ -42,20 +46,36 @@ enum ModelContainerFactory {
             return try ModelContainer(for: schema, configurations: [configuration])
         } catch {
             // Si falla la creación del contenedor y no estamos en memoria,
-            // intentamos eliminar la base de datos corrupta y crear una nueva
+            // respaldamos el store corrupto y recién entonces lo eliminamos y recreamos.
             if !isInMemory {
                 logger.error("Error al crear ModelContainer: \(error.localizedDescription, privacy: .public)")
-                logger.warning("Eliminando base de datos corrupta para recuperar la app...")
 
-                // Eliminar la base de datos existente
                 let storeURL = configuration.url
-                try? FileManager.default.removeItem(at: storeURL)
-                try? FileManager.default.removeItem(at: storeURL.deletingPathExtension().appendingPathExtension("sqlite-shm"))
-                try? FileManager.default.removeItem(at: storeURL.deletingPathExtension().appendingPathExtension("sqlite-wal"))
+
+                // 1) Backup NO destructivo antes de borrar nada.
+                //    - Si el backup del archivo principal falla, NO borramos (evita pérdida silenciosa).
+                do {
+                    if let backup = try backupCorruptStore(at: storeURL) {
+                        lastCorruptionBackupURL = backup
+                        logger.warning("Store corrupto respaldado en \(backup.lastPathComponent, privacy: .public); recuperando…")
+                    } else {
+                        logger.warning("No había archivo de store para respaldar; recuperando…")
+                    }
+                } catch {
+                    logger.error("Falló el backup del store corrupto: \(error.localizedDescription, privacy: .public). No se borra nada.")
+                    fatalError("No se pudo respaldar el store corrupto antes de la recuperación; se aborta para no perder datos: \(error)")
+                }
+
+                // 2) Recuperación destructiva: borrar archivo principal + sidecars (ya respaldados).
+                let fileManager = FileManager.default
+                try? fileManager.removeItem(at: storeURL)
+                for sidecar in storeSidecarURLs(for: storeURL) {
+                    try? fileManager.removeItem(at: sidecar)
+                }
 
                 didRecoverFromCorruption = true
 
-                // Intentar crear nuevamente
+                // 3) Intentar crear nuevamente.
                 do {
                     logger.info("Base de datos recreada exitosamente tras recuperación.")
                     return try ModelContainer(for: schema, configurations: [configuration])
@@ -67,5 +87,53 @@ enum ModelContainerFactory {
             // En un MVP es preferible fallar rápido antes que ejecutar con persistencia inconsistente.
             fatalError("No se pudo crear el ModelContainer: \(error)")
         }
+    }
+
+    // MARK: - Recuperación de store corrupto
+
+    /// URLs de los sidecars WAL/SHM asociados a un store SQLite.
+    ///
+    /// # Por qué así
+    /// - SQLite en modo WAL crea `<archivo>-wal` y `<archivo>-shm` (sufijo sobre el nombre
+    ///   completo, incluida la extensión). Para `default.store` son `default.store-wal`/`-shm`.
+    static func storeSidecarURLs(for storeURL: URL) -> [URL] {
+        let directory = storeURL.deletingLastPathComponent()
+        return ["-wal", "-shm"].map { suffix in
+            directory.appendingPathComponent(storeURL.lastPathComponent + suffix)
+        }
+    }
+
+    /// Respalda (con timestamp) el store corrupto y sus sidecars antes de una recuperación destructiva.
+    ///
+    /// - Returns: URL del backup del archivo principal, o `nil` si el archivo principal no existe
+    ///   (no hay nada útil que respaldar).
+    /// - Throws: si el archivo principal existe pero **no se pudo respaldar**. El caller debe
+    ///   abortar la recuperación en ese caso para no borrar datos silenciosamente.
+    /// - Note: los sidecars se respaldan solo si existen (best-effort); su ausencia o un fallo
+    ///   al copiarlos no aborta la operación.
+    @discardableResult
+    static func backupCorruptStore(at storeURL: URL) throws -> URL? {
+        let fileManager = FileManager.default
+        guard fileManager.fileExists(atPath: storeURL.path) else { return nil }
+
+        let stamp = corruptionTimestamp()
+        let mainBackup = storeURL.appendingPathExtension("corrupt-\(stamp).bak")
+        // Si esta copia falla, se propaga el error: el caller NO debe borrar.
+        try fileManager.copyItem(at: storeURL, to: mainBackup)
+
+        for sidecar in storeSidecarURLs(for: storeURL) where fileManager.fileExists(atPath: sidecar.path) {
+            let sidecarBackup = sidecar.appendingPathExtension("corrupt-\(stamp).bak")
+            try? fileManager.copyItem(at: sidecar, to: sidecarBackup)
+        }
+
+        return mainBackup
+    }
+
+    /// Timestamp seguro para nombres de archivo (sin `:`), en formato `yyyyMMdd-HHmmssSSS`.
+    private static func corruptionTimestamp() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmmssSSS"
+        return formatter.string(from: Date())
     }
 }
