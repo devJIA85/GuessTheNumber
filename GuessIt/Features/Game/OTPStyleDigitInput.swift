@@ -92,7 +92,7 @@ struct OTPStyleDigitInput: View {
                 .frame(height: 3)
                 .padding(.horizontal, 6)
         }
-        .frame(width: 44, height: 56)
+        .frame(width: 44, height: 52)
         .animation(.easeInOut(duration: 0.15), value: isActive)
         .animation(.easeInOut(duration: 0.15), value: digit)
     }

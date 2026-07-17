@@ -107,11 +107,6 @@ struct GameView: View {
                     }
                 )
                 #endif
-                .toolbar {
-                    leadingToolbarItems
-                    trailingToolbarItems
-                }
-                .toolbarTitleDisplayMode(.inline)
                 .sheet(isPresented: $isHintPresented, onDismiss: onHintDismiss) {
                     hintSheet
                 }
@@ -125,11 +120,13 @@ struct GameView: View {
         mainContent
             .overlay { victorySplashOverlay }
             .animation(.easeOut(duration: 0.2), value: victorySplash.isPresented)
-            .navigationTitle("")
-            .toolbarBackground(.hidden, for: .navigationBar)
+            // La barra de navegación se oculta: las acciones viven en una fila propia
+            // de íconos de línea (topActionsRow) y el badge de Game Center ocupa la
+            // esquina superior izquierda vía GKAccessPoint (sistema).
+            .toolbar(.hidden, for: .navigationBar)
             .tint(.appActionPrimary)
-            // "Focus" es una estética siempre oscura: forzamos dark para que la barra,
-            // el status bar y los acentos adaptativos resuelvan a sus variantes dark.
+            // "Focus" es una estética siempre oscura: forzamos dark para que el status
+            // bar y los acentos adaptativos resuelvan a sus variantes dark.
             .preferredColorScheme(.dark)
     }
 
@@ -150,11 +147,77 @@ struct GameView: View {
     private var mainContent: some View {
         ZStack {
             FocusBackground()
-            scrollableContent
-                .safeAreaInset(edge: .bottom) {
-                    inputSection
-                }
+            VStack(spacing: 0) {
+                topActionsRow
+                scrollableContent
+            }
+            .safeAreaInset(edge: .bottom) {
+                inputSection
+            }
         }
+    }
+
+    // MARK: - Top Actions
+
+    /// Fila superior de acciones: íconos de línea livianos a la derecha (sin pills).
+    /// El badge de Game Center vive en la esquina izquierda vía `GKAccessPoint`.
+    private var topActionsRow: some View {
+        HStack(spacing: 22) {
+            Spacer()
+
+            NavigationLink { HistoryView() } label: {
+                actionIcon("clock.arrow.circlepath", label: "Historial")
+            }
+            NavigationLink { StatsView() } label: {
+                actionIcon("chart.bar.fill", label: "Estadísticas")
+            }
+            NavigationLink { DailyChallengeView() } label: {
+                actionIcon("calendar", label: "Desafío Diario")
+            }
+
+            if let game = vm.currentGame, game.state == .inProgress {
+                Button {
+                    prepareHintPresentation()
+                    isHintPresented = true
+                } label: {
+                    actionIcon("lightbulb", label: "Pista")
+                }
+            }
+
+            Menu {
+                Button {
+                    isTutorialPresented = true
+                } label: {
+                    Label("game.how_to_play", systemImage: "questionmark.circle")
+                }
+                Button {
+                    startNewGame()
+                } label: {
+                    Label("game.reset", systemImage: "arrow.counterclockwise")
+                }
+                #if DEBUG
+                Button {
+                    revealDebugSecret()
+                } label: {
+                    Label("Debug Secreto", systemImage: "eye")
+                }
+                #endif
+            } label: {
+                actionIcon("ellipsis", label: "Más")
+            }
+        }
+        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.top, AppTheme.Spacing.small)
+    }
+
+    /// Ícono de acción de la barra superior: línea liviana, sin contenedor.
+    private func actionIcon(_ systemName: String, label: String) -> some View {
+        Image(systemName: systemName)
+            .font(.system(size: 20, weight: .regular))
+            .foregroundStyle(Color.white.opacity(0.8))
+            .frame(width: 30, height: 34)
+            .contentShape(Rectangle())
+            .accessibilityLabel(label)
     }
 
     private var scrollableContent: some View {
@@ -292,16 +355,18 @@ struct GameView: View {
             inputSectionBackground
         }
     }
-    
+
+    /// Fondo del dock: **opaco** para ocluir limpio el historial que scrollea por detrás
+    /// (antes era translúcido y se leía "a través"). Hairline arriba + sombra hacia arriba.
     private var inputSectionBackground: some View {
-        // Sin card sólida: apenas un fundido al fondo para que el contenido que
-        // scrollea por detrás no compita con el dock (como en el mock "Focus").
-        LinearGradient(
-            colors: [AppTheme.Focus.background.opacity(0), AppTheme.Focus.background.opacity(0.92)],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea(edges: .bottom)
+        AppTheme.Focus.background
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(Color.white.opacity(0.10))
+                    .frame(height: 1)
+            }
+            .ignoresSafeArea(edges: .bottom)
+            .shadow(color: .black.opacity(0.6), radius: 12, y: -8)
     }
     
     @ViewBuilder
@@ -330,89 +395,6 @@ struct GameView: View {
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(250))
             startNewGame()
-        }
-    }
-    
-    // MARK: - Toolbar Items
-    
-    @ToolbarContentBuilder
-    private var leadingToolbarItems: some ToolbarContent {
-        ToolbarItemGroup(placement: .topBarLeading) {
-            if env.gameCenterService.isAuthenticated {
-                Button {
-                    env.gameCenterService.showDashboard()
-                } label: {
-                    Label("Game Center", systemImage: "gamecontroller.fill")
-                        .labelStyle(.iconOnly)
-                }
-                .foregroundStyle(Color.appTextSecondary)
-            }
-
-            NavigationLink {
-                HistoryView()
-            } label: {
-                Label("Historial", systemImage: "clock.arrow.circlepath")
-                    .labelStyle(.iconOnly)
-            }
-            .foregroundStyle(Color.appTextSecondary)
-
-            NavigationLink {
-                StatsView()
-            } label: {
-                Label("Estadísticas", systemImage: "chart.bar.fill")
-                    .labelStyle(.iconOnly)
-            }
-            .foregroundStyle(Color.appTextSecondary)
-
-            NavigationLink {
-                DailyChallengeView()
-            } label: {
-                Label("Desafío Diario", systemImage: "calendar")
-                    .labelStyle(.iconOnly)
-            }
-            .foregroundStyle(Color.appTextSecondary)
-        }
-    }
-    
-    @ToolbarContentBuilder
-    private var trailingToolbarItems: some ToolbarContent {
-        ToolbarItemGroup(placement: .topBarTrailing) {
-            if let game = vm.currentGame, game.state == .inProgress {
-                Button {
-                    prepareHintPresentation()
-                    isHintPresented = true
-                } label: {
-                    Label("Pista", systemImage: "lightbulb")
-                        .labelStyle(.iconOnly)
-                }
-                .foregroundStyle(Color.appTextSecondary)
-            }
-            
-            Button {
-                isTutorialPresented = true
-            } label: {
-                Label("Cómo jugar", systemImage: "questionmark.circle")
-                    .labelStyle(.iconOnly)
-            }
-            .foregroundStyle(Color.appTextSecondary)
-
-            Button {
-                startNewGame()
-            } label: {
-                Label("Reiniciar", systemImage: "arrow.counterclockwise")
-                    .labelStyle(.iconOnly)
-            }
-            .foregroundStyle(Color.appTextSecondary)
-
-            #if DEBUG
-            Button {
-                revealDebugSecret()
-            } label: {
-                Label("Debug Secreto", systemImage: "eye")
-                    .labelStyle(.iconOnly)
-            }
-            .foregroundStyle(Color.appTextSecondary)
-            #endif
         }
     }
     
