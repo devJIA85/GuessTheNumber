@@ -189,6 +189,26 @@ so the pending work is visible in the test report.
 up as explicitly skipped with a reason.
 **Dependencias:** none.
 
+## PR 17 — Fix low-contrast text over the premium gradients ⬜
+**Tipo:** a11y
+**Objetivo:** The tutorial's "Saltar" button is close to unreadable: it styles text with
+`Color.appTextSecondary`, which is `Color(.secondaryLabel)` — a dynamic system color that
+adapts to the light/dark *appearance*, not to what is painted behind it. In light mode it
+resolves to a dark grey and `TutorialView` renders it over the dark purple gradient.
+Caught on a simulator screenshot; it predates the PR 11 cleanup and PR 10 missed it.
+**Archivos probables:** `TutorialView.swift` (skip button), `AppTheme.swift`; audit every
+`appTextSecondary` / `appTextPrimary` use that sits over `PremiumBackgroundGradient`.
+**Cambios esperados:** Use a colour chosen against the gradient (a fixed on-gradient
+token) rather than a background-agnostic system label colour. Check the same pattern in
+`GameDetailView` / `HistoryView` / `StatsView`, which paint the same gradient.
+**Riesgo:** bajo
+**Validación:** screenshot in light and dark mode; verify contrast ratio.
+**Criterio de aceptación:** No system label colour is drawn directly over a premium
+gradient; "Saltar" is legible in both appearances.
+**Dependencias:** none.
+**Nota:** the coral "Siguiente" label is *not* part of this — `appActionPrimary` is
+deliberately coral for CTAs. Revisit only as a design call, not as a bug.
+
 ---
 
 > This roadmap is **not definitive**. Reorder/insert PRs as the codebase and
