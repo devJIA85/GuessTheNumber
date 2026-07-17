@@ -738,6 +738,22 @@
         }
       }
     },
+    "detail.final_board": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Final board"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tablero final"
+          }
+        }
+      }
+    },
     "detail.load_error": {
       "localizations": {
         "en": {
@@ -846,6 +862,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Detalle de partida"
+          }
+        }
+      }
+    },
+    "detail.title_short": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detail"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalle"
           }
         }
       }
@@ -1374,6 +1406,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "intentos"
+          }
+        }
+      }
+    },
+    "history.best": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "best"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mejor"
           }
         }
       }

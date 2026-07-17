@@ -8,12 +8,11 @@
 import SwiftUI
 import SwiftData
 
-/// Fila reutilizable que muestra el resumen de una partida terminada.
+/// Fila-card que muestra el resumen de una partida terminada (rediseño "Focus").
 ///
 /// # Rol
 /// - Componente de UI puro, sin lógica de persistencia.
 /// - Muestra estado, fecha y cantidad de intentos usando un snapshot Sendable.
-/// - Diseñado para reutilizarse en listas, detalles o filtros.
 ///
 /// # Importante
 /// - No contiene @Query ni accede a SwiftData directamente.
@@ -25,111 +24,116 @@ struct GameSummaryRowView: View {
     /// El snapshot de la partida que se va a mostrar.
     let snapshot: GameSummarySnapshot
 
+    /// Marca la mejor partida (menos intentos entre las ganadas) con un badge dorado.
+    var isBest: Bool = false
+
+    private var isWon: Bool { snapshot.state == .won }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // Línea 1: Estado + Fecha
-            HStack {
+        HStack(spacing: AppTheme.Spacing.medium) {
+            statusIcon
+
+            VStack(alignment: .leading, spacing: 3) {
                 Text(stateText(for: snapshot.state))
-                    .font(.headline)
-                    .foregroundStyle(Color.appTextPrimary)
+                    .font(.system(size: 20, weight: .heavy, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
 
-                Spacer()
-
-                Text(displayDate, format: .dateTime.year().month().day().hour().minute())
-                    .font(.subheadline)
-                    .foregroundStyle(Color.appTextSecondary)
+                Text("\(dateText) · \(attemptsText)")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textSecondary)
             }
 
-            // Línea 2: Cantidad de intentos
-            Text("\(snapshot.attemptsCount) intentos")
-                .font(.subheadline)
-                .foregroundStyle(Color.appTextSecondary)
+            Spacer(minLength: AppTheme.Spacing.small)
+
+            if isBest {
+                bestBadge
+            } else {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(AppTheme.Focus.textTertiary)
+            }
         }
+        .focusCard(padding: AppTheme.CardPadding.standard)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText)
     }
 
+    // MARK: - Subviews
+
+    private var statusIcon: some View {
+        Image(systemName: isWon ? "checkmark" : "xmark")
+            .font(.system(size: 18, weight: .bold))
+            .foregroundStyle(isWon ? Color.appMarkGood : AppTheme.Focus.textSecondary)
+            .frame(width: 44, height: 44)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isWon ? Color.appMarkGood.opacity(0.18) : Color.white.opacity(0.06))
+            )
+    }
+
+    private var bestBadge: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "star.fill")
+                .font(.system(size: 11, weight: .bold))
+            Text("history.best")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+        }
+        .foregroundStyle(Color.appMarkFair)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Capsule().fill(Color.appMarkFair.opacity(0.16)))
+    }
+
     // MARK: - Helpers
 
-    /// Devuelve el texto del estado de la partida.
-    /// - Parameter state: estado de la partida.
-    /// - Returns: texto legible del estado.
     private func stateText(for state: GameState) -> String {
         switch state {
-        case .won:
-            return "Ganada"
-        case .abandoned:
-            return "Abandonada"
-        case .inProgress:
-            // No debería aparecer en el historial, pero lo manejamos por completitud.
-            return "En progreso"
+        case .won: return String(localized: "game.status.won")
+        case .abandoned: return String(localized: "game.status.abandoned")
+        case .inProgress: return String(localized: "game.status.in_progress")
         }
     }
 
-    /// Fecha a mostrar para esta partida.
-    ///
-    /// - Why: priorizamos `finishedAt` porque representa cuándo terminó realmente.
-    ///   Si no existe (casos edge), usamos `createdAt` como fallback.
     private var displayDate: Date {
         snapshot.finishedAt ?? snapshot.createdAt
     }
 
-    /// Texto de accesibilidad para la fila.
-    ///
-    /// - Why: los usuarios con VoiceOver necesitan escuchar un resumen completo
-    ///   de la partida sin tener que navegar por cada elemento visual.
+    private var dateText: String {
+        displayDate.formatted(.dateTime.day().month(.abbreviated))
+    }
+
+    private var attemptsText: String {
+        snapshot.attemptsCount == 1
+            ? String(localized: "game.attempts_one")
+            : String(format: String(localized: "game.attempts_other"), snapshot.attemptsCount)
+    }
+
     private var accessibilityText: String {
         let state = stateText(for: snapshot.state).lowercased()
-        let date = displayDate.formatted(.dateTime.year().month().day().hour().minute())
-        let attempts = snapshot.attemptsCount
-        return "Partida del \(date), estado \(state), intentos \(attempts)."
+        let date = displayDate.formatted(.dateTime.year().month().day())
+        return "\(state), \(date), \(attemptsText)\(isBest ? ", " + String(localized: "history.best") : "")."
     }
 }
 
-#Preview("GameSummaryRowView - Won") {
-    // Preview de una partida ganada usando snapshot
-    // Creamos un contenedor temporal y un Game para obtener un PersistentIdentifier real
+#Preview("GameSummaryRowView") {
     let container = ModelContainerFactory.make(isInMemory: true)
     let context = ModelContext(container)
-    
     let game = Game(secret: "12345", digitNotes: [])
     game.state = .won
     context.insert(game)
     try? context.save()
-    
-    let mockSnapshot = GameSummarySnapshot(
-        id: game.persistentModelID,
-        state: .won,
-        createdAt: Date().addingTimeInterval(-86400),
-        finishedAt: Date().addingTimeInterval(-86400),
-        attemptsCount: 5
+
+    let won = GameSummarySnapshot(
+        id: game.persistentModelID, state: .won,
+        createdAt: Date(), finishedAt: Date(), attemptsCount: 5
     )
-
-    return List {
-        GameSummaryRowView(snapshot: mockSnapshot)
+    return ZStack {
+        FocusBackground()
+        VStack {
+            GameSummaryRowView(snapshot: won, isBest: true)
+            GameSummaryRowView(snapshot: won)
+        }
+        .padding()
     }
-}
-
-#Preview("GameSummaryRowView - Abandoned") {
-    // Preview de una partida abandonada usando snapshot
-    // Creamos un contenedor temporal y un Game para obtener un PersistentIdentifier real
-    let container = ModelContainerFactory.make(isInMemory: true)
-    let context = ModelContext(container)
-    
-    let game = Game(secret: "67890", digitNotes: [])
-    game.state = .abandoned
-    context.insert(game)
-    try? context.save()
-    
-    let mockSnapshot = GameSummarySnapshot(
-        id: game.persistentModelID,
-        state: .abandoned,
-        createdAt: Date().addingTimeInterval(-172800),
-        finishedAt: Date().addingTimeInterval(-172800),
-        attemptsCount: 3
-    )
-
-    return List {
-        GameSummaryRowView(snapshot: mockSnapshot)
-    }
+    .preferredColorScheme(.dark)
 }
