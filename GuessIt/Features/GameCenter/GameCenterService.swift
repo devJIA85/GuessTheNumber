@@ -51,7 +51,6 @@ final class GameCenterService: Sendable {
     
     /// Referencia débil a servicios relacionados (se configuran después del init).
     /// - Note: Weak para evitar retain cycles en AppEnvironment.
-    private weak var activityService: GameCenterActivityService?
     private weak var leaderboardService: GameCenterLeaderboardService?
 
     // MARK: - Init
@@ -68,14 +67,8 @@ final class GameCenterService: Sendable {
     /// - Necesitamos activarlos cuando la autenticación tenga éxito.
     /// - Usamos referencias débiles para evitar retain cycles.
     ///
-    /// - Parameters:
-    ///   - activityService: Servicio de actividades.
-    ///   - leaderboardService: Servicio de leaderboards.
-    func configureServices(
-        activityService: GameCenterActivityService,
-        leaderboardService: GameCenterLeaderboardService
-    ) {
-        self.activityService = activityService
+    /// - Parameter leaderboardService: Servicio de leaderboards.
+    func configureServices(leaderboardService: GameCenterLeaderboardService) {
         self.leaderboardService = leaderboardService
     }
 
@@ -123,13 +116,11 @@ final class GameCenterService: Sendable {
                     self.lastAuthError = nil
                     
                     // Activar servicios relacionados
-                    self.activityService?.activate()
                     self.leaderboardService?.activate()
                 } else {
                     self.isAuthenticated = false
-                    
+
                     // Desactivar servicios
-                    self.activityService?.deactivate()
                     self.leaderboardService?.deactivate()
                 }
             }
@@ -137,14 +128,6 @@ final class GameCenterService: Sendable {
     }
 
     // MARK: - Dashboard
-
-    /// Indica si el dashboard de Game Center debe mostrarse.
-    ///
-    /// # SwiftUI Integration
-    /// - Vinculado a `.fullScreenCover(isPresented:)` en GameView.
-    /// - Se setea en `true` cuando el usuario toca el botón de Game Center.
-    /// - Se vuelve a `false` cuando el usuario cierra el dashboard.
-    var isShowingGameCenter: Bool = false
 
     /// Presenta el dashboard de Game Center (logros, leaderboards).
     ///

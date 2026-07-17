@@ -6,8 +6,6 @@
 //
 
 import SwiftUI
-import GameKit
-import UIKit
 
 /// Pantalla principal del juego.
 ///
@@ -119,12 +117,6 @@ struct GameView: View {
                 }
                 .fullScreenCover(isPresented: $isTutorialPresented) {
                     TutorialView(isPresented: $isTutorialPresented)
-                }
-                .fullScreenCover(isPresented: Binding(
-                    get: { env.gameCenterService.isShowingGameCenter },
-                    set: { env.gameCenterService.isShowingGameCenter = $0 }
-                )) {
-                    GameCenterDashboardView(state: .dashboard)
                 }
         }
     }
@@ -359,10 +351,7 @@ struct GameView: View {
                 victorySplash.present()
             }
             triggerVictoryHapticIfNeeded()
-            
-            // Finalizar actividad con éxito
-            env.activityService.endActivity()
-            
+
             // Enviar puntuación a leaderboards
             if let game = vm.currentGame {
                 Task {
@@ -377,9 +366,6 @@ struct GameView: View {
         }
         if newValue == .inProgress {
             resetHintUIState()
-            
-            // Iniciar nueva actividad
-            env.activityService.startActivity(type: .mainGame)
         }
     }
 
