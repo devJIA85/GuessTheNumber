@@ -6,8 +6,6 @@
 //
 
 import SwiftUI
-import GameKit
-import UIKit
 
 /// Pantalla principal del juego.
 ///
@@ -119,12 +117,6 @@ struct GameView: View {
                 }
                 .fullScreenCover(isPresented: $isTutorialPresented) {
                     TutorialView(isPresented: $isTutorialPresented)
-                }
-                .fullScreenCover(isPresented: Binding(
-                    get: { env.gameCenterService.isShowingGameCenter },
-                    set: { env.gameCenterService.isShowingGameCenter = $0 }
-                )) {
-                    GameCenterDashboardView(state: .dashboard)
                 }
         }
     }

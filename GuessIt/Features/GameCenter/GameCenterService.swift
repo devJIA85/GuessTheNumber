@@ -138,14 +138,6 @@ final class GameCenterService: Sendable {
 
     // MARK: - Dashboard
 
-    /// Indica si el dashboard de Game Center debe mostrarse.
-    ///
-    /// # SwiftUI Integration
-    /// - Vinculado a `.fullScreenCover(isPresented:)` en GameView.
-    /// - Se setea en `true` cuando el usuario toca el botón de Game Center.
-    /// - Se vuelve a `false` cuando el usuario cierra el dashboard.
-    var isShowingGameCenter: Bool = false
-
     /// Presenta el dashboard de Game Center (logros, leaderboards).
     ///
     /// - Usa `GKAccessPoint.trigger(state:)` para abrir la app nativa Apple Games.
