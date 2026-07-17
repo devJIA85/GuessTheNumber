@@ -46,7 +46,7 @@ struct OTPStyleDigitInput: View {
     
     /// Vista de las 5 celdas individuales.
     private var digitCellsView: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             ForEach(0..<digitCount, id: \.self) { index in
                 digitCell(at: index)
                     .accessibilityLabel("Posición \(index + 1)")
@@ -55,44 +55,44 @@ struct OTPStyleDigitInput: View {
             }
         }
     }
-    
-    /// Celda individual para un dígito.
+
+    /// Celda individual para un dígito (estilo "Focus").
     ///
-    /// # Liquid Glass (iOS 26+)
-    /// - Fondo: `.ultraThinMaterial` crea "cuencas" talladas en la superficie glass,
-    ///   según la guía de "Adopting Liquid Glass" (materiales translúcidos para profundidad).
-    /// - Borde: más sutil porque el material ya proporciona distinción visual.
-    /// - Tipografía: `.foregroundStyle(.primary)` para vibrancia semántica automática
-    ///   sobre el material (Apple recomienda no usar colores sólidos sobre glass).
+    /// # Diseño
+    /// - Fondo de vidrio sutil (`Focus.subSurface`) con esquinas de 14pt.
+    /// - **Barra inferior de 3pt** que actúa como indicador: coral si la celda está
+    ///   llena o es la activa; gris tenue si está vacía y en espera.
+    /// - Dígito en fuente monoespaciada; placeholder "·" tenue.
     private func digitCell(at index: Int) -> some View {
         let digit = digitAt(index: index)
         let isActive = index == text.count
+        let isHighlighted = digit != nil || isActive
 
         return ZStack {
-            // Fondo de la celda: blanco semitransparente para mejor visibilidad sobre glass.
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                .fill(Color.white.opacity(isActive ? 0.35 : 0.25))
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(AppTheme.Focus.subSurface)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(AppTheme.Focus.subSurfaceStroke, lineWidth: 1)
+                }
 
-            // Borde reactivo al estado activo/inactivo.
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                .strokeBorder(
-                    isActive ? Color.appActionPrimary : Color.white.opacity(0.5),
-                    lineWidth: isActive ? 2.5 : 1.5
-                )
-
-            // Contenido: dígito o placeholder.
             if let digit {
                 Text(String(digit))
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color.black.opacity(0.9))
+                    .focusMonoDigits(size: 26, weight: .bold, tracking: 0)
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
             } else {
                 Text("·")
-                    .font(.title2)
-                    .foregroundStyle(Color.black.opacity(0.3))
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(Color.white.opacity(0.25))
             }
         }
-        .frame(width: 44, height: 44)
+        .overlay(alignment: .bottom) {
+            RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                .fill(isHighlighted ? Color.appActionPrimary : Color.white.opacity(0.12))
+                .frame(height: 3)
+                .padding(.horizontal, 6)
+        }
+        .frame(width: 44, height: 56)
         .animation(.easeInOut(duration: 0.15), value: isActive)
         .animation(.easeInOut(duration: 0.15), value: digit)
     }

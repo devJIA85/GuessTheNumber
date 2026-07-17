@@ -866,6 +866,22 @@
         }
       }
     },
+    "game.header.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guess the number"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adiviná el número"
+          }
+        }
+      }
+    },
     "game.hint": {
       "localizations": {
         "en": {
@@ -942,6 +958,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tu intento"
+          }
+        }
+      }
+    },
+    "game.last_attempt.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fewer = better score"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "menos = mejor score"
           }
         }
       }
@@ -1038,6 +1070,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Probar"
+          }
+        }
+      }
+    },
+    "game.submit.attempt": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Submit guess"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probar intento"
           }
         }
       }

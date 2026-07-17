@@ -80,9 +80,11 @@ struct GuessInputView: View {
                 .padding(.vertical, 4)
             }
 
-            // SECCIÓN 3: Botones de acción (Borrar pequeño + Probar grande, en la misma línea)
+            // SECCIÓN 3: Botones de acción (Borrar compacto + Probar grande, en la misma línea)
             HStack(spacing: AppTheme.Spacing.small) {
-                // Botón "Borrar" - secundario, compacto
+                // Botón "Borrar" - compacto, icon-only (Focus).
+                // Nota: el mock no muestra un botón de borrado explícito, pero se conserva
+                // por usabilidad (el teclado 0-9 no incluye tecla de borrado).
                 Button {
                     if !guessText.isEmpty {
                         guessText.removeLast()
@@ -90,45 +92,50 @@ struct GuessInputView: View {
                         HapticFeedbackManager.keypadTap()
                     }
                 } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "delete.left")
-                            .font(.caption)
-                        Text("common.delete")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    Image(systemName: "delete.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Color.appActionPrimary)
+                        .frame(width: 56, height: 54)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous)
+                                .fill(AppTheme.Focus.subSurface)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous)
+                                .strokeBorder(AppTheme.Focus.subSurfaceStroke, lineWidth: 1)
+                        )
                 }
-                .buttonStyle(.bordered)
-                .tint(.appTextSecondary)
-                .controlSize(.small)
                 .disabled(guessText.isEmpty)
-                .opacity(guessText.isEmpty ? 0.4 : 0.7)
+                .opacity(guessText.isEmpty ? 0.4 : 1.0)
                 .accessibilityLabel("accessibility.delete_last")
                 .accessibilityHint("accessibility.delete_last_hint")
-                
-                // Botón "Probar" - PROTAGONISTA, más grande y prominente
+
+                // Botón "Probar intento" - CTA outline coral (estilo "Focus").
                 Button {
                     // Normalizamos (trim) para no validar espacios accidentales.
                     let normalized = guessText.trimmingCharacters(in: .whitespacesAndNewlines)
                     onSubmit(normalized)
                 } label: {
-                    Text("game.submit")
-                        .fontWeight(.semibold)
+                    Text("game.submit.attempt")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color.appActionPrimary)
                         .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous)
+                                .fill(Color.appActionPrimary.opacity(0.14))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous)
+                                .strokeBorder(Color.appActionPrimary, lineWidth: 1.5)
+                        )
                 }
-                // .glassProminent — Liquid Glass con énfasis alto (CTA principal)
-                .modernGlassProminentButton()
-                .tint(.appActionPrimary)
-                .controlSize(.large)
+                .buttonStyle(.plain)
                 // Evitamos acciones inútiles cuando el input está incompleto.
                 .disabled(isButtonDisabled)
-                // Micro-animación sutil cuando el botón pasa a enabled
-                // - Why: feedback visual de "listo para enviar" sin ser intrusivo
-                // MEJORADO: opacity mínima de 0.75 para mejor visibilidad
+                // Micro-animación sutil cuando el botón pasa a enabled.
                 .scaleEffect(isButtonDisabled ? 0.98 : 1.0)
-                .opacity(isButtonDisabled ? 0.75 : 1.0)
+                .opacity(isButtonDisabled ? 0.4 : 1.0)
                 .animation(.easeOut(duration: 0.2), value: isButtonDisabled)
                 .accessibilityLabel("accessibility.submit_guess")
                 .accessibilityHint(isButtonDisabled ? Text("accessibility.submit_disabled_hint") : Text("accessibility.submit_enabled_hint"))

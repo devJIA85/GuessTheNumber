@@ -125,9 +125,12 @@ struct GameView: View {
         mainContent
             .overlay { victorySplashOverlay }
             .animation(.easeOut(duration: 0.2), value: victorySplash.isPresented)
-            .navigationTitle("game.title")
-            .navigationSubtitle(vm.statusText)
+            .navigationTitle("")
+            .toolbarBackground(.hidden, for: .navigationBar)
             .tint(.appActionPrimary)
+            // "Focus" es una estética siempre oscura: forzamos dark para que la barra,
+            // el status bar y los acentos adaptativos resuelvan a sus variantes dark.
+            .preferredColorScheme(.dark)
     }
 
     private var errorBinding: Binding<Bool> {
@@ -146,35 +149,107 @@ struct GameView: View {
     
     private var mainContent: some View {
         ZStack {
-            backgroundGradient
+            FocusBackground()
             scrollableContent
                 .safeAreaInset(edge: .bottom) {
                     inputSection
                 }
         }
     }
-    
-    private var backgroundGradient: some View {
-        PremiumBackgroundGradient()
-            .modernBackgroundExtension()
-    }
-    
+
     private var scrollableContent: some View {
         ScrollView {
-            glassContainer {
-                LazyVStack(spacing: AppTheme.Spacing.large) {
-                    if let game = vm.currentGame, game.state == .won {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                gameHeader
+
+                if let game = vm.currentGame {
+                    if let last = latestAttempt(in: game) {
+                        LastAttemptCard(attempt: last)
+                    }
+
+                    if game.state == .won {
                         VictorySectionView(game: game, onNewGame: startNewGame)
                     }
-                    
-                    if let game = vm.currentGame {
-                        HistorySectionView(game: game)
-                    } else {
+
+                    attemptsHistory(for: game)
+
+                    // Aún sin intentos: guía al primer movimiento en vez de dejar un hueco.
+                    if game.attempts.isEmpty {
                         EmptyStateSectionView()
                     }
+                } else {
+                    EmptyStateSectionView()
                 }
-                .padding(.horizontal, AppTheme.Spacing.small)
-                .padding(.vertical, 4)
+            }
+            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.top, AppTheme.Spacing.small)
+            .padding(.bottom, AppTheme.Spacing.medium)
+        }
+    }
+
+    // MARK: - Header
+
+    /// Header "Focus": marca + título grande a la izquierda, contador de intentos a la derecha.
+    private var gameHeader: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("game.title")
+                    .focusSectionLabel()
+                Text("game.header.title")
+                    .font(.system(size: 34, weight: .heavy, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: AppTheme.Spacing.small)
+
+            attemptsCounter
+        }
+        .padding(.top, AppTheme.Spacing.small)
+    }
+
+    /// Contador de intentos (sin tope: el juego principal no limita intentos).
+    private var attemptsCounter: some View {
+        VStack(spacing: 2) {
+            Text(String(format: "%02d", vm.currentGame?.attempts.count ?? 0))
+                .focusMonoDigits(size: 30, weight: .heavy, tracking: 1)
+                .foregroundStyle(Color.appActionPrimary)
+            Text("common.attempts")
+                .focusSectionLabel()
+        }
+        .padding(.horizontal, AppTheme.Spacing.medium)
+        .padding(.vertical, AppTheme.Spacing.small)
+        .focusCard(padding: 0)
+        .frame(minWidth: 96)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("\(vm.currentGame?.attempts.count ?? 0) \(String(localized: "common.attempts"))"))
+    }
+
+    // MARK: - History
+
+    /// Intento más reciente del snapshot (el destacado en la card "Último intento").
+    private func latestAttempt(in game: GameDetailSnapshot) -> AttemptSnapshot? {
+        game.attempts.max { $0.createdAt < $1.createdAt }
+    }
+
+    /// Historial compacto: filas con guess mono + badges, separadas por línea tenue.
+    /// - Excluye el intento más reciente (ya destacado arriba en "Último intento").
+    @ViewBuilder
+    private func attemptsHistory(for game: GameDetailSnapshot) -> some View {
+        let rest = game.attempts
+            .sorted { $0.createdAt > $1.createdAt }
+            .dropFirst()  // el primero es el "último intento" destacado
+
+        if !rest.isEmpty {
+            VStack(spacing: 0) {
+                ForEach(Array(rest.enumerated()), id: \.element.id) { index, attempt in
+                    if index > 0 {
+                        Divider()
+                            .overlay(Color.white.opacity(0.06))
+                    }
+                    AttemptRowView(snapshot: attempt)
+                        .padding(.vertical, AppTheme.Spacing.small)
+                }
             }
         }
     }
@@ -219,8 +294,14 @@ struct GameView: View {
     }
     
     private var inputSectionBackground: some View {
-        Color.clear
-            .background(.ultraThinMaterial)
+        // Sin card sólida: apenas un fundido al fondo para que el contenido que
+        // scrollea por detrás no compita con el dock (como en el mock "Focus").
+        LinearGradient(
+            colors: [AppTheme.Focus.background.opacity(0), AppTheme.Focus.background.opacity(0.92)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea(edges: .bottom)
     }
     
     @ViewBuilder
@@ -375,15 +456,6 @@ struct GameView: View {
     // - Principio: cada subvista encapsula su propia lógica visual
 
     // MARK: - Helpers
-
-    /// Envuelve el contenido en un GlassEffectContainer.
-    /// - Why: Apple recomienda usar container para mejor rendimiento con múltiples efectos
-    /// - spacing: AppTheme.Spacing.medium (16pt) evita que efectos separados se mezclen
-    private func glassContainer<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        GlassEffectContainer(spacing: AppTheme.Spacing.medium) {
-            content()
-        }
-    }
 
     /// Inicia una nueva partida y limpia el estado de UI local solo si el reinicio fue exitoso.
     /// - Why: la orquestación (reset + reload) vive en la VM; la vista solo limpia su input/hint.
@@ -795,22 +867,19 @@ struct GameView: View {
 /// - Estilo más sutil (ultraThin) para indicar estado inactivo
 private struct DisabledInputSectionView: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            Text(String(localized: "game.input.title", defaultValue: "Tu intento"))
-                .font(AppTheme.Typography.headline())
-                .foregroundStyle(Color.appTextSecondary)
-            
-            HStack(spacing: AppTheme.Spacing.small) {
-                Image(systemName: "lock.fill")
-                    .foregroundStyle(Color.appTextSecondary)
-                    .font(.title3)
-                
-                Text("game.input.disabled")
-                    .font(AppTheme.Typography.body())
-                    .foregroundStyle(Color.appTextSecondary)
-            }
+        HStack(spacing: AppTheme.Spacing.small) {
+            Image(systemName: "lock.fill")
+                .foregroundStyle(AppTheme.Focus.textTertiary)
+                .font(.title3)
+
+            Text("game.input.disabled")
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textSecondary)
         }
-        .glassCard(material: .ultraThin)  // Material más sutil para estado inactivo
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .focusCard(padding: AppTheme.CardPadding.standard)
+        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.bottom, AppTheme.Spacing.small)
     }
 }
 
@@ -824,15 +893,15 @@ private struct EmptyStateSectionView: View {
         VStack(spacing: AppTheme.Spacing.medium) {
             Image(systemName: "play.circle")
                 .font(.system(size: 48))
-                .foregroundStyle(Color.appTextSecondary.opacity(0.6))
-            
+                .foregroundStyle(AppTheme.Focus.textTertiary)
+
             Text("Ingresá tu primer intento para comenzar")
-                .font(AppTheme.Typography.body())
-                .foregroundStyle(Color.appTextSecondary)
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .glassCard(material: .ultraThin)
+        .padding(.vertical, AppTheme.Spacing.xLarge)
     }
 }
 
@@ -852,12 +921,10 @@ private struct VictorySectionView: View {
     
     var body: some View {
         VStack(alignment: .center, spacing: AppTheme.Spacing.large) {
-            // Título celebratorio con emoji
-            // Why: el emoji refuerza el sentimiento positivo sin necesitar animaciones complejas
             Text("game.victory.title")
-                .font(AppTheme.Typography.title())
+                .font(.system(size: 22, weight: .heavy, design: .rounded))
                 .foregroundStyle(Color.appActionPrimary)
-            
+
             // Métricas del juego
             VStack(spacing: AppTheme.Spacing.small) {
                 MetricRow(
@@ -870,24 +937,29 @@ private struct VictorySectionView: View {
             .padding(AppTheme.Spacing.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .fill(Color.appBackgroundSecondary.opacity(0.5))
+                    .fill(AppTheme.Focus.subSurface)
             )
-            
+
             // CTA: Nueva partida
-            // Why: botón prominent con ícono para máxima affordance
-            // iOS 26+: Usa GlassProminentButtonStyle (Liquid Glass)
-            // iOS 13-25: Usa .borderedProminent (fallback)
             Button(action: onNewGame) {
                 Label("Nueva partida", systemImage: "plus.circle.fill")
-                    .font(AppTheme.Typography.headline())
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.appActionPrimary)
                     .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous)
+                            .fill(Color.appActionPrimary.opacity(0.14))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous)
+                            .strokeBorder(Color.appActionPrimary, lineWidth: 1.5)
+                    )
             }
-            .modernProminentButton()
-            .tint(.appActionPrimary)
-            .controlSize(.large)
+            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity)
-        .glassCard(tintColor: .appActionPrimary)  // Tint para dar énfasis celebratorio
+        .focusCard(tint: .appActionPrimary)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Ganaste. Secreto: \(game.secret ?? "desconocido"). Intentos: \(game.attempts.count).")
     }
@@ -899,87 +971,104 @@ private struct MetricRow: View {
     let label: String
     let value: String
     let isMonospaced: Bool
-    
+
     var body: some View {
         HStack {
             Text(label)
-                .font(AppTheme.Typography.body())
-                .foregroundStyle(Color.appTextSecondary)
+                .font(.system(size: 15, weight: .regular, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textSecondary)
             Spacer()
             Text(value)
-                .font(AppTheme.Typography.headline())
-                .fontDesign(isMonospaced ? .monospaced : .rounded)
-                .foregroundStyle(Color.appTextPrimary)
+                .font(.system(size: 17, weight: .semibold, design: isMonospaced ? .monospaced : .rounded))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
         }
     }
 }
 
-/// Sección de Historial de Intentos con ContentUnavailableView.
+/// Card "Último intento": guess grande mono + barra segmentada Good/Fair/Poor + leyenda.
 ///
 /// # Diseño
-/// - Si está vacío: muestra ContentUnavailableView bonito con SF Symbol
-/// - Si tiene intentos: lista scrolleable limitada a 5 intentos visibles
-/// - Cada intento se renderiza en una mini-card con AttemptRowView
-///
-/// # Por qué existe
-/// - Encapsula la lógica de renderizado del historial
-/// - ContentUnavailableView mejora la UX cuando no hay datos
-/// - Mantiene el código DRY (no repetimos el layout de intentos)
-private struct HistorySectionView: View {
-    let game: GameDetailSnapshot
-    
-    private var sortedAttempts: [AttemptSnapshot] {
-        game.attempts.sorted { $0.createdAt > $1.createdAt }
-    }
-    
+/// - El número destacado es el intento más reciente.
+/// - La barra es proporcional (Good/Fair/Poor); el segmento Poor es neutro (gris),
+///   como en el mock: verde / dorado / `rgba(255,255,255,.12)`.
+private struct LastAttemptCard: View {
+    let attempt: AttemptSnapshot
+
+    private var good: Int { attempt.good }
+    private var fair: Int { attempt.fair }
+    private var poor: Int { max(0, GameConstants.secretLength - good - fair) }
+
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            // Header con mejor contraste
-            Text("Historial")
-                .font(AppTheme.Typography.headline())
-                .foregroundStyle(Color.primary)
-            
-            // Contenido: ContentUnavailableView si vacío, lista si hay intentos
-            if sortedAttempts.isEmpty {
-                // Estado vacío con ContentUnavailableView estilo iOS 18
-                // Why: comunica claramente que no hay datos sin parecer un error
-                // NOTA: Usamos frame con altura fija para evitar que ocupe demasiado espacio
-                ContentUnavailableView {
-                    Label("Sin intentos", systemImage: "clock.badge.questionmark")
-                        .font(.subheadline)  // Reducimos tamaño para compactar
-                        .foregroundStyle(Color.primary)
-                } description: {
-                    Text("Tus intentos aparecerán aquí")
-                        .font(AppTheme.Typography.caption())
-                        .foregroundStyle(Color.secondary)
-                }
-                .frame(height: 100)  // Altura fija compacta para no dominar la pantalla
-            } else {
-                // Lista scrolleable de intentos
-                // Why: limitar altura a ~5 intentos evita que la sección domine la pantalla
-                ScrollView {
-                    VStack(spacing: AppTheme.Spacing.small) {
-                        ForEach(sortedAttempts) { attempt in
-                            AttemptRowView(snapshot: attempt)
-                                .padding(AppTheme.Spacing.small)
-                                // NUEVO: Fondo ultra-sutil que mantiene glassmorphism
-                                // - Why: el fondo anterior (opacity 0.6) era muy opaco
-                                // - Ahora usa opacity 0.15 para máxima transparencia
-                                .background(
-                                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                                        .fill(Color.white.opacity(0.08))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                                        .strokeBorder(Color.appBorderSubtle.opacity(0.2), lineWidth: 0.5)
-                                )
-                        }
-                    }
-                }
-                .frame(maxHeight: 220)  // ~5 intentos visibles
+            HStack(alignment: .firstTextBaseline) {
+                Text("daily.last_attempt")
+                    .focusSectionLabel()
+                Spacer()
+                Text("game.last_attempt.hint")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textTertiary)
+            }
+
+            Text(attempt.guess)
+                .focusMonoDigits(size: 40, weight: .bold, tracking: 6)
+                .foregroundStyle(AppTheme.Focus.textPrimary)
+
+            FeedbackBar(good: good, fair: fair, poor: poor)
+
+            legend
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .focusCard()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Último intento \(attempt.guess). \(good) Good, \(fair) Fair, \(poor) Poor.")
+    }
+
+    private var legend: some View {
+        HStack(spacing: AppTheme.Spacing.medium) {
+            legendItem(color: .appMarkGood, count: good, term: "Good")
+            legendItem(color: .appMarkFair, count: fair, term: "Fair")
+            legendItem(color: Color.white.opacity(0.30), count: poor, term: "Poor")
+        }
+    }
+
+    private func legendItem(color: Color, count: Int, term: String) -> some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(color)
+                .frame(width: 9, height: 9)
+            Text("\(count) \(term)")
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
+        }
+    }
+}
+
+/// Barra segmentada proporcional Good / Fair / Poor.
+private struct FeedbackBar: View {
+    let good: Int
+    let fair: Int
+    let poor: Int
+
+    private var total: CGFloat { CGFloat(max(1, good + fair + poor)) }
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            HStack(spacing: 0) {
+                Rectangle()
+                    .fill(Color.appMarkGood)
+                    .frame(width: w * CGFloat(good) / total)
+                Rectangle()
+                    .fill(Color.appMarkFair)
+                    .frame(width: w * CGFloat(fair) / total)
+                Rectangle()
+                    .fill(Color.white.opacity(0.12))
+                    .frame(width: w * CGFloat(poor) / total)
             }
         }
-        .glassCard()
+        .frame(height: 12)
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .accessibilityHidden(true)
     }
 }
 

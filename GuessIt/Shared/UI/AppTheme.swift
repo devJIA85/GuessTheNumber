@@ -598,6 +598,164 @@ struct PremiumBackgroundGradient: View {
     }
 }
 
+// MARK: - Focus Design Language (rediseño "Focus")
+/// Tokens y componentes del rediseño **"Focus"**: fondo casi negro con aurora
+/// difusa, superficies de vidrio blanco sutiles, labels en versalitas y números
+/// monoespaciados. Se adopta pantalla por pantalla.
+///
+/// # Por qué tokens fijos (no adaptativos light/dark)
+/// - "Focus" es una estética **siempre oscura** (todos los mocks son casi negros).
+/// - Las pantallas que lo adoptan fuerzan `colorScheme .dark` en su raíz, de modo
+///   que los acentos adaptativos (`appActionPrimary`, `appMark*`) resuelven a sus
+///   variantes dark, que ya coinciden con los valores del handoff.
+extension AppTheme {
+    enum Focus {
+        /// Fondo de pantalla: casi negro (`#0B0B12`).
+        static let background = Color(red: 0x0B / 255, green: 0x0B / 255, blue: 0x12 / 255)
+        /// Superficie de card: vidrio blanco sutil.
+        static let card = Color.white.opacity(0.05)
+        /// Borde de card.
+        static let cardStroke = Color.white.opacity(0.10)
+        /// Sub-superficie interna (tiles dentro de una card).
+        static let subSurface = Color.white.opacity(0.04)
+        /// Borde de sub-superficie.
+        static let subSurfaceStroke = Color.white.opacity(0.08)
+        /// Texto primario.
+        static let textPrimary = Color.white
+        /// Texto secundario.
+        static let textSecondary = Color.white.opacity(0.55)
+        /// Texto terciario / labels de sección.
+        static let textTertiary = Color.white.opacity(0.40)
+
+        /// Tinte de aurora según la carga emocional de la pantalla.
+        enum AuroraTint {
+            case neutral   // púrpura + azul
+            case positive  // + verde (victoria/completado)
+            case negative  // + magenta (fallado)
+        }
+    }
+}
+
+/// Fondo "Focus": casi negro con dos blobs de aurora difusa.
+///
+/// # Aurora
+/// - Blob púrpura arriba-izquierda + blob azul arriba-derecha.
+/// - `tint` agrega un tercer blob (verde o magenta) para pantallas con carga emocional.
+struct FocusBackground: View {
+    var tint: AppTheme.Focus.AuroraTint = .neutral
+
+    var body: some View {
+        ZStack {
+            AppTheme.Focus.background
+
+            auroraBlob(
+                color: Color(red: 0.55, green: 0.35, blue: 0.94),  // púrpura
+                opacity: 0.50,
+                center: UnitPoint(x: 0.12, y: -0.02),
+                radius: 460
+            )
+            auroraBlob(
+                color: Color(red: 0.15, green: 0.45, blue: 0.75),  // azul
+                opacity: 0.45,
+                center: UnitPoint(x: 0.98, y: 0.06),
+                radius: 440
+            )
+
+            switch tint {
+            case .neutral:
+                EmptyView()
+            case .positive:
+                auroraBlob(
+                    color: Color(red: 0.20, green: 0.80, blue: 0.45),  // verde
+                    opacity: 0.32,
+                    center: UnitPoint(x: 0.5, y: 0.0),
+                    radius: 520
+                )
+            case .negative:
+                auroraBlob(
+                    color: Color(red: 0.95, green: 0.25, blue: 0.60),  // magenta
+                    opacity: 0.30,
+                    center: UnitPoint(x: 0.5, y: 0.02),
+                    radius: 520
+                )
+            }
+        }
+        .ignoresSafeArea()
+    }
+
+    /// Blob radial difuso (transición suave a transparente, sin blur costoso).
+    private func auroraBlob(color: Color, opacity: Double, center: UnitPoint, radius: CGFloat) -> some View {
+        RadialGradient(
+            gradient: Gradient(colors: [color.opacity(opacity), color.opacity(0)]),
+            center: center,
+            startRadius: 0,
+            endRadius: radius
+        )
+    }
+}
+
+/// Card "Focus": relleno de vidrio blanco sutil + borde, con tinte opcional.
+struct FocusCardStyle: ViewModifier {
+    var padding: CGFloat = AppTheme.CardPadding.glass
+    var cornerRadius: CGFloat = AppTheme.CornerRadius.glassCard
+    var tint: Color? = nil
+    var tintOpacity: Double = 0.14
+
+    func body(content: Content) -> some View {
+        content
+            .padding(padding)
+            .background {
+                let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                shape
+                    .fill(AppTheme.Focus.card)
+                    .overlay {
+                        if let tint {
+                            shape.fill(tint.opacity(tintOpacity))
+                        }
+                    }
+                    .overlay {
+                        shape.strokeBorder(
+                            (tint ?? Color.white).opacity(tint == nil ? 0.10 : 0.30),
+                            lineWidth: 1
+                        )
+                    }
+            }
+    }
+}
+
+extension View {
+    /// Label de sección "Focus": versalitas, 11pt heavy, tracking 2, texto terciario.
+    func focusSectionLabel() -> some View {
+        self
+            .font(.system(size: 11, weight: .heavy, design: .rounded))
+            .tracking(2)
+            .textCase(.uppercase)
+            .foregroundStyle(AppTheme.Focus.textTertiary)
+    }
+
+    /// Aplica el estilo de card "Focus".
+    func focusCard(
+        padding: CGFloat = AppTheme.CardPadding.glass,
+        cornerRadius: CGFloat = AppTheme.CornerRadius.glassCard,
+        tint: Color? = nil,
+        tintOpacity: Double = 0.14
+    ) -> some View {
+        modifier(FocusCardStyle(
+            padding: padding,
+            cornerRadius: cornerRadius,
+            tint: tint,
+            tintOpacity: tintOpacity
+        ))
+    }
+
+    /// Tipografía de dígitos monoespaciada (guesses, secreto, contadores).
+    func focusMonoDigits(size: CGFloat, weight: Font.Weight = .bold, tracking: CGFloat = 2) -> some View {
+        self
+            .font(.system(size: size, weight: weight, design: .monospaced))
+            .tracking(tracking)
+    }
+}
+
 // MARK: - SwiftUI 2025: Background Extension Effect
 /// Extiende y blur el background alrededor de los bordes con safe areas disponibles.
 ///
