@@ -1479,13 +1479,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Win Distribution"
+            "value": "Attempts distribution"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Distribución de victorias"
+            "value": "Distribución por intentos"
           }
         }
       }
@@ -1623,13 +1623,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Win Rate"
+            "value": "Win rate"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Win Rate"
+            "value": "Éxito"
           }
         }
       }
