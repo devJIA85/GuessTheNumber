@@ -124,9 +124,12 @@ actor GuessItModelActor {
     /// - Los callers que cruzan el aislamiento de actor (p. ej. `GameActor`) solo
     ///   necesitan el **efecto** (crear la partida), no el objeto. Devolver el `@Model`
     ///   a otro actor es un error en modo Swift 6.
-    /// - Esta variante mantiene el `Game` dentro del actor y expone únicamente el efecto.
-    func startNewGame() throws {
-        _ = try createNewGame()
+    /// - Esta variante mantiene el `Game` dentro del actor y devuelve solo su
+    ///   identificador (`Sendable`), útil tanto para el dominio (lo descarta) como
+    ///   para los tests (lo usan para pedir snapshots).
+    @discardableResult
+    func startNewGame() throws -> GameIdentifier {
+        try createNewGame().persistentID
     }
 
     /// Devuelve la partida activa o crea una nueva si no existe.

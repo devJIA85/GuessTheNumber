@@ -43,10 +43,10 @@ struct GameActorIntegrationTests {
         let container = makeTestContainer()
         let modelActor = GuessItModelActor(modelContainer: container)
         
-        // Crear partida y actualizar su secreto a través del modelActor
-        let game = try await modelActor.createNewGame()
-        let gameID = game.persistentID
-        
+        // Crear partida y actualizar su secreto a través del modelActor.
+        // Usamos la variante que devuelve el ID (Sendable) para no cruzar el @Model.
+        let gameID = try await modelActor.fetchOrCreateInProgressGameID()
+
         // Actualizar el secreto de forma segura a través del actor
         try await modelActor.updateSecret(gameID: gameID, secret: secret)
         
