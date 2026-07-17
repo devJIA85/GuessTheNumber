@@ -126,7 +126,7 @@ removing that file (PR #11) cleared the project's last `DispatchQueue`.
 **Criterio de aceptación:** Tests cover digits split across fields and accent-less variants.
 **Dependencias:** none.
 
-## PR 12 — iOS 27 toolbar ⬜
+## PR 12 — iOS 27 toolbar ⛔ (anulado)
 **Tipo:** feature
 **Objetivo:** Adopt `toolbarOverflowMenu`/`visibilityPriority`/`topBarPinnedTrailing` in `GameView`, gated with fallback.
 **Archivos probables:** `GameView.swift`.
@@ -135,6 +135,20 @@ removing that file (PR #11) cleared the project's last `DispatchQueue`.
 **Validación:** build on iOS 27 + iOS 26.
 **Criterio de aceptación:** Toolbar no longer crowded on iOS 27; fallback intact.
 **Dependencias:** Xcode 27 SDK.
+**Resolución:** **Anulado.** El objetivo (barra superior descongestionada con overflow) ya
+se cumplió por otra vía durante el rediseño "Focus" (fix de `gameview_fixes`): `GameView`
+**dejó de usar toolbar** — las acciones viven en una fila de íconos de línea in-content con
+un `Menu` de overflow. Esa solución es superior a la propuesta: no necesita `#available`,
+funciona en iOS 26 y calca el mock.
+Ninguna API de toolbar de iOS 27 tiene caso de uso real en el código actual:
+- `ToolbarOverflowMenu` / `topBarPinnedTrailing` / `visibilityPriority`: no hay toolbars con
+  congestión (Stats/Daily/Detail tienen un único `ToolbarItem(.principal)`; Historial y
+  GameView no tienen ítems de barra).
+- `toolbarMinimizeBehavior`: marginal — las barras van ocultas/transparentes con headers
+  in-content, así que minimizarlas casi no se ve y competiría con el header propio.
+- `contentMarginsRemoved` / `ToolbarPlacement.statusBar`: no aplican (títulos centrados; no
+  se oculta el status bar).
+Adoptar cualquiera sería complejidad (gating + fallback) sin beneficio visible.
 
 ## PR 13 — Swipe actions in history / daily ✅
 **Tipo:** feature
