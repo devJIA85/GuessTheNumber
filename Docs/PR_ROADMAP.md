@@ -19,7 +19,7 @@ contradictory status reports from active folders.
 **Criterio de aceptación:** Root README + the five `Docs/*.md` exist; old contradictory docs no longer active; `Docs/Archive/README.md` present; build still green.
 **Dependencias:** none.
 
-## PR 2 — Pure-domain tests with seeded RNG ⬜
+## PR 2 — Pure-domain tests with seeded RNG ✅
 **Tipo:** tests
 **Objetivo:** Direct unit tests for `GuessEvaluator`, `GuessValidator`, `SecretGenerator` (incl. 3-digit Daily variants and error paths).
 **Archivos probables:** new files under `GuessItTests/`.
@@ -29,7 +29,7 @@ contradictory status reports from active folders.
 **Criterio de aceptación:** Each domain primitive has direct tests; secret generation reproducible by seed.
 **Dependencias:** PR 1 (docs/baseline).
 
-## PR 3 — Stats tests ⬜
+## PR 3 — Stats tests ✅
 **Tipo:** tests
 **Objetivo:** Cover `GameStats.update` — streak increment/reset, `bestStreak`, distribution cap, `winRate`/`averageAttemptsPerWin`/`bestResult`.
 **Archivos probables:** `GuessItTests/`.
@@ -39,7 +39,7 @@ contradictory status reports from active folders.
 **Criterio de aceptación:** Streak/histogram/rate behavior asserted, including abandon-resets-streak.
 **Dependencias:** PR 2.
 
-## PR 4 — Remove dead pre-deployment-target code ⬜
+## PR 4 — Remove dead pre-deployment-target code ✅
 **Tipo:** refactor
 **Objetivo:** Delete unreachable `#available(iOS 26.0, *)` `else` branches and legacy modifiers (min target is already 26.0).
 **Archivos probables:** `AppTheme.swift`, `GuessInputView.swift`, `StatsView.swift`, `OTPStyleDigitInput.swift`, others.
@@ -48,8 +48,13 @@ contradictory status reports from active folders.
 **Validación:** build + smoke on iOS 26 simulator.
 **Criterio de aceptación:** No `#available(iOS 26)` with a dead `else`; UI unchanged.
 **Dependencias:** none (independent), best after tests exist.
+**Resolución:** The original pass missed `GameCenterDashboardView.swift`; it was
+removed wholesale as dead code (PR #11), which also cleared the last
+`#available(iOS 26)` in the project. A follow-up dropped the now-pointless
+`AnyView` wrappers this PR left behind in `AppTheme` — with the fallback branch
+gone, they only erased the view type.
 
-## PR 5 — Unify haptics + digit cells ⬜
+## PR 5 — Unify haptics + digit cells ✅
 **Tipo:** refactor
 **Objetivo:** Complete `HapticFeedbackManager` (impact styles) and route all inline generators through it; extract a single `DigitCell` + shared `markColor`/`spokenText`.
 **Archivos probables:** `Shared/Utilities/HapticFeedbackManager.swift`, the digit-cell views.
@@ -59,7 +64,7 @@ contradictory status reports from active folders.
 **Criterio de aceptación:** One digit cell; no ad-hoc feedback generators in views.
 **Dependencias:** PR 2/3 (safety net).
 
-## PR 6 — Introduce `GameViewModel` (Observation) ⬜
+## PR 6 — Introduce `GameViewModel` (Observation) ✅
 **Tipo:** refactor
 **Objetivo:** Move orchestration out of `GameView` into an `@Observable` store; enable local snapshot mutation instead of full refetch.
 **Archivos probables:** `Features/Game/`.
@@ -69,7 +74,7 @@ contradictory status reports from active folders.
 **Criterio de aceptación:** `GameView` slimmed; orchestration testable without SwiftUI.
 **Dependencias:** PR 2/3.
 
-## PR 7 — Modern concurrency + replace `asyncAfter` ⬜
+## PR 7 — Modern concurrency + replace `asyncAfter` ✅
 **Tipo:** refactor
 **Objetivo:** Switch default actor isolation to `MainActor`; remove redundant `await MainActor.run`; replace `DispatchQueue.main.asyncAfter` with `Task.sleep`/declarative animation completion.
 **Archivos probables:** `RootView.swift`, `GameView.swift`, `VictorySplashView.swift`, `SplashView.swift`.
@@ -78,8 +83,10 @@ contradictory status reports from active folders.
 **Validación:** strict concurrency `complete` without new warnings; animation smoke test.
 **Criterio de aceptación:** No `DispatchQueue` in the UI layer.
 **Dependencias:** PR 6.
+**Resolución:** Like PR 4, the original pass missed `GameCenterDashboardView.swift`;
+removing that file (PR #11) cleared the project's last `DispatchQueue`.
 
-## PR 8 — Non-destructive corrupted-store recovery ⬜
+## PR 8 — Non-destructive corrupted-store recovery ✅
 **Tipo:** fix
 **Objetivo:** Back up the corrupted store before deleting; surface `didRecoverFromCorruption` to the user.
 **Archivos probables:** `ModelContainerFactory.swift`, a UI surface in `RootView`.
@@ -89,7 +96,7 @@ contradictory status reports from active folders.
 **Criterio de aceptación:** No silent data loss; recovery is reported.
 **Dependencias:** none.
 
-## PR 9 — String Catalog migration + remaining localization ⬜
+## PR 9 — String Catalog migration + remaining localization ✅
 **Tipo:** feature / i18n
 **Objetivo:** Migrate `.strings` → `.xcstrings`; route hardcoded Spanish literals (History/Detail/Stats/Daily/VictorySplash/GuessInput) and accessibility labels through keys.
 **Archivos probables:** `*.lproj`, most view files.
@@ -99,7 +106,7 @@ contradictory status reports from active folders.
 **Criterio de aceptación:** `en`/`es` complete; no raw Spanish in `Text`/`Label`/`Button`.
 **Dependencias:** none.
 
-## PR 10 — Accessibility: Reduce Motion + Dynamic Type ⬜
+## PR 10 — Accessibility: Reduce Motion + Dynamic Type ✅
 **Tipo:** a11y
 **Objetivo:** Honor `accessibilityReduceMotion` (Victory/Splash); route fixed `size:` fonts through `AppTheme.Typography`; raise touch targets to 44pt.
 **Archivos probables:** `VictorySplashView.swift`, `SplashView.swift`, cells, `AppTheme.swift`.
@@ -109,7 +116,7 @@ contradictory status reports from active folders.
 **Criterio de aceptación:** No unguarded confetti/loops; fonts scale.
 **Dependencias:** PR 5 (shared cells).
 
-## PR 11 — Harden hint guardrails ⬜
+## PR 11 — Harden hint guardrails ✅
 **Tipo:** fix
 **Objetivo:** Validate `isOutputSafe` over the concatenated structured output; normalize accents; cap output length; preserve original FoundationModels errors.
 **Archivos probables:** `HintPromptBuilder.swift`, `HintService.swift`, `HintPromptBuilderTests`.
@@ -138,7 +145,7 @@ contradictory status reports from active folders.
 **Criterio de aceptación:** Working swipe actions with iOS 26 fallback.
 **Dependencias:** Xcode 27 SDK.
 
-## PR 14 — Decide Game Center activities ⬜
+## PR 14 — Decide Game Center activities ✅
 **Tipo:** feature / cleanup
 **Objetivo:** Implement `GKGameActivity` for real, or remove the stubbed activity service and its references.
 **Archivos probables:** `GameCenterActivityService.swift`, `GameView.swift`, `AppEnvironment.swift`.
@@ -146,6 +153,14 @@ contradictory status reports from active folders.
 **Validación:** build; Game Center smoke test if implemented.
 **Criterio de aceptación:** No advertised-but-dead feature remains.
 **Dependencias:** none.
+**Resolución:** Removed (PR #11). The service was a no-op end to end: `startActivity`
+never assigned `currentActivity`, so `endActivity`/`updateActivityMetadata` always
+returned early, and the deep-link handler implemented `player(_:wantsToPlay:)` while
+the real selector is `player:wantsToPlayGameActivity:completionHandler:` — declared
+`@optional`, so the mismatch compiled silently and GameKit never called it. Implementing
+it for real is not code-only: `GKGameActivityDefinition` is server-loaded and needs
+definitions configured in App Store Connect (no `.gkbundle` in the repo). Revisit if
+that configuration ever exists.
 
 ## PR 15 — Adopt Swift 6 language mode ⬜
 **Tipo:** refactor
@@ -155,6 +170,24 @@ contradictory status reports from active folders.
 **Validación:** build with Swift 6 mode, no concurrency warnings.
 **Criterio de aceptación:** Compiles cleanly in Swift 6 mode.
 **Dependencias:** PR 7 (and ideally PR 4).
+**Estado actual:** `SWIFT_VERSION = 5.0`. The build is warning-free today, but
+`SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated` on the app target, so switching modes
+is likely to surface isolation work that the current settings hide.
+
+## PR 16 — Re-enable the SwiftData snapshot test ⬜
+**Tipo:** tests
+**Objetivo:** Restore `fetchGameDetailSnapshot_throwsGameNotFound`, disabled invisibly:
+its `@Test` attribute is commented out and the method renamed to `disabled_test_*`, so
+it neither runs nor reports as skipped.
+**Archivos probables:** `GuessItTests/GuessItModelActorSnapshotTests.swift`.
+**Cambios esperados:** Give the test a dedicated container (its suite is already
+`.serialized`, which was not enough), or — at minimum — mark it `@Test(.disabled("…"))`
+so the pending work is visible in the test report.
+**Riesgo:** bajo
+**Validación:** `xcodebuild test` with the full suite, not in isolation.
+**Criterio de aceptación:** The test either passes alongside the other suites or shows
+up as explicitly skipped with a reason.
+**Dependencias:** none.
 
 ---
 
