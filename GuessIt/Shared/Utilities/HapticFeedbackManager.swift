@@ -9,6 +9,11 @@ import Foundation
 import UIKit
 
 /// Helper centralizado para feedback háptico.
+///
+/// - Note: `@MainActor` porque los generadores de feedback de UIKit
+///   (`UINotificationFeedbackGenerator`/`UIImpactFeedbackGenerator`) están aislados
+///   al main actor. Todos los callers ya son `@MainActor` (vistas y el view model).
+@MainActor
 enum HapticFeedbackManager {
     static func attemptSubmitted(feedback: AttemptFeedback) {
         let generator = UINotificationFeedbackGenerator()

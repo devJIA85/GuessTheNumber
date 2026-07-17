@@ -162,7 +162,7 @@ it for real is not code-only: `GKGameActivityDefinition` is server-loaded and ne
 definitions configured in App Store Connect (no `.gkbundle` in the repo). Revisit if
 that configuration ever exists.
 
-## PR 15 — Adopt Swift 6 language mode ⬜
+## PR 15 — Adopt Swift 6 language mode ◑
 **Tipo:** refactor
 **Objetivo:** Raise `SWIFT_VERSION` to 6 once strict-concurrency warnings are at zero.
 **Archivos probables:** `project.pbxproj`, scattered concurrency fixes.
@@ -170,9 +170,16 @@ that configuration ever exists.
 **Validación:** build with Swift 6 mode, no concurrency warnings.
 **Criterio de aceptación:** Compiles cleanly in Swift 6 mode.
 **Dependencias:** PR 7 (and ideally PR 4).
-**Estado actual:** `SWIFT_VERSION = 5.0`. The build is warning-free today, but
-`SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated` on the app target, so switching modes
-is likely to surface isolation work that the current settings hide.
+**Estado actual:** **App target migrado a Swift 6** (0 errores, 0 warnings). Fixes:
+- `GameActor` cruzaba el aislamiento devolviendo `@Model` no-`Sendable`
+  (`createNewGame`/`recordAttempt`). Se agregaron variantes `startNewGame()` /
+  `recordAttemptDiscardingResult(...)` que mantienen el `@Model` dentro del actor.
+- `ModelContainerFactory` flags de recuperación → `nonisolated(unsafe)` (solo se
+  escriben una vez al arranque, nunca concurrentemente).
+- `HapticFeedbackManager` → `@MainActor` (los generadores de UIKit lo son).
+**Pendiente:** los targets de **tests / widget / UI tests siguen en `SWIFT_VERSION = 5.0`.
+Migrar el target de tests destapará errores: acceden a `@Model` (`Game`/`Attempt`) a
+través del aislamiento del actor y assertan sobre relaciones (`attempt.game.id`).
 
 ## PR 16 — Re-enable the SwiftData snapshot test ⬜
 **Tipo:** tests

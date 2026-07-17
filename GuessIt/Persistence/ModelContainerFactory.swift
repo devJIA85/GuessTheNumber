@@ -20,11 +20,17 @@ enum ModelContainerFactory {
 
     /// Indica si se realizó una recuperación destructiva al inicio.
     /// La app puede leer este flag para mostrar una alerta al usuario.
-    static private(set) var didRecoverFromCorruption = false
+    ///
+    /// - Note: `nonisolated(unsafe)` es seguro aquí: solo se escribe en la rama de
+    ///   recuperación (`!isInMemory`), que corre una única vez durante la creación
+    ///   sincrónica del contenedor en el arranque real; nunca hay escritura concurrente.
+    ///   Los contenedores in-memory (previews/tests) no tocan estos flags.
+    nonisolated(unsafe) static private(set) var didRecoverFromCorruption = false
 
     /// URL del backup del store corrupto generado durante la última recuperación (si hubo).
     /// - Why: permite que una UI futura informe al usuario dónde quedó respaldada su data.
-    static private(set) var lastCorruptionBackupURL: URL?
+    /// - Note: ver la nota de `didRecoverFromCorruption` sobre `nonisolated(unsafe)`.
+    nonisolated(unsafe) static private(set) var lastCorruptionBackupURL: URL?
 
     /// Construye un `ModelContainer` listo para usarse.
     /// - Parameter isInMemory: `true` para previews/tests (no escribe en disco), `false` para ejecución real.
