@@ -882,7 +882,7 @@ private struct VictorySectionView: View {
                     .font(AppTheme.Typography.headline())
                     .frame(maxWidth: .infinity)
             }
-            .modernProminentButton()  // Helper que detecta iOS 26+ automáticamente
+            .modernProminentButton()
             .tint(.appActionPrimary)
             .controlSize(.large)
         }

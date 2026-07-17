@@ -106,7 +106,7 @@ struct HistoryView: View {
                     await loadGames()
                 }
             }
-            .modernProminentButton()  // SwiftUI 2025: Liquid Glass button
+            .modernProminentButton()
             .tint(.appActionPrimary)
         }
         .padding()
