@@ -136,7 +136,7 @@ removing that file (PR #11) cleared the project's last `DispatchQueue`.
 **Criterio de aceptación:** Toolbar no longer crowded on iOS 27; fallback intact.
 **Dependencias:** Xcode 27 SDK.
 
-## PR 13 — Swipe actions in history / daily ⬜
+## PR 13 — Swipe actions in history / daily ✅
 **Tipo:** feature
 **Objetivo:** `swipeActionsContainer` for delete/replay/share.
 **Archivos probables:** `HistoryView.swift`, `DailyChallengeView.swift`.
@@ -144,6 +144,14 @@ removing that file (PR #11) cleared the project's last `DispatchQueue`.
 **Validación:** build + fallback check.
 **Criterio de aceptación:** Working swipe actions with iOS 26 fallback.
 **Dependencias:** Xcode 27 SDK.
+**Resolución:**
+- `HistoryView`: swipe-to-delete en cada fila vía `swipeActionsContainer()` (iOS 27+,
+  gateado por `#available`); `contextMenu` (Compartir + Borrar) como fallback universal
+  en iOS 26. Nuevo `GuessItModelActor.deleteGame(gameID:)` (borra en cascada; no recalcula
+  stats históricas) + test.
+- `DailyChallengeView`: el desafío es único por día (no hay lista borrable), así que en vez
+  de swipe se agregó un `ShareLink` ("Compartir resultado") en las cards de completado y
+  fallado. "Replay" no aplica (secretos fijos, históricos).
 
 ## PR 14 — Decide Game Center activities ✅
 **Tipo:** feature / cleanup

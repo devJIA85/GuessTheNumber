@@ -131,6 +131,10 @@ struct HistoryView: View {
     }
 
     /// Lista de partidas terminadas como cards "Focus", con la mejor destacada.
+    ///
+    /// # Swipe actions
+    /// - Swipe-to-delete en cada fila (iOS 27+, vía `swipeActionsContainer()`).
+    /// - `contextMenu` (Compartir / Borrar) como fallback universal en iOS 26.
     private func historyListView(games: [GameSummarySnapshot]) -> some View {
         // Mejor partida: menos intentos entre las ganadas.
         let bestID = games
@@ -149,10 +153,72 @@ struct HistoryView: View {
                         GameSummaryRowView(snapshot: snapshot, isBest: snapshot.id == bestID)
                     }
                     .buttonStyle(.plain)
+                    // Swipe-to-delete: solo surte efecto con `swipeActionsContainer()`
+                    // abajo (iOS 27+); en iOS 26 es un no-op y queda el contextMenu.
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            delete(snapshot)
+                        } label: {
+                            Label("common.delete", systemImage: "trash")
+                        }
+                    }
+                    // Fallback universal (y complemento en iOS 27): Compartir + Borrar.
+                    .contextMenu {
+                        ShareLink(item: shareText(for: snapshot)) {
+                            Label("common.share", systemImage: "square.and.arrow.up")
+                        }
+                        Button(role: .destructive) {
+                            delete(snapshot)
+                        } label: {
+                            Label("common.delete", systemImage: "trash")
+                        }
+                    }
                 }
             }
             .padding(.horizontal, AppTheme.Spacing.large)
             .padding(.bottom, AppTheme.Spacing.medium)
+        }
+        .modifier(SwipeActionsContainerIfAvailable())
+    }
+
+    // MARK: - Actions
+
+    /// Borra una partida del historial y refresca la lista.
+    private func delete(_ snapshot: GameSummarySnapshot) {
+        Task { @MainActor in
+            do {
+                try await env.modelActor.deleteGame(gameID: snapshot.id)
+                HapticFeedbackManager.markChanged()
+                await loadGames()
+            } catch {
+                state = .failure(error)
+            }
+        }
+    }
+
+    /// Texto para compartir el resultado de una partida.
+    private func shareText(for snapshot: GameSummarySnapshot) -> String {
+        let title = String(localized: "game.title")
+        let state = snapshot.state == .won
+            ? String(localized: "game.status.won")
+            : String(localized: "game.status.abandoned")
+        let attempts = snapshot.attemptsCount == 1
+            ? String(localized: "game.attempts_one")
+            : String(format: String(localized: "game.attempts_other"), snapshot.attemptsCount)
+        return "\(title) 🎯 — \(state), \(attempts)"
+    }
+}
+
+/// Aplica `swipeActionsContainer()` en iOS 27+; en iOS 26 no hace nada.
+/// - Note: la condición es `#available` (constante en tiempo de ejecución para el
+///   dispositivo), así que no rompe la identidad de la vista como sí lo haría un
+///   modificador condicional basado en estado.
+private struct SwipeActionsContainerIfAvailable: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 27.0, *) {
+            content.swipeActionsContainer()
+        } else {
+            content
         }
     }
 }

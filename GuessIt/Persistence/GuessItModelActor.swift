@@ -261,6 +261,22 @@ actor GuessItModelActor {
         try updateStatsAfterGame(gameID: gameID)
     }
 
+    /// Elimina una partida del historial (y en cascada sus intentos y notas).
+    ///
+    /// # Nota
+    /// - Solo borra el registro de la partida; **no** recalcula estadísticas
+    ///   (las stats acumuladas históricas se conservan).
+    /// - `Game.attempts` y `Game.digitNotes` tienen `deleteRule: .cascade`.
+    ///
+    /// - Parameter gameID: identificador persistente de la partida a borrar.
+    func deleteGame(gameID: GameIdentifier) throws {
+        guard let game = modelContext.model(for: gameID) as? Game else {
+            throw ModelActorError.gameNotFound(gameID)
+        }
+        modelContext.delete(game)
+        try modelContext.save()
+    }
+
     // MARK: - Attempts
 
     /// Persiste un intento ya evaluado por el dominio.

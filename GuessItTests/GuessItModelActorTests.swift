@@ -219,6 +219,24 @@ struct GuessItModelActorTests {
         #expect(after.finishedAt != nil, "finishedAt debe estar establecido")
     }
 
+    @Test("deleteGame elimina la partida del historial")
+    func testDeleteGameRemovesGameFromHistory() async throws {
+        // Arrange: crear una partida y terminarla (queda en el historial).
+        let modelActor = makeTestModelActor()
+        let gameID = try await modelActor.fetchOrCreateInProgressGameID()
+        try await modelActor.markGameWon(gameID: gameID)
+
+        let before = try await modelActor.fetchFinishedGameSummaries()
+        #expect(before.contains { $0.id == gameID }, "La partida terminada debe estar en el historial")
+
+        // Act: borrar la partida.
+        try await modelActor.deleteGame(gameID: gameID)
+
+        // Assert: ya no está en el historial.
+        let after = try await modelActor.fetchFinishedGameSummaries()
+        #expect(!after.contains { $0.id == gameID }, "La partida borrada no debe seguir en el historial")
+    }
+
     // MARK: - Tests de Registro de Intentos
 
     @Test("recordAttempt persiste intento con feedback correcto")

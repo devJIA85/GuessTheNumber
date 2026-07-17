@@ -174,6 +174,8 @@ struct DailyChallengeView: View {
                             isMono: false
                         )
                     }
+
+                    dailyShareLink(challenge: challenge)
                 }
                 .frame(maxWidth: .infinity)
                 .focusCard(tint: .appActionPrimary)
@@ -225,6 +227,8 @@ struct DailyChallengeView: View {
                         }
                         .padding(.top, AppTheme.Spacing.xSmall)
                     }
+
+                    dailyShareLink(challenge: challenge)
                 }
                 .frame(maxWidth: .infinity)
                 .focusCard()
@@ -245,6 +249,35 @@ struct DailyChallengeView: View {
             }
             .padding(.horizontal, AppTheme.Spacing.large)
             .padding(.vertical, AppTheme.Spacing.small)
+        }
+    }
+
+    // MARK: - Share
+
+    /// Link para compartir el resultado del desafío diario.
+    /// - Note: el desafío es único por día, así que no hay swipe-to-delete (como en
+    ///   Historial); la acción que aplica es compartir el resultado.
+    @ViewBuilder
+    private func dailyShareLink(challenge: DailyChallengeSnapshot) -> some View {
+        ShareLink(item: dailyShareText(challenge: challenge)) {
+            Label("game.victory.share", systemImage: "square.and.arrow.up")
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color.appActionPrimary)
+        }
+        .padding(.top, AppTheme.Spacing.xSmall)
+    }
+
+    /// Texto para compartir el resultado del desafío diario.
+    private func dailyShareText(challenge: DailyChallengeSnapshot) -> String {
+        let title = String(localized: "daily.title")
+        let attempts = challenge.attemptsCount == 1
+            ? String(localized: "game.attempts_one")
+            : String(format: String(localized: "game.attempts_other"), challenge.attemptsCount)
+        switch challenge.state {
+        case .completed:
+            return "\(title) 📅 — \(String(localized: "daily.completed_short")) \(attempts)"
+        default:
+            return "\(title) 📅 — \(String(localized: "daily.failed_title"))"
         }
     }
 
