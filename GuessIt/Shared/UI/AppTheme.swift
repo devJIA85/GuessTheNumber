@@ -484,38 +484,25 @@ extension View {
         ))
     }
 }
-// MARK: - Modern Button Styles (SwiftUI 2025 Liquid Glass Support)
-/// Helper para aplicar estilos de botón modernos con soporte Liquid Glass.
+// MARK: - Modern Button Styles (Liquid Glass)
+/// Helpers para aplicar los button styles de Liquid Glass.
 ///
 /// # Por qué existe
-/// - Centraliza la lógica de detección de iOS 26+
-/// - Proporciona fallback elegante a .borderedProminent
-/// - Permite usar Liquid Glass button styles sin #available en cada uso
-///
-/// # SwiftUI 2025 Update
-/// - Usa el nuevo `.glass` button style introducido en June 2025
-/// - `.glass` es el reemplazo oficial de `.glassProminent` para Liquid Glass
+/// - Nombra la intención (acción primaria / CTA) en vez del style concreto,
+///   para poder cambiarlo en un solo lugar.
 extension View {
     /// Aplica un button style prominent con soporte Liquid Glass.
-    ///
-    /// # Comportamiento
-    /// - iOS 26+: Usa .glass (Liquid Glass nativo - SwiftUI 2025)
-    /// - iOS 13-25: Usa .borderedProminent (style clásico)
     ///
     /// # Cuándo usar
     /// - Botones de acción primaria (CTA)
     /// - Botones que necesitan máxima prominencia visual
     ///
-    /// # SwiftUI 2025
-    /// - Usa buttonStyle(.glass) como recomienda Apple en June 2025 updates
-    ///
     /// - Returns: Vista con button style aplicado
     func modernProminentButton() -> some View {
-        AnyView(self.buttonStyle(.glass))
+        self.buttonStyle(.glass)
     }
 
-    /// Aplica `.glassProminent` en iOS 26+ (Liquid Glass con énfasis alto).
-    /// Fallback: `.borderedProminent` en iOS <26.
+    /// Aplica `.glassProminent` (Liquid Glass con énfasis alto).
     ///
     /// # Diferencia con `modernProminentButton()`
     /// - `modernProminentButton()` usa `.glass` (peso regular, para acciones secundarias)
@@ -529,7 +516,7 @@ extension View {
     /// > ".glassProminent allows adopting the look and feel of the material
     /// > with a high visual emphasis, ideal for the primary action."
     func modernGlassProminentButton() -> some View {
-        AnyView(self.buttonStyle(.glassProminent))
+        self.buttonStyle(.glassProminent)
     }
 }
 
@@ -629,19 +616,11 @@ struct PremiumBackgroundGradient: View {
 /// - Vistas que usan PremiumBackgroundGradient
 /// - Cualquier vista que quiera maximizar el uso del espacio visual
 extension View {
-    /// Aplica background extension effect en iOS 26+.
+    /// Aplica background extension effect: blur y extend en los bordes.
     ///
-    /// # Comportamiento
-    /// - iOS 26+: Usa backgroundExtensionEffect() para blur y extend en bordes
-    /// - iOS 13-25: No hace nada (retorna la vista sin cambios)
-    ///
-    /// # Por qué condicional
-    /// - backgroundExtensionEffect() solo existe en iOS 26+
-    /// - El fallback es seguro: la vista se ve bien sin este efecto
-    ///
-    /// - Returns: Vista con background extension aplicado (iOS 26+) o sin cambios
+    /// - Returns: Vista con background extension aplicado
     func modernBackgroundExtension() -> some View {
-        AnyView(self.backgroundExtensionEffect())
+        self.backgroundExtensionEffect()
     }
 }
 
