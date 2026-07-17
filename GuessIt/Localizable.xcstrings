@@ -1271,13 +1271,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Great read of the feedback"
+            "value": "You found the number!"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excelente lectura del feedback"
+            "value": "¡Descubriste el número!"
           }
         }
       }
