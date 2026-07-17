@@ -459,34 +459,31 @@ struct GuessItModelActorSnapshotTests {
         #expect(mostRecent.isRepeated == true)
     }
 
-    // FIXME: Este test falla cuando se ejecuta junto con otras suites,
-    // probablemente por lifecycle del ModelContainer in-memory o sincronización
-    // entre mainContext y modelActor.modelContext al eliminar entidades.
-    // Funciona correctamente en aislamiento.
-    // Posible solución: usar container dedicado por test o esperar a que SwiftData
-    // propague el delete entre contextos antes de verificar el error.
-    // @Test("fetchGameDetailSnapshot lanza gameNotFound cuando no existe")
-    @MainActor
-    func disabled_test_fetchGameDetailSnapshot_throwsGameNotFound() async throws {
-        // Arrange: crear y borrar la partida para dejar un ID inválido.
-        let container = makeTestContainer()
-        let context = container.mainContext
-        let modelActor = makeTestModelActor(container: container)
+    @Test(
+        "fetchGameDetailSnapshot lanza gameNotFound cuando no existe",
+        .disabled("""
+        Pasa en aislamiento, pero es flaky bajo la ejecución PARALELA de la suite \
+        completa: al sumar carga, un clone del runner se cae de forma no-determinista \
+        (inestabilidad de contenedores SwiftData in-memory por clone en el simulador de \
+        Xcode-beta; se arrastran tests de otras suites, que varían entre corridas). \
+        Re-habilitar cuando el target corra en serie o se estabilice la paralelización. \
+        A diferencia del `disabled_test_*` anterior, ahora es un @Test visible: aparece \
+        como skipped con motivo en el reporte, y el cuerpo (crear/borrar/consultar todo \
+        por el contexto del actor) ya es determinista.
+        """)
+    )
+    func test_fetchGameDetailSnapshot_throwsGameNotFound() async throws {
+        // Arrange: creamos y borramos la partida **a través del propio actor**, para que
+        // el crear/borrar/consultar ocurra todo en el mismo `ModelContext`.
+        //
+        // La versión anterior insertaba y borraba vía `mainContext` (un contexto distinto
+        // al del actor). El actor no veía esas escrituras de forma confiable al correr
+        // junto con otras suites, lo que volvía el test flaky. Con todo en el contexto del
+        // actor el resultado es determinista.
+        let modelActor = makeTestModelActor(container: makeTestContainer())
 
-        let gameID = try insertGame(
-            context: context,
-            state: .won,
-            secret: "01234",
-            createdAt: makeDate(year: 2026, month: 1, day: 5),
-            finishedAt: makeDate(year: 2026, month: 1, day: 6),
-            attemptSeeds: []
-        )
-
-        // Delete the game to make the ID invalid
-        if let game = context.model(for: gameID) as? Game {
-            context.delete(game)
-            try context.save()
-        }
+        let gameID = try await modelActor.startNewGame()
+        try await modelActor.deleteGame(gameID: gameID)
 
         // Act + Assert: debe lanzar error específico.
         do {
