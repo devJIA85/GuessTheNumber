@@ -198,7 +198,7 @@ so the pending work is visible in the test report.
 up as explicitly skipped with a reason.
 **Dependencias:** none.
 
-## PR 17 — Fix low-contrast text over the premium gradients ⬜
+## PR 17 — Fix low-contrast text over the premium gradients ✅
 **Tipo:** a11y
 **Objetivo:** The tutorial's "Saltar" button is close to unreadable: it styles text with
 `Color.appTextSecondary`, which is `Color(.secondaryLabel)` — a dynamic system color that
@@ -217,6 +217,11 @@ gradient; "Saltar" is legible in both appearances.
 **Dependencias:** none.
 **Nota:** the coral "Siguiente" label is *not* part of this — `appActionPrimary` is
 deliberately coral for CTAs. Revisit only as a design call, not as a bug.
+**Resolución:** Cerrado por el rediseño "Focus" del TutorialView: el fondo pasó a
+`FocusBackground` (siempre oscuro) y "Saltar" usa `AppTheme.Focus.textSecondary`
+(blanco 55%), un token fijo pensado para el fondo oscuro en vez de un color de sistema
+agnóstico al fondo. El resto de pantallas que pintaban el gradiente también migraron a
+`FocusBackground` durante el rediseño, así que ya no hay `secondaryLabel` sobre gradiente.
 
 ---
 
