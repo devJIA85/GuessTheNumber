@@ -31,31 +31,30 @@ struct HistoryView: View {
     @State private var state: LoadState<[GameSummarySnapshot]> = .loading
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // SwiftUI 2025: Usar PremiumBackgroundGradient + backgroundExtensionEffect
-                // - Why: mantiene consistencia visual con GameView
-                // - backgroundExtensionEffect: da continuidad en bordes con safe areas
-                PremiumBackgroundGradient()
-                    .modernBackgroundExtension()
+        ZStack {
+            FocusBackground()
 
-                Group {
-                    switch state {
-                    case .loading:
-                        loadingView
-                    case .loaded(let games):
-                        historyListView(games: games)
-                    case .empty:
-                        emptyStateView
-                    case .failure(let error):
-                        failureView(error: error)
-                    }
+            Group {
+                switch state {
+                case .loading:
+                    loadingView
+                case .loaded(let games):
+                    historyListView(games: games)
+                case .empty:
+                    emptyStateView
+                case .failure(let error):
+                    failureView(error: error)
                 }
             }
-            .navigationTitle("history.title")
-            .task {
-                await loadGames()
-            }
+        }
+        // Barra transparente pero visible (conserva el botón "atrás"); el header
+        // grande vive en el contenido, como en el mock.
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .preferredColorScheme(.dark)
+        .task {
+            await loadGames()
         }
     }
     
@@ -73,65 +72,88 @@ struct HistoryView: View {
 
     // MARK: - Views
     
+    /// Header "Focus": marca + título grande, como en GameView.
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("game.title")
+                .focusSectionLabel()
+            Text("history.title")
+                .font(.system(size: 34, weight: .heavy, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, AppTheme.Spacing.small)
+    }
+
     /// Vista de carga.
     private var loadingView: some View {
         ProgressView("history.loading")
-            .tint(.appActionPrimary)
+            .tint(AppTheme.Focus.textSecondary)
     }
 
     /// Vista cuando no hay partidas terminadas todavía.
     private var emptyStateView: some View {
-        VStack(spacing: 12) {
-            Text("history.empty.finished")
-                .font(.headline)
-                .foregroundStyle(Color.appTextSecondary)
-
-            Text("history.empty.finished_description")
-                .font(.subheadline)
-                .foregroundStyle(Color.appTextSecondary)
-                .multilineTextAlignment(.center)
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.large) {
+                header
+                VStack(spacing: 12) {
+                    Text("history.empty.finished")
+                        .font(.headline)
+                        .foregroundStyle(AppTheme.Focus.textPrimary)
+                    Text("history.empty.finished_description")
+                        .font(.subheadline)
+                        .foregroundStyle(AppTheme.Focus.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, AppTheme.Spacing.xxLarge)
+            }
+            .padding(.horizontal, AppTheme.Spacing.large)
         }
-        .padding()
     }
-    
+
     /// Vista de error con opción de reintentar.
     private func failureView(error: Error) -> some View {
         VStack(spacing: 16) {
             Text("history.load_error")
                 .font(.headline)
-                .foregroundStyle(Color.appTextSecondary)
+                .foregroundStyle(AppTheme.Focus.textPrimary)
 
             Button("common.retry") {
                 Task(name: "RetryLoadGames") { @MainActor in
                     await loadGames()
                 }
             }
-            .modernProminentButton()
+            .buttonStyle(.bordered)
             .tint(.appActionPrimary)
         }
         .padding()
     }
 
-    /// Lista de partidas terminadas usando snapshots.
-    ///
-    /// # Liquid Glass (WWDC25: Adopting Liquid Glass)
-    /// - `.scrollContentBackground(.hidden)` remueve el fondo opaco del List,
-    ///   permitiendo que el `PremiumBackgroundGradient` sea visible.
-    /// - No usamos `.listRowBackground()` para que el sistema aplique
-    ///   Liquid Glass nativamente a las secciones del List en iOS 26+.
-    /// - En iOS <26 el List `.insetGrouped` mantiene su apariencia nativa.
+    /// Lista de partidas terminadas como cards "Focus", con la mejor destacada.
     private func historyListView(games: [GameSummarySnapshot]) -> some View {
-        List {
-            ForEach(games) { snapshot in
-                NavigationLink {
-                    GameDetailView(gameID: snapshot.id)
-                } label: {
-                    GameSummaryRowView(snapshot: snapshot)
+        // Mejor partida: menos intentos entre las ganadas.
+        let bestID = games
+            .filter { $0.state == .won }
+            .min { $0.attemptsCount < $1.attemptsCount }?
+            .id
+
+        return ScrollView {
+            LazyVStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                header
+
+                ForEach(games) { snapshot in
+                    NavigationLink {
+                        GameDetailView(gameID: snapshot.id)
+                    } label: {
+                        GameSummaryRowView(snapshot: snapshot, isBest: snapshot.id == bestID)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.bottom, AppTheme.Spacing.medium)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
     }
 }
 
@@ -139,8 +161,10 @@ struct HistoryView: View {
     // Preview con entorno configurado
     let container = ModelContainerFactory.make(isInMemory: true)
     let env = AppEnvironment(modelContainer: container)
-    
-    HistoryView()
-        .environment(\.appEnvironment, env)
-        .modelContainer(container)
+
+    NavigationStack {
+        HistoryView()
+            .environment(\.appEnvironment, env)
+            .modelContainer(container)
+    }
 }

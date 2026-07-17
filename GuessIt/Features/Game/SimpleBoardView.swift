@@ -44,52 +44,42 @@ struct SimpleBoardView: View {
     // MARK: - Body
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Header: "Tablero" + Reset
-            headerRow
-            
+        VStack(alignment: .trailing, spacing: 8) {
+            // Reset sutil (solo si hay marcas que resetear); el teclado va limpio como en el mock.
+            if game.state == .inProgress && hasMarks {
+                resetButton
+            }
+
             // Grilla 2×5
             digitGrid
         }
-        .padding(.horizontal, AppTheme.Spacing.small)
-        .padding(.vertical, 8)
-        .background {
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                .fill(.ultraThinMaterial)
+    }
+
+    // MARK: - Reset
+
+    /// ¿Hay al menos una marca de deducción puesta?
+    private var hasMarks: Bool {
+        game.digitNotes.contains { $0.mark != .unknown }
+    }
+
+    /// Botón de reset de marcas, discreto y alineado a la derecha.
+    private var resetButton: some View {
+        Button {
+            resetBoard()
+        } label: {
+            Label("game.board.reset", systemImage: "arrow.counterclockwise")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textTertiary)
         }
     }
-    
-    // MARK: - Header Row
-    
-    /// Fila con label "Tablero" y botón Reset.
-    private var headerRow: some View {
-        HStack {
-            Label("game.board.title", systemImage: "square.grid.2x2")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundStyle(Color.appTextPrimary)
 
-            Spacer()
-
-            if game.state == .inProgress {
-                Button {
-                    resetBoard()
-                } label: {
-                    Text("game.board.reset")
-                        .font(.caption2)
-                        .foregroundStyle(Color.appActionPrimary)
-                }
-            }
-        }
-    }
-    
     // MARK: - Digit Grid
-    
+
     /// Grilla 2×5 con celdas de dígitos.
     private var digitGrid: some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 5)
-        
-        return LazyVGrid(columns: columns, spacing: 8) {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 9), count: 5)
+
+        return LazyVGrid(columns: columns, spacing: 9) {
             ForEach(sortedNotes, id: \.id) { note in
                 SimpleDigitCell(
                     digit: note.digit,
@@ -161,16 +151,16 @@ struct SimpleDigitCell: View {
     
     var body: some View {
         Text("\(digit)")
-            .font(.system(size: 18, weight: .semibold, design: .rounded))
+            .font(.system(size: 22, weight: .bold, design: .rounded))
             .foregroundStyle(textColor)
             .frame(maxWidth: .infinity)
-            .frame(height: 44)
+            .frame(height: 52)
             .background(cellBackground)
             .overlay { cellBorder }
             .scaleEffect(isPressed ? 0.95 : 1.0)
             .animation(.smooth(duration: 0.2), value: mark)
             .animation(.easeInOut(duration: 0.1), value: isPressed)
-            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .onTapGesture {
                 if !isUsed {
                     isPressed = true
@@ -236,52 +226,49 @@ struct SimpleDigitCell: View {
     // MARK: - Presentación
     
     private var textColor: Color {
-        isUsed ? .white.opacity(0.5) : .white
+        if isUsed { return .white.opacity(0.35) }
+        return mark == .unknown ? .white : markColor
     }
-    
+
     private var cellBackground: some View {
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
             .fill(backgroundFillColor)
     }
-    
+
     private var backgroundFillColor: Color {
         if isUsed {
-            return Color.white.opacity(0.08)
+            return Color.white.opacity(0.03)
         }
 
         switch mark {
         case .unknown:
-            return Color.white.opacity(0.12)
+            return Color.white.opacity(0.05)
         case .poor:
-            return Color.appMarkPoor.opacity(0.30)
+            return Color.appMarkPoor.opacity(0.18)
         case .good:
-            return Color.appMarkGood.opacity(0.30)
+            return Color.appMarkGood.opacity(0.18)
         case .fair:
-            return Color.appMarkFair.opacity(0.35)
+            return Color.appMarkFair.opacity(0.20)
         }
     }
-    
+
     private var cellBorder: some View {
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
             .strokeBorder(borderColor, lineWidth: borderWidth)
     }
-    
+
     private var borderColor: Color {
         if isUsed {
-            return Color.white.opacity(0.15)
+            return Color.white.opacity(0.06)
         }
-        
-        if isInputMode && mark == .unknown {
-            return Color.appActionPrimary.opacity(0.4)
-        }
-        
+
         if mark == .unknown {
-            return Color.white.opacity(0.25)
+            return Color.white.opacity(0.16)
         }
-        
+
         return markColor.opacity(0.7)
     }
-    
+
     private var borderWidth: CGFloat {
         mark == .unknown ? 1.0 : 2.0
     }

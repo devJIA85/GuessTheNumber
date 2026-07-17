@@ -162,7 +162,7 @@ it for real is not code-only: `GKGameActivityDefinition` is server-loaded and ne
 definitions configured in App Store Connect (no `.gkbundle` in the repo). Revisit if
 that configuration ever exists.
 
-## PR 15 — Adopt Swift 6 language mode ⬜
+## PR 15 — Adopt Swift 6 language mode ✅
 **Tipo:** refactor
 **Objetivo:** Raise `SWIFT_VERSION` to 6 once strict-concurrency warnings are at zero.
 **Archivos probables:** `project.pbxproj`, scattered concurrency fixes.
@@ -170,9 +170,18 @@ that configuration ever exists.
 **Validación:** build with Swift 6 mode, no concurrency warnings.
 **Criterio de aceptación:** Compiles cleanly in Swift 6 mode.
 **Dependencias:** PR 7 (and ideally PR 4).
-**Estado actual:** `SWIFT_VERSION = 5.0`. The build is warning-free today, but
-`SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated` on the app target, so switching modes
-is likely to surface isolation work that the current settings hide.
+**Resolución:** **Todos los targets en Swift 6** (app + tests + UI tests + widget);
+build y tests limpios (113 tests). Fixes de concurrencia:
+- `GameActor` cruzaba el aislamiento devolviendo `@Model` no-`Sendable`
+  (`createNewGame`/`recordAttempt`). Variantes que mantienen el `@Model` dentro del
+  actor: `startNewGame() -> GameIdentifier` y `recordAttemptDiscardingResult(...)`.
+- `ModelContainerFactory` flags de recuperación → `nonisolated(unsafe)` (solo se
+  escriben una vez al arranque, nunca concurrentemente).
+- `HapticFeedbackManager` → `@MainActor` (los generadores de UIKit lo son).
+- `GuessItModelActorTests` / `GameActorIntegrationTests` reescritos para assertar
+  sobre snapshots/DTOs (`GameDetailSnapshot`/`GameData`) en vez de sobre objetos
+  `@Model` cruzando el actor. Se perdió la verificación directa de la relación
+  bidireccional (`note.game.id`), cubierta indirectamente por los snapshots.
 
 ## PR 16 — Re-enable the SwiftData snapshot test ⬜
 **Tipo:** tests
@@ -189,7 +198,7 @@ so the pending work is visible in the test report.
 up as explicitly skipped with a reason.
 **Dependencias:** none.
 
-## PR 17 — Fix low-contrast text over the premium gradients ⬜
+## PR 17 — Fix low-contrast text over the premium gradients ✅
 **Tipo:** a11y
 **Objetivo:** The tutorial's "Saltar" button is close to unreadable: it styles text with
 `Color.appTextSecondary`, which is `Color(.secondaryLabel)` — a dynamic system color that
@@ -208,6 +217,11 @@ gradient; "Saltar" is legible in both appearances.
 **Dependencias:** none.
 **Nota:** the coral "Siguiente" label is *not* part of this — `appActionPrimary` is
 deliberately coral for CTAs. Revisit only as a design call, not as a bug.
+**Resolución:** Cerrado por el rediseño "Focus" del TutorialView: el fondo pasó a
+`FocusBackground` (siempre oscuro) y "Saltar" usa `AppTheme.Focus.textSecondary`
+(blanco 55%), un token fijo pensado para el fondo oscuro en vez de un color de sistema
+agnóstico al fondo. El resto de pantallas que pintaban el gradiente también migraron a
+`FocusBackground` durante el rediseño, así que ya no hay `secondaryLabel` sobre gradiente.
 
 ---
 

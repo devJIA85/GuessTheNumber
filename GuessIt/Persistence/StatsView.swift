@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Charts
 
 /// Pantalla de estadísticas del jugador.
 ///
@@ -35,25 +34,30 @@ struct StatsView: View {
     // MARK: - Body
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Fondo premium
-                PremiumBackgroundGradient()
-                    .modernBackgroundExtension()
-                
-                // Contenido
-                ScrollView {
-                    content
-                        .padding(.horizontal, AppTheme.Spacing.medium)
-                        .padding(.vertical, AppTheme.Spacing.small)
-                }
+        ZStack {
+            FocusBackground()
+
+            // Contenido
+            ScrollView {
+                content
+                    .padding(.horizontal, AppTheme.Spacing.large)
+                    .padding(.vertical, AppTheme.Spacing.small)
             }
-            .navigationTitle("stats.title")
-            .navigationBarTitleDisplayMode(.inline)
-            .tint(.appActionPrimary)
-            .task {
-                await loadStats()
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Label("stats.title", systemImage: "chart.bar.fill")
+                    .labelStyle(.titleAndIcon)
+                    .font(.system(size: 17, weight: .heavy, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
             }
+        }
+        .tint(.appActionPrimary)
+        .preferredColorScheme(.dark)
+        .task {
+            await loadStats()
         }
     }
     
@@ -66,8 +70,9 @@ struct StatsView: View {
             // Loading state
             VStack(spacing: AppTheme.Spacing.medium) {
                 ProgressView()
+                    .tint(AppTheme.Focus.textSecondary)
                 Text("stats.loading")
-                    .foregroundStyle(Color.appTextSecondary)
+                    .foregroundStyle(AppTheme.Focus.textSecondary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.top, 100)
@@ -89,13 +94,13 @@ struct StatsView: View {
                 
                 Text("stats.load_error")
                     .font(AppTheme.Typography.headline())
-                    .foregroundStyle(Color.appTextPrimary)
-                
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
+
                 Text(error.localizedDescription)
                     .font(AppTheme.Typography.caption())
-                    .foregroundStyle(Color.appTextSecondary)
+                    .foregroundStyle(AppTheme.Focus.textSecondary)
                     .multilineTextAlignment(.center)
-                
+
                 Button("common.retry") {
                     Task { await loadStats() }
                 }
@@ -103,7 +108,7 @@ struct StatsView: View {
                 .tint(.appActionPrimary)
             }
             .padding(AppTheme.Spacing.large)
-            .glassCard()
+            .focusCard()
             .padding(.top, 100)
         }
     }
@@ -114,19 +119,19 @@ struct StatsView: View {
         VStack(spacing: AppTheme.Spacing.large) {
             Image(systemName: "chart.bar.xaxis")
                 .font(.system(size: 60))
-                .foregroundStyle(Color.appTextSecondary.opacity(0.6))
-            
+                .foregroundStyle(AppTheme.Focus.textTertiary)
+
             Text("stats.empty.title")
                 .font(AppTheme.Typography.title())
-                .foregroundStyle(Color.appTextPrimary)
-            
+                .foregroundStyle(AppTheme.Focus.textPrimary)
+
             Text("stats.empty.description")
                 .font(AppTheme.Typography.body())
-                .foregroundStyle(Color.appTextSecondary)
+                .foregroundStyle(AppTheme.Focus.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .padding(AppTheme.Spacing.xxLarge)
-        .glassCard()
+        .focusCard()
         .padding(.top, 100)
     }
     
@@ -153,9 +158,8 @@ struct StatsView: View {
     private func metricsSection(stats: GameStatsSnapshot) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
             Text("stats.summary")
-                .font(AppTheme.Typography.headline())
-                .foregroundStyle(Color.appTextPrimary)
-            
+                .focusSectionLabel()
+
             // Grid 2x2 de métricas
             LazyVGrid(
                 columns: [
@@ -165,115 +169,82 @@ struct StatsView: View {
                 spacing: AppTheme.Spacing.small
             ) {
                 MetricCard(
-                    icon: "flag.checkered",
+                    icon: "flag.fill",
                     label: String(localized: "stats.games"),
                     value: "\(stats.totalGames)",
                     color: .appActionPrimary
                 )
-                
+
                 MetricCard(
                     icon: "trophy.fill",
                     label: String(localized: "stats.wins"),
                     value: "\(stats.totalWins)",
-                    color: .green
+                    color: .appMarkGood
                 )
-                
+
                 MetricCard(
                     icon: "percent",
                     label: String(localized: "stats.win_rate"),
-                    value: String(format: "%.0f%%", stats.winRate),
+                    value: String(format: "%.0f", stats.winRate),
+                    unit: "%",
                     color: .appActionPrimary
                 )
-                
+
                 MetricCard(
                     icon: "chart.line.uptrend.xyaxis",
                     label: String(localized: "stats.average"),
                     value: String(format: "%.1f", stats.averageAttemptsPerWin),
-                    color: .orange
+                    color: .appMarkFair
                 )
             }
         }
-        .glassCard()
+        .focusCard()
     }
     
     // MARK: - Distribution Section
     
     private func distributionSection(stats: GameStatsSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            Text("stats.distribution")
-                .font(AppTheme.Typography.headline())
-                .foregroundStyle(Color.appTextPrimary)
-            
-            // Gráfico de barras horizontal estilo Wordle
-            distributionChart(stats: stats)
-        }
-        .glassCard()
-    }
-    
-    @available(iOS 16.0, *)
-    private func distributionChart(stats: GameStatsSnapshot) -> some View {
-        let sortedData = stats.attemptsDistribution
+        let rows = stats.attemptsDistribution
             .sorted { $0.key < $1.key }
             .map { (attempts: $0.key, count: $0.value) }
-        
-        return Chart(sortedData, id: \.attempts) { item in
-            BarMark(
-                x: .value("Count", item.count),
-                y: .value("Attempts", "\(item.attempts)")
-            )
-            .foregroundStyle(
-                item.attempts == stats.bestResult
-                    ? Color.green.gradient
-                    : Color.appActionPrimary.gradient
-            )
-            .annotation(position: .trailing, alignment: .leading) {
-                Text("\(item.count)")
-                    .font(.caption2)
-                    .fontDesign(.rounded)
-                    .foregroundStyle(Color.appTextSecondary)
-            }
-        }
-        .chartXAxis(.hidden)
-        .chartYAxis {
-            AxisMarks { value in
-                AxisValueLabel {
-                    if let attempts = value.as(String.self) {
-                        Text(attempts)
-                            .font(.caption)
-                            .fontDesign(.rounded)
-                            .foregroundStyle(Color.appTextSecondary)
-                    }
+        let maxCount = max(1, rows.map(\.count).max() ?? 1)
+
+        return VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            Text("stats.distribution")
+                .focusSectionLabel()
+
+            VStack(spacing: AppTheme.Spacing.small) {
+                ForEach(rows, id: \.attempts) { row in
+                    DistributionBar(
+                        attempts: row.attempts,
+                        count: row.count,
+                        maxCount: maxCount,
+                        isBest: row.attempts == stats.bestResult
+                    )
                 }
             }
         }
-        .frame(height: CGFloat(sortedData.count) * 32 + 20)
+        .focusCard()
     }
 
     // MARK: - Streaks Section
     
     private func streaksSection(stats: GameStatsSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            Text("stats.streaks")
-                .font(AppTheme.Typography.headline())
-                .foregroundStyle(Color.appTextPrimary)
-            
-            HStack(spacing: AppTheme.Spacing.small) {
-                StreakCard(
-                    icon: "flame.fill",
-                    label: String(localized: "stats.current_streak"),
-                    value: "\(stats.currentStreak)",
-                    color: stats.currentStreak > 0 ? .orange : .appTextSecondary
-                )
-                
-                StreakCard(
-                    icon: "star.fill",
-                    label: String(localized: "stats.best_streak"),
-                    value: "\(stats.bestStreak)",
-                    color: .yellow
-                )
-            }
+        HStack(spacing: AppTheme.Spacing.medium) {
+            StreakCard(
+                icon: "flame.fill",
+                label: String(localized: "stats.current_streak"),
+                value: "\(stats.currentStreak)",
+                color: stats.currentStreak > 0 ? .appActionPrimary : AppTheme.Focus.textTertiary
+            )
+
+            StreakCard(
+                icon: "star.fill",
+                label: String(localized: "stats.best_streak"),
+                value: "\(stats.bestStreak)",
+                color: .appMarkFair
+            )
         }
-        .glassCard()
     }
     
     // MARK: - Helpers
@@ -292,74 +263,124 @@ struct StatsView: View {
 
 // MARK: - Metric Card
 
-/// Card individual para mostrar una métrica.
+/// Tile individual de métrica en el grid RESUMEN (estilo "Focus").
+/// - Ícono de acento arriba-izquierda, número grande, label abajo.
 private struct MetricCard: View {
     let icon: String
     let label: String
     let value: String
+    var unit: String? = nil
     let color: Color
-    
+
     var body: some View {
-        VStack(spacing: AppTheme.Spacing.small) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Image(systemName: icon)
-                .font(.title2)
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(color)
-            
-            Text(value)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(Color.appTextPrimary)
-            
+
+            HStack(alignment: .firstTextBaseline, spacing: 1) {
+                Text(value)
+                    .font(.system(size: 30, weight: .heavy, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
+                if let unit {
+                    Text(unit)
+                        .font(.system(size: 18, weight: .heavy, design: .rounded))
+                        .foregroundStyle(AppTheme.Focus.textSecondary)
+                }
+            }
+
             Text(label)
-                .font(.caption)
-                .foregroundStyle(Color.appTextSecondary)
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textSecondary)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(AppTheme.Spacing.medium)
         .background(
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                .fill(Color.white.opacity(0.08))
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(AppTheme.Focus.subSurface)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                .strokeBorder(Color.appBorderSubtle.opacity(0.2), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(AppTheme.Focus.subSurfaceStroke, lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)\(unit ?? "")")
     }
 }
 
 // MARK: - Streak Card
 
-/// Card individual para mostrar una racha.
+/// Card de racha (estilo "Focus"): ícono, número grande, label centrados.
 private struct StreakCard: View {
     let icon: String
     let label: String
     let value: String
     let color: Color
-    
+
     var body: some View {
         VStack(spacing: AppTheme.Spacing.small) {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundStyle(color)
-            
+
             Text(value)
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundStyle(Color.appTextPrimary)
-            
+                .font(.system(size: 30, weight: .heavy, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
+
             Text(label)
-                .font(.caption)
-                .foregroundStyle(Color.appTextSecondary)
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(AppTheme.Spacing.medium)
-        .background(
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                .fill(Color.white.opacity(0.08))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                .strokeBorder(Color.appBorderSubtle.opacity(0.2), lineWidth: 0.5)
-        )
+        .padding(AppTheme.Spacing.large)
+        .focusCard(padding: 0)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
+    }
+}
+
+// MARK: - Distribution Bar
+
+/// Fila de la distribución por intentos: nº de intentos + barra proporcional con
+/// el conteo alineado a la derecha dentro de la barra. Mejor resultado en verde.
+private struct DistributionBar: View {
+    let attempts: Int
+    let count: Int
+    let maxCount: Int
+    let isBest: Bool
+
+    var body: some View {
+        HStack(spacing: AppTheme.Spacing.small) {
+            Text("\(attempts)")
+                .font(.system(size: 15, weight: .bold, design: .monospaced))
+                .foregroundStyle(AppTheme.Focus.textSecondary)
+                .frame(width: 20, alignment: .leading)
+
+            GeometryReader { geo in
+                let fraction = CGFloat(count) / CGFloat(maxCount)
+                // Ancho mínimo para que el número quepa dentro de la barra.
+                let fillWidth = max(geo.size.width * fraction, 34)
+
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(AppTheme.Focus.subSurface)
+
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(isBest ? Color.appMarkGood : Color.appActionPrimary)
+                        .frame(width: fillWidth)
+                        .overlay(alignment: .trailing) {
+                            Text("\(count)")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundStyle(isBest ? .black.opacity(0.8) : .white)
+                                .padding(.trailing, 8)
+                        }
+                }
+            }
+            .frame(height: 22)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(attempts) intentos: \(count)")
     }
 }
 

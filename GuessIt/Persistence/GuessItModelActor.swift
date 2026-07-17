@@ -112,8 +112,24 @@ actor GuessItModelActor {
         
         // 5) Verificar que se crearon correctamente
         Self.logger.info("Juego creado con \(game.digitNotes.count) notas de dígitos")
-        
+
         return game
+    }
+
+    /// Crea una nueva partida sin devolver el modelo.
+    ///
+    /// # Por qué existe
+    /// - `createNewGame()` devuelve `Game` (`@Model`, no `Sendable`), útil para uso
+    ///   interno y tests dentro del actor.
+    /// - Los callers que cruzan el aislamiento de actor (p. ej. `GameActor`) solo
+    ///   necesitan el **efecto** (crear la partida), no el objeto. Devolver el `@Model`
+    ///   a otro actor es un error en modo Swift 6.
+    /// - Esta variante mantiene el `Game` dentro del actor y devuelve solo su
+    ///   identificador (`Sendable`), útil tanto para el dominio (lo descarta) como
+    ///   para los tests (lo usan para pedir snapshots).
+    @discardableResult
+    func startNewGame() throws -> GameIdentifier {
+        try createNewGame().persistentID
     }
 
     /// Devuelve la partida activa o crea una nueva si no existe.
@@ -280,6 +296,23 @@ actor GuessItModelActor {
 
         try modelContext.save()
         return attempt
+    }
+
+    /// Persiste un intento evaluado sin devolver el modelo.
+    ///
+    /// # Por qué existe
+    /// - `recordAttempt(...)` devuelve `Attempt` (`@Model`, no `Sendable`) para uso
+    ///   interno y tests dentro del actor.
+    /// - `GameActor` cruza el aislamiento de actor y solo necesita el efecto (persistir
+    ///   el intento), no el objeto. Devolver el `@Model` a otro actor es un error en Swift 6.
+    func recordAttemptDiscardingResult(
+        gameID: GameIdentifier,
+        guess: String,
+        good: Int,
+        fair: Int,
+        isPoor: Bool
+    ) throws {
+        _ = try recordAttempt(gameID: gameID, guess: guess, good: good, fair: fair, isPoor: isPoor)
     }
 
     // MARK: - Digit Notes

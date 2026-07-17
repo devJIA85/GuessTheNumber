@@ -138,16 +138,28 @@ struct VictorySplashView: View {
 
     // MARK: - Subviews
 
-    /// Backdrop: fondo oscuro 85% + gradiente ambiental rotatorio.
+    /// Backdrop: fondo "Focus" inmersivo + aurora rotatoria teñida por el rango + viñeta.
     private var backdrop: some View {
         ZStack {
-            Color.black.opacity(showBackground ? 0.85 : 0)
+            AppTheme.Focus.background.opacity(showBackground ? 1 : 0)
                 .ignoresSafeArea()
 
-            // El gradiente rotatorio solo se muestra si el usuario no pidió reducir movimiento.
+            // La aurora rotatoria solo se muestra si el usuario no pidió reducir movimiento.
             if showBackground && !reduceMotion {
                 AmbientGradientLoop(color: rank.color)
                     .ignoresSafeArea()
+            }
+
+            // Viñeta radial: oscurece los bordes para concentrar la atención en el centro.
+            if showBackground {
+                RadialGradient(
+                    colors: [.clear, .black.opacity(0.55)],
+                    center: .center,
+                    startRadius: 220,
+                    endRadius: 720
+                )
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
             }
         }
     }

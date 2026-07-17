@@ -418,6 +418,22 @@
         }
       }
     },
+    "daily.completed_short": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed!"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡Completado!"
+          }
+        }
+      }
+    },
     "daily.description": {
       "localizations": {
         "en": {
@@ -439,13 +455,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Don't give up!"
+            "value": "Don't give up"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "¡No te rindas!"
+            "value": "No te rindas"
           }
         }
       }
@@ -493,7 +509,23 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alcanzaste el límite de 10 intentos"
+            "value": "Llegaste al límite de 10 intentos"
+          }
+        }
+      }
+    },
+    "daily.failed_title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You didn't make it"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No lo lograste"
           }
         }
       }
@@ -510,6 +542,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Desafío global del día"
+          }
+        }
+      }
+    },
+    "daily.global_today_short": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Global · Today"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Global · Hoy"
           }
         }
       }
@@ -567,13 +615,29 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Next challenge in:"
+            "value": "Next challenge in"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Próximo desafío en:"
+            "value": "Próximo desafío en"
+          }
+        }
+      }
+    },
+    "daily.next_in_short": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next in"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Próximo en"
           }
         }
       }
@@ -583,13 +647,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The number was:"
+            "value": "The secret was"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El número era:"
+            "value": "El secreto era"
           }
         }
       }
@@ -615,13 +679,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tomorrow is a new day to try your luck"
+            "value": "Try again tomorrow"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mañana es un nuevo día para probar suerte"
+            "value": "Probá de nuevo mañana"
           }
         }
       }
@@ -670,6 +734,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fecha"
+          }
+        }
+      }
+    },
+    "detail.final_board": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Final board"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tablero final"
           }
         }
       }
@@ -786,6 +866,22 @@
         }
       }
     },
+    "detail.title_short": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detail"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalle"
+          }
+        }
+      }
+    },
     "game.attempts_one": {
       "localizations": {
         "en": {
@@ -866,6 +962,22 @@
         }
       }
     },
+    "game.header.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guess the number"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adiviná el número"
+          }
+        }
+      }
+    },
     "game.hint": {
       "localizations": {
         "en": {
@@ -942,6 +1054,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tu intento"
+          }
+        }
+      }
+    },
+    "game.last_attempt.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fewer = better score"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "menos = mejor score"
           }
         }
       }
@@ -1042,6 +1170,22 @@
         }
       }
     },
+    "game.submit.attempt": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Submit guess"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probar intento"
+          }
+        }
+      }
+    },
     "game.title": {
       "localizations": {
         "en": {
@@ -1127,13 +1271,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Great read of the feedback"
+            "value": "You found the number!"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excelente lectura del feedback"
+            "value": "¡Descubriste el número!"
           }
         }
       }
@@ -1262,6 +1406,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "intentos"
+          }
+        }
+      }
+    },
+    "history.best": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "best"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mejor"
           }
         }
       }
@@ -1431,13 +1591,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Win Distribution"
+            "value": "Attempts distribution"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Distribución de victorias"
+            "value": "Distribución por intentos"
           }
         }
       }
@@ -1575,13 +1735,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Win Rate"
+            "value": "Win rate"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Win Rate"
+            "value": "Éxito"
           }
         }
       }

@@ -36,15 +36,13 @@ struct GameDetailView: View {
 
     var body: some View {
         ZStack {
-            // SwiftUI 2025: Usar PremiumBackgroundGradient + backgroundExtensionEffect
-            PremiumBackgroundGradient()
-                .modernBackgroundExtension()
+            FocusBackground()
 
             Group {
                 switch state {
                 case .loading:
                     ProgressView("detail.loading")
-                        .tint(.appActionPrimary)
+                        .tint(AppTheme.Focus.textSecondary)
                 case .loaded(let snapshot):
                     detailContent(snapshot: snapshot)
                 case .empty:
@@ -55,8 +53,17 @@ struct GameDetailView: View {
                 }
             }
         }
-        .navigationTitle("detail.title")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("detail.title_short")
+                    .font(.system(size: 17, weight: .heavy, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
+            }
+        }
+        .tint(.appActionPrimary)
+        .preferredColorScheme(.dark)
         .task(id: gameID) {
             await loadGameDetail()
         }
@@ -79,142 +86,161 @@ struct GameDetailView: View {
         VStack(spacing: 16) {
             Text("detail.load_error")
                 .font(.headline)
-                .foregroundStyle(Color.appTextSecondary)
+                .foregroundStyle(AppTheme.Focus.textPrimary)
 
             Button("common.retry") {
                 Task(name: "RetryLoadGameDetail") {
                     await loadGameDetail()
                 }
             }
-            .modernProminentButton()
+            .buttonStyle(.bordered)
             .tint(.appActionPrimary)
         }
         .padding()
     }
-    
+
     /// Vista cuando no se encuentra la partida.
     private var emptyStateView: some View {
         VStack(spacing: 12) {
             Text("detail.not_found")
                 .font(.headline)
-                .foregroundStyle(Color.appTextSecondary)
+                .foregroundStyle(AppTheme.Focus.textSecondary)
         }
         .padding()
     }
-    
-    /// Contenido principal del detalle.
-    ///
-    /// # Liquid Glass (WWDC25: Adopting Liquid Glass)
-    /// - Removido `.background(Color.appBackgroundPrimary)` que bloqueaba el
-    ///   `PremiumBackgroundGradient` y el efecto glass nativo del List.
-    /// - `.scrollContentBackground(.hidden)` es suficiente para que el gradiente
-    ///   premium sea visible a través de las secciones glass del List.
+
+    /// Contenido principal del detalle: cards "Focus" en un ScrollView.
     private func detailContent(snapshot: GameDetailSnapshot) -> some View {
-        List {
-            headerSection(snapshot: snapshot)
-            attemptsSection(snapshot: snapshot)
-            digitBoardSection(snapshot: snapshot)
+        ScrollView {
+            VStack(spacing: AppTheme.Spacing.medium) {
+                summaryCard(snapshot: snapshot)
+                attemptsCard(snapshot: snapshot)
+                boardCard(snapshot: snapshot)
+            }
+            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.top, AppTheme.Spacing.small)
+            .padding(.bottom, AppTheme.Spacing.medium)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
     }
 
-    // MARK: - Header
+    // MARK: - Summary Card
 
-    /// Sección superior con resumen de la partida.
-    private func headerSection(snapshot: GameDetailSnapshot) -> some View {
-        Section {
-            VStack(alignment: .leading, spacing: 12) {
-                // Estado de la partida
-                HStack {
-                    Text("detail.state")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.appTextSecondary)
+    /// Card de resumen: chip de estado + fecha, y tiles de Intentos / Secreto.
+    private func summaryCard(snapshot: GameDetailSnapshot) -> some View {
+        let isWon = snapshot.state == .won
+        return VStack(spacing: AppTheme.Spacing.medium) {
+            HStack(spacing: AppTheme.Spacing.small) {
+                Image(systemName: isWon ? "checkmark" : "xmark")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(isWon ? Color.appMarkGood : AppTheme.Focus.textSecondary)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(isWon ? Color.appMarkGood.opacity(0.18) : Color.white.opacity(0.06))
+                    )
 
-                    Spacer()
+                Text(stateText(for: snapshot.state))
+                    .font(.system(size: 24, weight: .heavy, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
 
-                    Text(stateText(for: snapshot.state))
-                        .font(.headline)
-                        .foregroundStyle(Color.appTextPrimary)
-                }
+                Spacer()
 
-                // Fecha de finalización
-                HStack {
-                    Text("detail.date")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.appTextSecondary)
+                Text(displayDate(for: snapshot), format: .dateTime.day().month(.abbreviated).hour().minute())
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textSecondary)
+            }
 
-                    Spacer()
-
-                    Text(displayDate(for: snapshot), format: .dateTime.year().month().day().hour().minute())
-                        .font(.subheadline)
-                        .foregroundStyle(Color.appTextPrimary)
-                }
-
-                // Cantidad de intentos
-                HStack {
-                    Text("common.attempts")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.appTextSecondary)
-
-                    Spacer()
-
-                    Text("\(snapshot.attempts.count)")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.appTextPrimary)
-                }
-
-                // Número secreto (solo si está ganada, para no spoilear)
+            HStack(spacing: AppTheme.Spacing.small) {
+                detailTile(
+                    label: String(localized: "common.attempts"),
+                    value: "\(snapshot.attempts.count)",
+                    valueColor: AppTheme.Focus.textPrimary,
+                    isMono: false,
+                    tinted: false
+                )
                 if let secret = snapshot.secret {
-                    HStack {
-                        Text("detail.secret")
-                            .font(.subheadline)
-                            .foregroundStyle(Color.appTextSecondary)
-
-                        Spacer()
-
-                        Text(secret)
-                            .font(.headline)
-                            .fontDesign(.monospaced)
-                            .foregroundStyle(Color.appTextPrimary)
-                    }
+                    detailTile(
+                        label: String(localized: "game.victory.secret"),
+                        value: secret,
+                        valueColor: .appActionPrimary,
+                        isMono: true,
+                        tinted: true
+                    )
                 }
             }
-        } header: {
-            Text("stats.summary")
         }
+        .focusCard()
         .accessibilityElement(children: .combine)
         .accessibilityLabel(headerAccessibilityLabel(for: snapshot))
     }
 
-    // MARK: - Attempts
-
-    /// Sección con la lista completa de intentos.
-    /// - Note: los intentos ya vienen ordenados del snapshot (más reciente primero).
-    private func attemptsSection(snapshot: GameDetailSnapshot) -> some View {
-        Section {
-            if snapshot.attempts.isEmpty {
-                Text("detail.no_attempts")
-                    .foregroundStyle(Color.appTextSecondary)
-            } else {
-                ForEach(snapshot.attempts) { attemptSnapshot in
-                    AttemptRowView(snapshot: attemptSnapshot)
-                }
-            }
-        } header: {
-            Text(String(localized: "common.attempts") + " (\(snapshot.attempts.count))")
+    /// Tile de métrica del resumen (Intentos / Secreto).
+    private func detailTile(label: String, value: String, valueColor: Color, isMono: Bool, tinted: Bool) -> some View {
+        VStack(spacing: AppTheme.Spacing.xSmall) {
+            Text(value)
+                .font(.system(size: 26, weight: .heavy, design: isMono ? .monospaced : .rounded))
+                .tracking(isMono ? 4 : 0)
+                .foregroundStyle(valueColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(label)
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textSecondary)
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(String(format: String(localized: "accessibility.attempts_list"), snapshot.attempts.count))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppTheme.Spacing.medium)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(tinted ? Color.appActionPrimary.opacity(0.14) : AppTheme.Focus.subSurface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(tinted ? Color.appActionPrimary.opacity(0.5) : Color.clear, lineWidth: 1)
+        )
     }
 
-    // MARK: - Digit Board
+    // MARK: - Attempts Card
 
-    /// Sección con el tablero final de dígitos (modo solo lectura).
-    private func digitBoardSection(snapshot: GameDetailSnapshot) -> some View {
-        DigitBoardSnapshotView(digitNotes: snapshot.digitNotes)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("accessibility.final_board")
+    /// Card con la lista de intentos (orden cronológico: el ganador al final).
+    private func attemptsCard(snapshot: GameDetailSnapshot) -> some View {
+        let attempts = snapshot.attempts.sorted { $0.createdAt < $1.createdAt }
+        return VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            Text("\(String(localized: "common.attempts")) · \(attempts.count)")
+                .focusSectionLabel()
+
+            if attempts.isEmpty {
+                Text("detail.no_attempts")
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textSecondary)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(attempts.enumerated()), id: \.element.id) { index, attempt in
+                        if index > 0 {
+                            Divider().overlay(Color.white.opacity(0.06))
+                        }
+                        AttemptRowView(snapshot: attempt)
+                            .padding(.vertical, AppTheme.Spacing.small)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .focusCard()
+    }
+
+    // MARK: - Board Card
+
+    /// Card con el tablero final de dígitos (solo lectura).
+    private func boardCard(snapshot: GameDetailSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            Text("detail.final_board")
+                .focusSectionLabel()
+            DigitBoardSnapshotView(digitNotes: snapshot.digitNotes)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .focusCard()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("accessibility.final_board")
     }
 
     // MARK: - Helpers

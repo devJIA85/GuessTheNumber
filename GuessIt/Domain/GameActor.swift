@@ -62,8 +62,9 @@ actor GameActor {
                 // No propagamos el error - crear nueva partida es más importante
             }
         }
-        // Crear siempre una nueva partida
-        _ = try await modelActor.createNewGame()
+        // Crear siempre una nueva partida.
+        // Usamos la variante que no devuelve el `@Model` (seguro para cruzar actores en Swift 6).
+        try await modelActor.startNewGame()
     }
 
     /// Envía un intento del usuario.
@@ -104,7 +105,8 @@ actor GameActor {
         )
 
         // 4) Persistir intento evaluado.
-        _ = try await modelActor.recordAttempt(
+        // Variante que no devuelve el `@Model` (seguro para cruzar actores en Swift 6).
+        try await modelActor.recordAttemptDiscardingResult(
             gameID: gameID,
             guess: guess,
             good: feedback.good,

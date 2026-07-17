@@ -7,87 +7,90 @@
 
 import SwiftUI
 import Combine
-import UIKit
 
-/// Pantalla del desafío diario.
+/// Pantalla del desafío diario (rediseño "Focus").
 ///
 /// # Responsabilidad
-/// - Mostrar el desafío del día actual (3 dígitos).
+/// - Mostrar el desafío del día actual (3 dígitos, tope de 10 intentos).
 /// - Permitir enviar intentos y mostrar historial.
 /// - Mostrar cuenta regresiva hasta el próximo desafío.
 ///
 /// # Diferencias con GameView
 /// - No se puede resetear: un desafío por día.
 /// - No hay tablero de deducción (modo más puro).
-/// - Usa 3 dígitos en lugar de 5.
+/// - Usa 3 dígitos y **sí** tiene tope de intentos (`dailyChallengeMaxAttempts`).
 @MainActor
 struct DailyChallengeView: View {
-    
+
     // MARK: - Dependencies
-    
+
     @Environment(\.appEnvironment) private var env
-    
+
     // MARK: - State
-    
+
     /// Estado de carga del desafío.
     @State private var loadState: LoadState<DailyChallengeSnapshot> = .empty
-    
+
     /// Input del usuario (3 dígitos).
     @State private var guessText: String = ""
 
     /// Manejo de errores.
     @State private var errorMessage: String?
 
-    /// Altura actual del teclado para evitar que tape el contenido.
-    @State private var keyboardInset: CGFloat = 0
-    
     // MARK: - Body
-    
+
     var body: some View {
-        NavigationStack {
-            ZStack {
-                PremiumBackgroundGradient()
-                    .modernBackgroundExtension()
-                
-                content
+        ZStack {
+            FocusBackground(tint: auroraTint)
+
+            content
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Label("daily.title", systemImage: "calendar")
+                    .labelStyle(.titleAndIcon)
+                    .font(.system(size: 17, weight: .heavy, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
             }
-            .navigationTitle("daily.title")
-            .navigationBarTitleDisplayMode(.inline)
-            .tint(.appActionPrimary)
-            .task {
-                await loadChallenge()
-            }
-            .task {
-                await observeKeyboardFrameChanges()
-            }
-            .alert(
-                "Error",
-                isPresented: Binding(
-                    get: { errorMessage != nil },
-                    set: { if !$0 { errorMessage = nil } }
-                ),
-                actions: {
-                    Button("common.ok", role: .cancel) { errorMessage = nil }
-                },
-                message: {
-                    Text(errorMessage ?? "")
-                }
-            )
+        }
+        .tint(.appActionPrimary)
+        .preferredColorScheme(.dark)
+        .task { await loadChallenge() }
+        .alert(
+            "Error",
+            isPresented: Binding(
+                get: { errorMessage != nil },
+                set: { if !$0 { errorMessage = nil } }
+            ),
+            actions: { Button("common.ok", role: .cancel) { errorMessage = nil } },
+            message: { Text(errorMessage ?? "") }
+        )
+    }
+
+    /// Tinte de aurora según el estado emocional del desafío.
+    private var auroraTint: AppTheme.Focus.AuroraTint {
+        guard case .loaded(let c) = loadState else { return .neutral }
+        switch c.state {
+        case .completed: return .positive
+        case .failed: return .negative
+        default: return .neutral
         }
     }
-    
+
     // MARK: - Content
-    
+
     @ViewBuilder
     private var content: some View {
         switch loadState {
         case .empty, .loading:
             VStack(spacing: AppTheme.Spacing.medium) {
-                ProgressView()
+                ProgressView().tint(AppTheme.Focus.textSecondary)
                 Text("daily.loading")
-                    .foregroundStyle(Color.appTextSecondary)
+                    .foregroundStyle(AppTheme.Focus.textSecondary)
             }
-            
+
         case .loaded(let challenge):
             if challenge.state == .completed {
                 completedView(challenge: challenge)
@@ -96,252 +99,159 @@ struct DailyChallengeView: View {
             } else {
                 activeView(challenge: challenge)
             }
-            
+
         case .failure(let error):
             VStack(spacing: AppTheme.Spacing.large) {
                 Image(systemName: "exclamationmark.triangle")
                     .font(.largeTitle)
-                    .foregroundStyle(Color.appTextSecondary)
-                
+                    .foregroundStyle(AppTheme.Focus.textTertiary)
+
                 Text("daily.load_error")
                     .font(AppTheme.Typography.headline())
-                
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
+
                 Text(error.localizedDescription)
                     .font(AppTheme.Typography.caption())
-                    .foregroundStyle(Color.appTextSecondary)
-                
-                Button("common.retry") {
-                    Task { await loadChallenge() }
-                }
-                .buttonStyle(.bordered)
+                    .foregroundStyle(AppTheme.Focus.textSecondary)
+
+                Button("common.retry") { Task { await loadChallenge() } }
+                    .buttonStyle(.bordered)
             }
             .padding(AppTheme.Spacing.large)
-            .glassCard()
+            .focusCard()
+            .padding(.horizontal, AppTheme.Spacing.large)
         }
     }
-    
+
     // MARK: - Active View
-    
+
     @ViewBuilder
     private func activeView(challenge: DailyChallengeSnapshot) -> some View {
-        VStack(spacing: 0) {
-            // Header con fecha - más compacto
-            VStack(spacing: AppTheme.Spacing.small) {
-                Text("🎯")
-                    .font(.system(size: 36))
-                
-                Text(challenge.challengeID)
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color.appTextPrimary)
-                
-                Text("daily.global_today")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color.appTextSecondary)
-            }
-            .padding(.vertical, AppTheme.Spacing.small)
-            .padding(.horizontal, AppTheme.Spacing.medium)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .fill(Color.white.opacity(0.1))
-            )
-            .padding(.horizontal, AppTheme.Spacing.medium)
-            .padding(.top, AppTheme.Spacing.small)
-            
-            // Historial de intentos (si hay) - scrolleable
-            if !challenge.attempts.isEmpty {
-                ScrollView {
-                    VStack(spacing: AppTheme.Spacing.small) {
-                        ForEach(challenge.attempts) { attempt in
-                            DailyChallengeAttemptRow(attempt: attempt)
-                                .padding(AppTheme.Spacing.small)
-                                .background(
-                                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                                        .fill(Color.white.opacity(0.08))
-                                )
-                        }
-                    }
-                    .padding(.horizontal, AppTheme.Spacing.medium)
+        ScrollView {
+            VStack(spacing: AppTheme.Spacing.medium) {
+                DailyHeaderCard(challenge: challenge)
+
+                if !challenge.attempts.isEmpty {
+                    DailyAttemptsCard(attempts: challenge.attempts, highlightWinner: false)
                 }
-                .frame(maxHeight: 120)
-                .padding(.vertical, AppTheme.Spacing.small)
             }
-            
-            Spacer()
-            
-            // Input section - siempre visible en la parte inferior
-            VStack(spacing: AppTheme.Spacing.small) {
-                DailyChallengeInputView(guessText: $guessText, onSubmit: submitGuess)
-            }
-            .padding(AppTheme.Spacing.medium)
-            .background(
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .fill(Color.white.opacity(0.05))
-            )
-            .padding(.horizontal, AppTheme.Spacing.medium)
-            .padding(.bottom, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.top, AppTheme.Spacing.small)
+        }
+        .safeAreaInset(edge: .bottom) {
+            DailyInputDock(guessText: $guessText, onSubmit: submitGuess)
+                .padding(.horizontal, AppTheme.Spacing.large)
+                .padding(.bottom, AppTheme.Spacing.small)
         }
     }
-    
+
     // MARK: - Completed View
-    
+
     @ViewBuilder
     private func completedView(challenge: DailyChallengeSnapshot) -> some View {
         ScrollView {
             VStack(spacing: AppTheme.Spacing.medium) {
-                // Countdown arriba de todo
                 CountdownCard()
-                
-                VStack(spacing: AppTheme.Spacing.small) {
-                    Text("🎉")
-                        .font(.system(size: 60))
-                    
-                    Text("daily.completed")
-                        .font(AppTheme.Typography.title())
+
+                VStack(spacing: AppTheme.Spacing.medium) {
+                    Text("🎉").font(.system(size: 48))
+
+                    Text("daily.completed_short")
+                        .font(.system(size: 24, weight: .heavy, design: .rounded))
                         .foregroundStyle(Color.appActionPrimary)
-                    
-                    VStack(spacing: AppTheme.Spacing.small) {
-                        if let secret = challenge.secret {
-                            MetricRow(label: String(localized: "game.victory.secret"), value: secret, isMonospaced: true)
-                        }
-                        MetricRow(label: String(localized: "common.attempts"), value: "\(challenge.attemptsCount)", isMonospaced: false)
+
+                    HStack(spacing: AppTheme.Spacing.small) {
+                        DailyResultTile(
+                            label: String(localized: "game.victory.secret"),
+                            value: challenge.secret ?? "---",
+                            valueColor: AppTheme.Focus.textPrimary,
+                            isMono: true
+                        )
+                        DailyResultTile(
+                            label: String(localized: "common.attempts"),
+                            value: "\(challenge.attemptsCount)",
+                            valueColor: .appMarkGood,
+                            isMono: false
+                        )
                     }
-                    .padding(AppTheme.Spacing.medium)
-                    .background(
-                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                            .fill(Color.appBackgroundSecondary.opacity(0.5))
-                    )
                 }
                 .frame(maxWidth: .infinity)
-                .glassCard(tintColor: .appActionPrimary)
-                
-                // Historial de intentos
+                .focusCard(tint: .appActionPrimary)
+
                 if !challenge.attempts.isEmpty {
-                    AttemptsHistoryCard(attempts: challenge.attempts)
+                    DailyAttemptsCard(attempts: challenge.attempts, highlightWinner: true)
                 }
             }
-            .padding(.horizontal, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Spacing.large)
             .padding(.vertical, AppTheme.Spacing.small)
         }
     }
-    
+
     // MARK: - Failed View
-    
+
     @ViewBuilder
     private func failedView(challenge: DailyChallengeSnapshot) -> some View {
         ScrollView {
             VStack(spacing: AppTheme.Spacing.medium) {
-                // Countdown arriba de todo
                 CountdownCard()
-                
-                // Card principal con resultado
+
                 VStack(spacing: AppTheme.Spacing.medium) {
-                    Text("😔")
-                        .font(.system(size: 60))
-                    
-                    Text("daily.failed")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.appTextPrimary)
-                    
+                    Text("😔").font(.system(size: 48))
+
+                    Text("daily.failed_title")
+                        .font(.system(size: 24, weight: .heavy, design: .rounded))
+                        .foregroundStyle(AppTheme.Focus.textPrimary)
+
                     Text("daily.failed_limit")
-                        .font(.system(size: 15))
-                        .foregroundStyle(Color.appTextSecondary)
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundStyle(AppTheme.Focus.textSecondary)
                         .multilineTextAlignment(.center)
-                    
-                    // Mostrar el secreto
+
                     if let secret = challenge.secret {
-                        VStack(spacing: AppTheme.Spacing.small) {
+                        VStack(spacing: AppTheme.Spacing.medium) {
                             Text("daily.secret_was")
-                                .font(.system(size: 14))
-                                .foregroundStyle(Color.appTextSecondary)
-                            
-                            HStack(spacing: 6) {
+                                .focusSectionLabel()
+
+                            HStack(spacing: AppTheme.Spacing.medium) {
                                 ForEach(Array(secret.enumerated()), id: \.offset) { _, char in
                                     Text(String(char))
-                                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                                        .font(.system(size: 26, weight: .bold, design: .monospaced))
                                         .foregroundStyle(Color.appActionPrimary)
-                                        .frame(width: 48, height: 48)
-                                        .background(
-                                            Circle()
-                                                .fill(Color.appActionPrimary.opacity(0.2))
-                                        )
+                                        .frame(width: 52, height: 52)
+                                        .background(Circle().fill(Color.appActionPrimary.opacity(0.15)))
+                                        .overlay(Circle().strokeBorder(Color.appActionPrimary.opacity(0.6), lineWidth: 1.5))
                                 }
                             }
                         }
-                        .padding(.top, AppTheme.Spacing.small)
+                        .padding(.top, AppTheme.Spacing.xSmall)
                     }
-                    
-                    // Estadísticas
-                    HStack(spacing: AppTheme.Spacing.large) {
-                        VStack(spacing: 4) {
-                            Text("\(challenge.attemptsCount)")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
-                                .foregroundStyle(Color.orange)
-                            Text("common.attempts")
-                                .font(.system(size: 12))
-                                .foregroundStyle(Color.appTextSecondary)
-                        }
-                    }
-                    .padding(.top, AppTheme.Spacing.small)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(AppTheme.Spacing.medium)
-                .glassCard()
-                
-                // Historial de intentos
-                if !challenge.attempts.isEmpty {
-                    VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-                        Text("daily.your_attempts")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Color.appTextPrimary)
-                        
-                        ScrollView {
-                            VStack(spacing: AppTheme.Spacing.small) {
-                                ForEach(challenge.attempts) { attempt in
-                                    DailyChallengeAttemptRow(attempt: attempt)
-                                        .padding(AppTheme.Spacing.small)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                                                .fill(Color.white.opacity(0.08))
-                                        )
-                                }
-                            }
-                        }
-                        .frame(maxHeight: 200)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(AppTheme.Spacing.medium)
-                    .glassCard()
-                }
-                
-                // Motivación
+                .focusCard()
+
+                // Aliento
                 VStack(spacing: AppTheme.Spacing.small) {
-                    Text("💪")
-                        .font(.system(size: 32))
-                    
+                    Text("💪").font(.system(size: 32))
                     Text("daily.dont_give_up")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Color.appTextPrimary)
-                    
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(AppTheme.Focus.textPrimary)
                     Text("daily.try_tomorrow")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color.appTextSecondary)
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundStyle(AppTheme.Focus.textSecondary)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(AppTheme.Spacing.medium)
-                .glassCard()
+                .focusCard()
             }
-            .padding(.horizontal, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Spacing.large)
             .padding(.vertical, AppTheme.Spacing.small)
         }
     }
-    
+
     // MARK: - Helpers
-    
+
     private func loadChallenge() async {
         loadState = .loading
-        
         do {
             let snapshot = try await env.modelActor.fetchTodayChallengeSnapshot(revealSecret: true)
             loadState = .loaded(snapshot)
@@ -349,30 +259,17 @@ struct DailyChallengeView: View {
             loadState = .failure(error)
         }
     }
-    
+
     private func submitGuess(_ guess: String) {
         guard case .loaded(let challenge) = loadState else { return }
-        
+
         Task { @MainActor in
             do {
-                // Validar input para desafío diario (3 dígitos)
                 try GuessValidator.validateDailyChallenge(guess)
-                
-                // Enviar intento
-                _ = try await env.modelActor.submitDailyChallengeGuess(
-                    guess: guess,
-                    challengeID: challenge.id
-                )
-                
-                // Limpiar input
+                _ = try await env.modelActor.submitDailyChallengeGuess(guess: guess, challengeID: challenge.id)
                 guessText = ""
-                
-                // Haptic
                 HapticFeedbackManager.attemptSubmitted()
-                
-                // Recargar desafío
                 await loadChallenge()
-                
             } catch let error as GuessValidator.ValidationError {
                 errorMessage = error.errorDescription
                 HapticFeedbackManager.validationFailed()
@@ -382,367 +279,376 @@ struct DailyChallengeView: View {
             }
         }
     }
-
-    @MainActor
-    private func observeKeyboardFrameChanges() async {
-        let center = NotificationCenter.default
-        for await notification in center.notifications(named: UIResponder.keyboardWillChangeFrameNotification) {
-            keyboardInset = keyboardInset(from: notification)
-        }
-    }
-
-    private func keyboardInset(from notification: Notification) -> CGFloat {
-        guard
-            let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
-        else {
-            return 0
-        }
-
-        // En iOS 26, UIScreen.main está deprecated. El keyboard frame ya viene en coordenadas de pantalla,
-        // y frame.height representa directamente la altura visible del teclado cuando está arriba de la pantalla.
-        // Si frame.minY es menor que la altura de la pantalla, el teclado está visible.
-        // Simplemente usamos el frame del teclado directamente: cuando el teclado sube, frame.origin.y disminuye.
-        // La mejor aproximación es usar la altura del frame cuando está visible (frame.size.height).
-        let overlap = frame.size.height
-
-        return overlap
-    }
 }
 
-// MARK: - Attempts History Card
+// MARK: - Header Card (activo)
 
-/// Card que muestra el historial de intentos del desafío diario.
-struct AttemptsHistoryCard: View {
-    let attempts: [DailyChallengeAttemptSnapshot]
-    
+/// Card superior del estado activo: fecha + countdown + barra de progreso 3/10.
+private struct DailyHeaderCard: View {
+    let challenge: DailyChallengeSnapshot
+
     var body: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-            Text("history.title")
-                .font(AppTheme.Typography.headline())
-                .foregroundStyle(Color.appTextPrimary)
-            
-            ScrollView {
-                VStack(spacing: AppTheme.Spacing.small) {
-                    ForEach(attempts) { attempt in
-                        DailyChallengeAttemptRow(attempt: attempt)
-                            .padding(AppTheme.Spacing.small)
-                            .background(
-                                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                                    .fill(Color.white.opacity(0.08))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                                    .strokeBorder(Color.appBorderSubtle.opacity(0.2), lineWidth: 0.5)
-                            )
-                    }
+        VStack(spacing: AppTheme.Spacing.medium) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("daily.global_today_short")
+                        .font(.system(size: 11, weight: .heavy, design: .rounded))
+                        .tracking(2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.appActionPrimary)
+                    Text(challenge.challengeID)
+                        .font(.system(size: 24, weight: .bold, design: .monospaced))
+                        .foregroundStyle(AppTheme.Focus.textPrimary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("daily.next_in_short")
+                        .focusSectionLabel()
+                    CountdownText(font: .system(size: 22, weight: .bold, design: .monospaced))
                 }
             }
-            .frame(maxHeight: 150)  // Limitar altura (~3-4 intentos)
+
+            DailyProgressBar(count: challenge.attemptsCount, max: GameConstants.dailyChallengeMaxAttempts)
         }
-        .frame(maxWidth: .infinity)
-        .glassCard()
+        .focusCard()
     }
 }
 
-// MARK: - Daily Challenge Attempt Row
+/// Barra de progreso `n/max` con relleno de gradiente coral.
+private struct DailyProgressBar: View {
+    let count: Int
+    let max: Int
 
-/// Vista de un intento individual del desafío diario.
-struct DailyChallengeAttemptRow: View {
-    let attempt: DailyChallengeAttemptSnapshot
-    
     var body: some View {
-        HStack(spacing: AppTheme.Spacing.medium) {
-            // Guess (3 dígitos)
-            HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.small) {
+            GeometryReader { geo in
+                let fraction = Swift.max(0, Swift.min(1, CGFloat(count) / CGFloat(Swift.max(1, max))))
+                ZStack(alignment: .leading) {
+                    Capsule().fill(AppTheme.Focus.subSurface)
+                    Capsule()
+                        .fill(LinearGradient(
+                            colors: [Color.appActionPrimary.opacity(0.7), Color.appActionPrimary],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
+                        .frame(width: geo.size.width * fraction)
+                }
+            }
+            .frame(height: 10)
+
+            Text("\(count)/\(max)")
+                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .foregroundStyle(AppTheme.Focus.textSecondary)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(count) de \(max) intentos")
+    }
+}
+
+// MARK: - Attempts Card
+
+/// Card "TUS INTENTOS": filas de 3 tiles + badges de feedback.
+private struct DailyAttemptsCard: View {
+    let attempts: [DailyChallengeAttemptSnapshot]
+    let highlightWinner: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            Text("daily.your_attempts")
+                .focusSectionLabel()
+
+            VStack(spacing: AppTheme.Spacing.small) {
+                ForEach(attempts) { attempt in
+                    DailyAttemptRow(
+                        attempt: attempt,
+                        isWinner: highlightWinner && attempt.good == GameConstants.dailyChallengeLength
+                    )
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .focusCard()
+    }
+}
+
+/// Fila de un intento del desafío: 3 tiles + badges.
+private struct DailyAttemptRow: View {
+    let attempt: DailyChallengeAttemptSnapshot
+    let isWinner: Bool
+
+    var body: some View {
+        HStack(spacing: AppTheme.Spacing.small) {
+            HStack(spacing: 6) {
                 ForEach(Array(attempt.guess.enumerated()), id: \.offset) { _, char in
                     Text(String(char))
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.appTextPrimary)
-                        .frame(width: 32, height: 32)
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(isWinner ? Color.appMarkGood : AppTheme.Focus.textPrimary)
+                        .frame(width: 34, height: 38)
                         .background(
-                            Circle()
-                                .fill(Color.appBackgroundSecondary.opacity(0.3))
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(isWinner ? Color.appMarkGood.opacity(0.18) : AppTheme.Focus.subSurface)
                         )
                 }
             }
-            
-            Spacer()
-            
-            // Feedback
-            HStack(spacing: AppTheme.Spacing.small) {
-                if attempt.good > 0 {
-                    FeedbackPill(count: attempt.good, color: .green, label: "G")
-                }
-                if attempt.fair > 0 {
-                    FeedbackPill(count: attempt.fair, color: .yellow, label: "F")
-                }
+
+            Spacer(minLength: 0)
+
+            HStack(spacing: 10) {
                 if attempt.isPoor {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.red)
-                        .font(.title3)
+                    Text("POOR").modifier(DailyBadge(color: AppTheme.Focus.textSecondary))
+                } else {
+                    if attempt.good > 0 {
+                        Text("\(attempt.good)G").modifier(DailyBadge(color: .appMarkGood))
+                    }
+                    if attempt.fair > 0 {
+                        Text("\(attempt.fair)F").modifier(DailyBadge(color: .appMarkFair))
+                    }
+                    if isWinner {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(Color.appMarkGood)
+                    }
                 }
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(attempt.guess): \(attempt.good) Good, \(attempt.fair) Fair")
     }
 }
 
-// MARK: - Feedback Pill
-
-/// Pequeña pill para mostrar feedback compacto.
-struct FeedbackPill: View {
-    let count: Int
+/// Badge de feedback coloreado (bold, sin fondo) del desafío diario.
+private struct DailyBadge: ViewModifier {
     let color: Color
+    func body(content: Content) -> some View {
+        content
+            .font(.system(size: 15, weight: .bold, design: .rounded))
+            .foregroundStyle(color)
+            .monospacedDigit()
+    }
+}
+
+// MARK: - Result Tile (completado)
+
+/// Tile de resultado (Secreto / Intentos) en el estado completado.
+private struct DailyResultTile: View {
     let label: String
-    
+    let value: String
+    let valueColor: Color
+    let isMono: Bool
+
     var body: some View {
-        HStack(spacing: 4) {
-            Text("\(count)")
-                .font(.system(size: 14, weight: .bold, design: .rounded))
+        VStack(spacing: AppTheme.Spacing.xSmall) {
+            Text(value)
+                .font(.system(size: 28, weight: .heavy, design: isMono ? .monospaced : .rounded))
+                .tracking(isMono ? 4 : 0)
+                .foregroundStyle(valueColor)
             Text(label)
-                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textSecondary)
         }
-        .foregroundStyle(color)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppTheme.Spacing.medium)
         .background(
-            Capsule()
-                .fill(color.opacity(0.2))
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(AppTheme.Focus.subSurface)
         )
     }
 }
 
-// MARK: - Daily Challenge Input View
+// MARK: - Input Dock (activo)
 
-/// Input específico para desafío diario (3 dígitos).
-struct DailyChallengeInputView: View {
+/// Dock de input del desafío: 3 slots OTP + teclado 0-9 + CTA coral.
+private struct DailyInputDock: View {
     @Binding var guessText: String
     let onSubmit: (String) -> Void
-    
+
+    private var isComplete: Bool { guessText.count == GameConstants.dailyChallengeLength }
+
     var body: some View {
-        VStack(spacing: AppTheme.Spacing.small) {
-            // Celdas para 3 dígitos
+        VStack(spacing: AppTheme.Spacing.medium) {
+            // Slots OTP (3)
             HStack(spacing: AppTheme.Spacing.small) {
-                ForEach(0..<3, id: \.self) { index in
-                    DailyChallengeDigitCell(
-                        digit: guessText.count > index ? String(guessText[guessText.index(guessText.startIndex, offsetBy: index)]) : "",
-                        isFocused: guessText.count == index
+                ForEach(0..<GameConstants.dailyChallengeLength, id: \.self) { index in
+                    DailyDigitSlot(
+                        digit: digit(at: index),
+                        isActive: guessText.count == index
                     )
                 }
             }
-            
-            // Tablero de dígitos 0-9 (clickeable para input)
-            DailyChallengeDigitBoard(
+
+            // Teclado 0-9 (2×5)
+            DailyKeypad(
                 usedDigits: Set(guessText.compactMap { Int(String($0)) }),
-                onDigitTap: { digit in
-                    if guessText.count < 3 {
-                        guessText.append("\(digit)")
-                        
+                onTap: { d in
+                    if guessText.count < GameConstants.dailyChallengeLength {
+                        guessText.append("\(d)")
                         HapticFeedbackManager.keypadTap()
                     }
                 }
             )
-            .padding(.vertical, 4)
-            
-            // Botones de acción (Borrar pequeño + Probar grande, en la misma línea)
+
+            // Borrar + CTA
             HStack(spacing: AppTheme.Spacing.small) {
-                // Botón "Borrar" - secundario, compacto
                 Button {
                     if !guessText.isEmpty {
                         guessText.removeLast()
-                        
                         HapticFeedbackManager.keypadTap()
                     }
                 } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "delete.left")
-                            .font(.caption)
-                        Text("common.delete")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    Image(systemName: "delete.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Color.appActionPrimary)
+                        .frame(width: 56, height: 54)
+                        .background(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous).fill(AppTheme.Focus.subSurface))
+                        .overlay(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous).strokeBorder(AppTheme.Focus.subSurfaceStroke, lineWidth: 1))
                 }
-                .buttonStyle(.bordered)
-                .tint(.appTextSecondary)
-                .controlSize(.small)
                 .disabled(guessText.isEmpty)
-                .opacity(guessText.isEmpty ? 0.4 : 0.7)
-                
-                // Botón "Probar" - PROTAGONISTA, más grande y prominente
+                .opacity(guessText.isEmpty ? 0.4 : 1.0)
+
                 Button {
                     onSubmit(guessText)
                 } label: {
-                    Text("game.submit")
-                        .font(AppTheme.Typography.headline())
+                    Text("game.submit.attempt")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color.appActionPrimary)
                         .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous).fill(Color.appActionPrimary.opacity(0.14)))
+                        .overlay(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous).strokeBorder(Color.appActionPrimary, lineWidth: 1.5))
                 }
-                .modernProminentButton()
-                .tint(.appActionPrimary)
-                .controlSize(.large)
-                .disabled(guessText.count != 3)
+                .buttonStyle(.plain)
+                .disabled(!isComplete)
+                .scaleEffect(isComplete ? 1.0 : 0.98)
+                .opacity(isComplete ? 1.0 : 0.4)
+                .animation(.easeOut(duration: 0.2), value: isComplete)
             }
         }
     }
+
+    private func digit(at index: Int) -> String? {
+        guard index < guessText.count else { return nil }
+        return String(guessText[guessText.index(guessText.startIndex, offsetBy: index)])
+    }
 }
 
-// MARK: - Daily Challenge Digit Cell
+/// Slot OTP del desafío (3 dígitos), estilo "Focus".
+private struct DailyDigitSlot: View {
+    let digit: String?
+    let isActive: Bool
 
-/// Celda individual para un dígito del desafío diario.
-struct DailyChallengeDigitCell: View {
-    let digit: String
-    let isFocused: Bool
-    
     var body: some View {
+        let highlighted = digit != nil || isActive
         ZStack {
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                .fill(Color.appBackgroundSecondary.opacity(0.3))
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                        .strokeBorder(
-                            isFocused ? Color.appActionPrimary : Color.appBorderSubtle,
-                            lineWidth: isFocused ? 2 : 1
-                        )
-                )
-            
-            Text(digit.isEmpty ? "" : digit)
-                .font(.system(size: 36, weight: .bold, design: .rounded))
-                .foregroundStyle(Color.appTextPrimary)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(AppTheme.Focus.subSurface)
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(AppTheme.Focus.subSurfaceStroke, lineWidth: 1))
+
+            if let digit {
+                Text(digit)
+                    .font(.system(size: 30, weight: .bold, design: .monospaced))
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
+            } else {
+                Text("·").font(.system(size: 26, weight: .bold)).foregroundStyle(Color.white.opacity(0.25))
+            }
         }
-        .frame(width: 64, height: 64)
-        .animation(.easeInOut(duration: 0.2), value: isFocused)
+        .overlay(alignment: .bottom) {
+            RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                .fill(highlighted ? Color.appActionPrimary : Color.white.opacity(0.12))
+                .frame(height: 3)
+                .padding(.horizontal, 8)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 64)
+        .animation(.easeInOut(duration: 0.15), value: isActive)
+        .animation(.easeInOut(duration: 0.15), value: digit)
     }
 }
 
-// MARK: - Daily Challenge Digit Board
-
-/// Tablero de dígitos 0-9 para el desafío diario.
-struct DailyChallengeDigitBoard: View {
+/// Teclado 0-9 (grilla 2×5) del desafío diario, sin marcas de deducción.
+private struct DailyKeypad: View {
     let usedDigits: Set<Int>
-    let onDigitTap: (Int) -> Void
-    
+    let onTap: (Int) -> Void
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 9), count: 5)
+
     var body: some View {
-        VStack(spacing: 8) {
-            // Filas de 3 dígitos cada una
-            ForEach(0..<3) { row in
-                HStack(spacing: 8) {
-                    ForEach(0..<3) { col in
-                        let digit = row * 3 + col + 1
-                        if digit <= 9 {
-                            digitButton(for: digit)
-                        }
-                    }
-                }
-            }
-            
-            // Última fila con el 0 centrado
-            HStack(spacing: 8) {
-                Spacer()
-                digitButton(for: 0)
-                Spacer()
+        LazyVGrid(columns: columns, spacing: 9) {
+            ForEach(0..<10, id: \.self) { d in
+                key(d)
             }
         }
-        .fixedSize()
     }
-    
-    @ViewBuilder
-    private func digitButton(for digit: Int) -> some View {
-        let isUsed = usedDigits.contains(digit)
-        
-        Button {
-            onDigitTap(digit)
+
+    private func key(_ d: Int) -> some View {
+        let isUsed = usedDigits.contains(d)
+        return Button {
+            if !isUsed { onTap(d) }
         } label: {
-            Text("\(digit)")
-                .font(.system(size: 24, weight: .semibold, design: .rounded))
-                .foregroundStyle(isUsed ? Color.appTextSecondary : Color.appTextPrimary)
-                .frame(width: 56, height: 48)
-                .background(
-                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                        .fill(Color.appBackgroundSecondary.opacity(isUsed ? 0.2 : 0.4))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                        .strokeBorder(Color.appBorderSubtle.opacity(isUsed ? 0.3 : 0.5), lineWidth: 1)
-                )
+            Text("\(d)")
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .foregroundStyle(isUsed ? Color.white.opacity(0.35) : AppTheme.Focus.textPrimary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(AppTheme.Focus.card))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(isUsed ? 0.06 : 0.16), lineWidth: 1))
         }
+        .buttonStyle(.plain)
         .disabled(isUsed)
         .opacity(isUsed ? 0.4 : 1.0)
+        .accessibilityLabel("Dígito \(d)\(isUsed ? ", ya usado" : "")")
     }
 }
 
-// MARK: - Feedback Card (legacy - eliminado lastFeedback)
+// MARK: - Countdown
 
-// MARK: - Metric Row
+/// Texto de cuenta regresiva (HH:MM:SS) hasta el próximo desafío, auto-actualizado.
+struct CountdownText: View {
+    var font: Font = .system(size: 24, weight: .bold, design: .monospaced)
 
-private struct MetricRow: View {
-    let label: String
-    let value: String
-    let isMonospaced: Bool
-    
-    var body: some View {
-        HStack {
-            Text(label)
-                .font(AppTheme.Typography.body())
-                .foregroundStyle(Color.appTextSecondary)
-            Spacer()
-            Text(value)
-                .font(AppTheme.Typography.headline())
-                .fontDesign(isMonospaced ? .monospaced : .rounded)
-                .foregroundStyle(Color.appTextPrimary)
-        }
-    }
-}
-
-// MARK: - Countdown Card
-
-struct CountdownCard: View {
     @State private var timeRemaining: String = ""
-    
-    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
     var body: some View {
-        VStack(spacing: AppTheme.Spacing.small) {
-            Text("⏰")
-                .font(.system(size: 32))
-            
-            Text("daily.next_in")
-                .font(AppTheme.Typography.body())
-                .foregroundStyle(Color.appTextSecondary)
-            
-            Text(timeRemaining)
-                .font(.system(size: 24, weight: .bold, design: .monospaced))
-                .foregroundStyle(Color.appActionPrimary)
-        }
-        .padding(AppTheme.Spacing.medium)
-        .glassCard()
-        .onReceive(timer) { _ in
-            updateTimeRemaining()
-        }
-        .onAppear {
-            updateTimeRemaining()
-        }
+        Text(timeRemaining)
+            .font(font)
+            .foregroundStyle(Color.appActionPrimary)
+            .onReceive(timer) { _ in update() }
+            .onAppear { update() }
+            .accessibilityLabel("Próximo desafío en \(timeRemaining)")
     }
-    
-    private func updateTimeRemaining() {
+
+    private func update() {
         let calendar = Calendar.current
         let now = Date()
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))!
-        
-        let components = calendar.dateComponents([.hour, .minute, .second], from: now, to: tomorrow)
-        
-        let hours = components.hour ?? 0
-        let minutes = components.minute ?? 0
-        let seconds = components.second ?? 0
-        
-        timeRemaining = String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+        let c = calendar.dateComponents([.hour, .minute, .second], from: now, to: tomorrow)
+        timeRemaining = String(format: "%02d:%02d:%02d", c.hour ?? 0, c.minute ?? 0, c.second ?? 0)
+    }
+}
+
+/// Card de cuenta regresiva horizontal (completado / fallado).
+struct CountdownCard: View {
+    var body: some View {
+        HStack(spacing: AppTheme.Spacing.small) {
+            Text("⏰").font(.system(size: 22))
+            Text("daily.next_in")
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundStyle(AppTheme.Focus.textSecondary)
+            Spacer()
+            CountdownText(font: .system(size: 22, weight: .bold, design: .monospaced))
+        }
+        .focusCard(padding: AppTheme.CardPadding.standard)
     }
 }
 
 // MARK: - Previews
 
 #Preview {
-    DailyChallengeView()
-        .environment(\.appEnvironment, AppEnvironment(
-            modelContainer: ModelContainerFactory.make(isInMemory: true)
-        ))
+    NavigationStack {
+        DailyChallengeView()
+            .environment(\.appEnvironment, AppEnvironment(
+                modelContainer: ModelContainerFactory.make(isInMemory: true)
+            ))
+    }
 }

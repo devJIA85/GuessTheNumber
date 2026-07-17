@@ -43,10 +43,9 @@ struct TutorialView: View {
     
     var body: some View {
         ZStack {
-            // Fondo oscuro para mejor contraste
-            DarkTutorialBackground()
-                .ignoresSafeArea()
-            
+            // Fondo "Focus": casi negro con aurora púrpura.
+            FocusBackground()
+
             VStack(spacing: 0) {
                 // Skip button
                 HStack {
@@ -55,63 +54,63 @@ struct TutorialView: View {
                         completeTutorial()
                     } label: {
                         Text(String(localized: "tutorial.skip"))
-                            .font(.subheadline)
-                            .foregroundStyle(Color.appTextSecondary)
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundStyle(AppTheme.Focus.textSecondary)
                     }
-                    .padding(.horizontal, AppTheme.Spacing.medium)
+                    .padding(.horizontal, AppTheme.Spacing.large)
                     .padding(.top, AppTheme.Spacing.small)
                 }
-                
-                // Contenido de las páginas
+
+                // Contenido de las páginas (dots custom abajo, no los nativos)
                 TabView(selection: $currentPage) {
-                    Page1View()
-                        .tag(0)
-                    
-                    Page2View()
-                        .tag(1)
-                    
-                    Page3View()
-                        .tag(2)
-                    
-                    Page4View()
-                        .tag(3)
+                    Page1View().tag(0)
+                    Page2View().tag(1)
+                    Page3View().tag(2)
+                    Page4View().tag(3)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .always))
-                .indexViewStyle(.page(backgroundDisplayMode: .always))
-                
-                // Botón de acción
-                VStack(spacing: AppTheme.Spacing.medium) {
+                .tabViewStyle(.page(indexDisplayMode: .never))
+
+                // Page dots custom: activo = pill coral.
+                pageDots
+                    .padding(.bottom, AppTheme.Spacing.large)
+
+                // CTA coral sólido (Siguiente / Comenzar)
+                Button {
                     if currentPage < totalPages - 1 {
-                        Button {
-                            // Reduce Motion: cambio de página instantáneo (sin animación).
-                            withAnimation(reduceMotion ? nil : .default) {
-                                currentPage += 1
-                            }
-                        } label: {
-                            Text(String(localized: "tutorial.next"))
-                                .font(AppTheme.Typography.headline())
-                                .frame(maxWidth: .infinity)
-                        }
-                        .modernProminentButton()
-                        .tint(.appActionPrimary)
-                        .controlSize(.large)
+                        withAnimation(reduceMotion ? nil : .default) { currentPage += 1 }
                     } else {
-                        Button {
-                            completeTutorial()
-                        } label: {
-                            Text(String(localized: "tutorial.start"))
-                                .font(AppTheme.Typography.headline())
-                                .frame(maxWidth: .infinity)
-                        }
-                        .modernProminentButton()
-                        .tint(.appActionPrimary)
-                        .controlSize(.large)
+                        completeTutorial()
                     }
+                } label: {
+                    Text(String(localized: currentPage < totalPages - 1 ? "tutorial.next" : "tutorial.start"))
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous)
+                                .fill(Color.appActionPrimary)
+                        )
                 }
-                .padding(.horizontal, AppTheme.Spacing.medium)
+                .buttonStyle(.plain)
+                .padding(.horizontal, AppTheme.Spacing.large)
                 .padding(.bottom, AppTheme.Spacing.medium)
             }
         }
+    }
+
+    /// Indicador de página custom: el activo es una pill coral, el resto puntos tenues.
+    private var pageDots: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<totalPages, id: \.self) { index in
+                Capsule(style: .continuous)
+                    .fill(index == currentPage ? Color.appActionPrimary : Color.white.opacity(0.25))
+                    .frame(width: index == currentPage ? 22 : 8, height: 8)
+                    .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: currentPage)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Página \(currentPage + 1) de \(totalPages)")
     }
     
     // MARK: - Helpers
@@ -296,15 +295,15 @@ struct Page3View: View {
             }
             .padding(AppTheme.Spacing.medium)
             .background(
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .fill(Color.black.opacity(0.2))
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.glassCard, style: .continuous)
+                    .fill(AppTheme.Focus.card)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.glassCard, style: .continuous)
+                    .strokeBorder(AppTheme.Focus.cardStroke, lineWidth: 1)
             )
             .padding(.horizontal, AppTheme.Spacing.medium)
-            
+
             Spacer()
         }
     }
@@ -352,7 +351,7 @@ struct Page4View: View {
             .padding(AppTheme.Spacing.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .fill(Color.black.opacity(0.15))
+                    .fill(AppTheme.Focus.card)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
@@ -368,7 +367,7 @@ struct Page4View: View {
             .padding(AppTheme.Spacing.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
-                    .fill(Color.black.opacity(0.15))
+                    .fill(AppTheme.Focus.card)
             )
             .padding(.horizontal, AppTheme.Spacing.medium)
             
@@ -409,30 +408,35 @@ struct FeedbackExample: View {
     let icon: String
     let label: String
     let description: String
-    
+
     var body: some View {
         HStack(spacing: AppTheme.Spacing.medium) {
             Image(systemName: icon)
-                .font(.title2)
-                .foregroundStyle(color)
-                .frame(width: 32)
-            
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(color.opacity(0.85)))
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(label)
-                    .font(.system(.subheadline, design: .rounded, weight: .bold))
-                    .foregroundStyle(.white)
-                
+                    .font(.system(size: 17, weight: .heavy, design: .rounded))
+                    .foregroundStyle(color)
+
                 Text(description)
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.85))
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textSecondary)
             }
-            
+
             Spacer()
         }
-        .padding(AppTheme.Spacing.small)
+        .padding(AppTheme.Spacing.medium)
         .background(
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.field, style: .continuous)
-                .fill(Color.white.opacity(0.12))
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(color.opacity(0.10))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(color.opacity(0.35), lineWidth: 1)
         )
     }
 }
@@ -443,15 +447,15 @@ struct ExampleInputView: View {
         HStack(spacing: 8) {
             ForEach(["1", "2", "3", "4", "5"], id: \.self) { digit in
                 Text(digit)
-                    .font(.system(size: 32, weight: .semibold, design: .rounded))
+                    .font(.system(size: 30, weight: .bold, design: .monospaced))
                     .foregroundStyle(.white)
-                    .frame(width: 50, height: 60)
+                    .frame(width: 50, height: 62)
                     .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.white.opacity(0.15))
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(AppTheme.Focus.subSurface)
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .strokeBorder(Color.appActionPrimary, lineWidth: 2)
                     )
             }
@@ -475,25 +479,34 @@ struct DeductionCellExample: View {
 
     var borderColor: Color {
         switch mark {
-        case .unknown: return .appBorderSubtle
+        case .unknown: return .white.opacity(0.12)
         case .poor: return .appMarkPoor
         case .good: return .appMarkGood
         case .fair: return .appMarkFair
         }
     }
-    
+
+    var textColor: Color {
+        switch mark {
+        case .unknown: return .white
+        case .poor: return .appMarkPoor
+        case .good: return .appMarkGood
+        case .fair: return .appMarkFair
+        }
+    }
+
     var body: some View {
         Text("\(digit)")
-            .font(.system(size: 20, weight: .semibold, design: .rounded))
-            .foregroundStyle(.white)
-            .frame(width: 44, height: 44)
+            .font(.system(size: 20, weight: .bold, design: .rounded))
+            .foregroundStyle(textColor)
+            .frame(width: 44, height: 48)
             .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(backgroundColor)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(mark == .unknown ? AppTheme.Focus.subSurface : backgroundColor)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .strokeBorder(borderColor, lineWidth: 2)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(borderColor, lineWidth: mark == .unknown ? 1 : 2)
             )
     }
 }
@@ -513,30 +526,6 @@ struct LegendRow: View {
                 .font(.callout)
                 .foregroundStyle(.white.opacity(0.9))
         }
-    }
-}
-
-// MARK: - Dark Background
-
-/// Fondo oscuro específico para el tutorial con mejor contraste.
-struct DarkTutorialBackground: View {
-    var body: some View {
-        LinearGradient(
-            gradient: Gradient(stops: [
-                // Top: púrpura profundo
-                .init(color: Color(red: 0.35, green: 0.25, blue: 0.55), location: 0.0),
-                // Middle high: púrpura-azul
-                .init(color: Color(red: 0.30, green: 0.35, blue: 0.60), location: 0.3),
-                // Middle: azul profundo
-                .init(color: Color(red: 0.20, green: 0.40, blue: 0.65), location: 0.5),
-                // Middle low: azul-cyan
-                .init(color: Color(red: 0.15, green: 0.45, blue: 0.70), location: 0.7),
-                // Bottom: cyan profundo
-                .init(color: Color(red: 0.10, green: 0.50, blue: 0.75), location: 1.0)
-            ]),
-            startPoint: .top,
-            endPoint: .bottom
-        )
     }
 }
 

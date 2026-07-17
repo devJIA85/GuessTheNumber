@@ -51,9 +51,9 @@ struct AttemptRowView: View {
     var body: some View {
         HStack(alignment: .center, spacing: AppTheme.Spacing.small) {
             header
-            metrics
-            Spacer(minLength: 0)
             repeatedBadge
+            Spacer(minLength: 0)
+            metrics
         }
         // Mantener todo en una sola línea reduce altura por intento y evita scroll extra.
         .accessibilityElement(children: .combine)
@@ -62,56 +62,62 @@ struct AttemptRowView: View {
 
     // MARK: - Subviews
 
-    /// Encabezado con el valor ingresado.
+    /// Encabezado con el valor ingresado, en fuente monoespaciada con tracking.
     /// - Why más prominente: el número es lo más importante en la fila.
     private var header: some View {
         Text(data.guess)
-            .font(.title3)
-            .fontDesign(.monospaced)
-            .fontWeight(.semibold)
-            .foregroundStyle(Color.appTextPrimary)
+            .focusMonoDigits(size: 20, weight: .semibold, tracking: 3)
+            .foregroundStyle(AppTheme.Focus.textPrimary)
             .layoutPriority(1)
     }
 
-    /// Métricas GOOD/FAIR y POOR si corresponde.
-    /// - NUEVO: chips no-compact para mejor legibilidad (tamaño de fuente aumentado).
-    /// - Why: los chips compactos eran difíciles de leer rápidamente.
+    /// Métricas compactas coloreadas ("1G", "2F", "POOR"), como en el mock.
+    /// - En intentos POOR solo se muestra "POOR" (sin 0G/0F).
+    /// - En el intento ganador se agrega ✓.
     private var metrics: some View {
-        HStack(spacing: 6) {
-            Text("GOOD \(data.good)")
-                .metricChip(color: .appMarkGood, compact: false)
-            Text("FAIR \(data.fair)")
-                .metricChip(color: .appMarkFair, compact: false)
-
+        HStack(spacing: 10) {
             if data.isPoor {
-                Text("POOR \(poorCount)")
-                    .metricChip(color: .appMarkPoor, compact: false)
+                Text("POOR")
+                    .modifier(BadgeText(color: .appMarkPoor))
+            } else {
+                Text("\(data.good)G")
+                    .modifier(BadgeText(color: .appMarkGood))
+                Text("\(data.fair)F")
+                    .modifier(BadgeText(color: .appMarkFair))
+                if isWinning {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(Color.appMarkGood)
+                }
             }
         }
     }
 
+    /// ¿Es el intento ganador? (todos los dígitos GOOD).
+    private var isWinning: Bool {
+        data.good == GameConstants.secretLength
+    }
+
     /// Conteo de POOR deducido del largo del secreto cuando el intento no tuvo GOOD/FAIR.
-    /// - Why: el usuario espera ver “POOR 5” (cantidad), no solo la etiqueta.
     private var poorCount: Int {
         max(0, GameConstants.secretLength - data.good - data.fair)
     }
 
-    /// Badge de repetido alineado horizontalmente y con jerarquía visual secundaria.
+    /// Pill "Repetido" tenue, junto al guess.
     private var repeatedBadge: some View {
         Group {
             if data.isRepeated {
                 Text("Repetido")
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(Color.appTextSecondary.opacity(0.7))
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .foregroundStyle(AppTheme.Focus.textSecondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
                     .background(
-                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.chip, style: .continuous)
-                            .fill(Color.appTextSecondary.opacity(0.08))
+                        Capsule(style: .continuous)
+                            .fill(Color.white.opacity(0.06))
                     )
             }
         }
-        // Badge pequeño para que no domine la fila y conserve la prioridad del guess.
     }
 
     // MARK: - Accessibility
@@ -133,6 +139,17 @@ struct AttemptRowView: View {
         }
 
         return parts.joined(separator: ", ")
+    }
+}
+
+/// Texto de badge de feedback: bold, coloreado, sin fondo (estilo "Focus").
+private struct BadgeText: ViewModifier {
+    let color: Color
+    func body(content: Content) -> some View {
+        content
+            .font(.system(size: 15, weight: .bold, design: .rounded))
+            .foregroundStyle(color)
+            .monospacedDigit()
     }
 }
 
