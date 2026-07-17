@@ -191,7 +191,7 @@ build y tests limpios (113 tests). Fixes de concurrencia:
   `@Model` cruzando el actor. Se perdió la verificación directa de la relación
   bidireccional (`note.game.id`), cubierta indirectamente por los snapshots.
 
-## PR 16 — Re-enable the SwiftData snapshot test ⬜
+## PR 16 — Re-enable the SwiftData snapshot test ✅
 **Tipo:** tests
 **Objetivo:** Restore `fetchGameDetailSnapshot_throwsGameNotFound`, disabled invisibly:
 its `@Test` attribute is commented out and the method renamed to `disabled_test_*`, so
@@ -205,6 +205,19 @@ so the pending work is visible in the test report.
 **Criterio de aceptación:** The test either passes alongside the other suites or shows
 up as explicitly skipped with a reason.
 **Dependencias:** none.
+**Resolución:** Se tomó la segunda rama del criterio (skip explícito con motivo).
+- El cuerpo se reescribió para ser **determinista**: crea/borra/consulta todo por el
+  contexto del propio actor (`startNewGame()` + `deleteGame()`), en vez de mezclar
+  `mainContext` y el contexto del actor (la causa original del flakiness). Así **pasa en
+  aislamiento**.
+- Sin embargo, al **habilitarlo** en la suite completa, la ejecución PARALELA de Swift
+  Testing vuelve inestable: un clone del runner se cae de forma no-determinista
+  (contenedores SwiftData in-memory por clone en el simulador de Xcode-beta), arrastrando
+  tests de otras suites que **varían entre corridas**. Correr en serie timeoutea en este
+  entorno.
+- Por eso queda como `@Test(.disabled("…"))`: **visible como skipped con motivo** (ya no
+  el `disabled_test_*` invisible). Suite: 114 passed, 0 failed, **1 skipped**.
+- Re-habilitar cuando el target corra en serie o se estabilice la paralelización.
 
 ## PR 17 — Fix low-contrast text over the premium gradients ✅
 **Tipo:** a11y
