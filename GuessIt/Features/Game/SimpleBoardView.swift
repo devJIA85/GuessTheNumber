@@ -154,7 +154,7 @@ struct SimpleDigitCell: View {
             .font(.system(size: 22, weight: .bold, design: .rounded))
             .foregroundStyle(textColor)
             .frame(maxWidth: .infinity)
-            .frame(height: 52)
+            .frame(height: 46)
             .background(cellBackground)
             .overlay { cellBorder }
             .scaleEffect(isPressed ? 0.95 : 1.0)
