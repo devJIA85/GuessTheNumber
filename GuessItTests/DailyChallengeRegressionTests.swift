@@ -69,6 +69,16 @@ struct DailyChallengeRegressionTests {
         return challenge.persistentModelID
     }
 
+    /// Genera un guess con los mismos dígitos que `secret` pero rotados una posición,
+    /// garantizando que nunca coincide con el secreto (0 GOOD) — útil para simular
+    /// intentos perdedores deterministas sin conocer de antemano el secreto generado.
+    private func rotatedGuess(from secret: String) -> String {
+        var chars = Array(secret)
+        let first = chars.removeFirst()
+        chars.append(first)
+        return String(chars)
+    }
+
     // MARK: - Tests
 
     @Test("DailyChallenge usa medianoche UTC real para la seed y el challengeID")
@@ -195,5 +205,138 @@ struct DailyChallengeRegressionTests {
             firstSnapshot.attempts.map(\.id) == secondSnapshot.attempts.map(\.id),
             "Los IDs de intentos deben permanecer estables entre refreshes"
         )
+    }
+
+    // MARK: - Plan 004: tope de intentos, failDailyChallenge y rollover UTC
+
+    @Test("El intento número 10 sin ganar falla el desafío; los intentos 1-9 lo mantienen en progreso")
+    @MainActor
+    func test_submitDailyChallengeGuess_capsAtMaxAttempts() async throws {
+        let container = makeTestContainer()
+        let modelActor = makeModelActor(container: container)
+        let utc = TimeZone(secondsFromGMT: 0)!
+        let now = makeDate(year: 2026, month: 3, day: 10, hour: 12, timeZone: utc)
+
+        let snapshot = try await modelActor.fetchTodayChallengeSnapshot(now: now)
+        let secret = DailyChallengeService.generate(for: now).secret
+        let wrongGuess = rotatedGuess(from: secret)
+
+        for attemptNumber in 1...(GameConstants.dailyChallengeMaxAttempts - 1) {
+            _ = try await modelActor.submitDailyChallengeGuess(guess: wrongGuess, challengeID: snapshot.id, now: now)
+            let afterAttempt = try await modelActor.fetchTodayChallengeSnapshot(now: now)
+            #expect(afterAttempt.state == .inProgress, "El intento \(attemptNumber) no debería agotar el límite de intentos")
+        }
+
+        _ = try await modelActor.submitDailyChallengeGuess(guess: wrongGuess, challengeID: snapshot.id, now: now)
+        let finalSnapshot = try await modelActor.fetchTodayChallengeSnapshot(now: now)
+
+        #expect(finalSnapshot.state == .failed, "El intento número \(GameConstants.dailyChallengeMaxAttempts) sin ganar debe fallar el desafío")
+        #expect(finalSnapshot.completedAt != nil)
+        #expect(finalSnapshot.attemptsCount == GameConstants.dailyChallengeMaxAttempts)
+    }
+
+    @Test("Un intento posterior al límite de 10 lanza challengeNotActive (el guard preexistente, no el nuevo)")
+    @MainActor
+    func test_submitDailyChallengeGuess_afterCapThrowsNotActive() async throws {
+        let container = makeTestContainer()
+        let modelActor = makeModelActor(container: container)
+        let utc = TimeZone(secondsFromGMT: 0)!
+        let now = makeDate(year: 2026, month: 3, day: 10, hour: 12, timeZone: utc)
+
+        let snapshot = try await modelActor.fetchTodayChallengeSnapshot(now: now)
+        let secret = DailyChallengeService.generate(for: now).secret
+        let wrongGuess = rotatedGuess(from: secret)
+
+        for _ in 0..<GameConstants.dailyChallengeMaxAttempts {
+            _ = try await modelActor.submitDailyChallengeGuess(guess: wrongGuess, challengeID: snapshot.id, now: now)
+        }
+
+        do {
+            _ = try await modelActor.submitDailyChallengeGuess(guess: wrongGuess, challengeID: snapshot.id, now: now)
+            Issue.record("Se esperaba DailyChallengeError.challengeNotActive(currentState: .failed)")
+        } catch let error as DailyChallengeError {
+            #expect(error == .challengeNotActive(currentState: .failed))
+        } catch {
+            Issue.record("Se esperaba DailyChallengeError, llegó \(error)")
+        }
+    }
+
+    @Test("failDailyChallenge cierra el desafío y bloquea intentos futuros")
+    @MainActor
+    func test_failDailyChallenge_closesTheChallenge() async throws {
+        let container = makeTestContainer()
+        let modelActor = makeModelActor(container: container)
+        let utc = TimeZone(secondsFromGMT: 0)!
+        let now = makeDate(year: 2026, month: 3, day: 10, hour: 12, timeZone: utc)
+
+        let snapshot = try await modelActor.fetchTodayChallengeSnapshot(now: now)
+
+        try await modelActor.failDailyChallenge(challengeID: snapshot.id)
+
+        let afterFail = try await modelActor.fetchTodayChallengeSnapshot(now: now)
+        #expect(afterFail.state == .failed)
+        #expect(afterFail.completedAt != nil)
+
+        do {
+            _ = try await modelActor.submitDailyChallengeGuess(guess: "012", challengeID: snapshot.id, now: now)
+            Issue.record("Se esperaba un error al intentar jugar un desafío ya fallado")
+        } catch let error as DailyChallengeError {
+            #expect(error == .challengeNotActive(currentState: .failed))
+        } catch {
+            Issue.record("Se esperaba DailyChallengeError, llegó \(error)")
+        }
+    }
+
+    @Test("fetchOrCreateTodayChallenge reutiliza el mismo desafío dentro del día UTC y crea uno nuevo al cruzar la medianoche")
+    @MainActor
+    func test_fetchOrCreateTodayChallenge_rolloverAcrossUTCDay() async throws {
+        let container = makeTestContainer()
+        let modelActor = makeModelActor(container: container)
+        let utc = TimeZone(secondsFromGMT: 0)!
+
+        // day1 y day2 separados por dos días completos y ambos a mediodía UTC, para que
+        // ningún offset de timezone local (el que usa la rama legacy de compatibilidad)
+        // pueda hacerlos colisionar en `Calendar.current.isDate(_:inSameDayAs:)`.
+        let day1Morning = makeDate(year: 2026, month: 3, day: 10, hour: 10, timeZone: utc)
+        let day1Night = makeDate(year: 2026, month: 3, day: 10, hour: 23, minute: 59, timeZone: utc)
+        let day2 = makeDate(year: 2026, month: 3, day: 12, hour: 12, timeZone: utc)
+
+        let firstSnapshot = try await modelActor.fetchTodayChallengeSnapshot(now: day1Morning)
+        let secondSnapshot = try await modelActor.fetchTodayChallengeSnapshot(now: day1Night)
+
+        #expect(firstSnapshot.id == secondSnapshot.id, "El mismo día UTC debe reutilizar el mismo desafío")
+        #expect(firstSnapshot.challengeID == secondSnapshot.challengeID)
+
+        let thirdSnapshot = try await modelActor.fetchTodayChallengeSnapshot(now: day2)
+
+        #expect(thirdSnapshot.id != firstSnapshot.id, "Un nuevo día UTC debe crear un desafío distinto")
+        #expect(thirdSnapshot.challengeID != firstSnapshot.challengeID)
+    }
+
+    @Test("submitDailyChallengeGuess rechaza un intento cuando el desafío ya no es el del día en curso")
+    @MainActor
+    func test_submitDailyChallengeGuess_rejectsExpiredChallenge() async throws {
+        let container = makeTestContainer()
+        let modelActor = makeModelActor(container: container)
+        let utc = TimeZone(secondsFromGMT: 0)!
+
+        let day1 = makeDate(year: 2026, month: 3, day: 10, hour: 12, timeZone: utc)
+        let day2 = makeDate(year: 2026, month: 3, day: 12, hour: 12, timeZone: utc)
+
+        let snapshot = try await modelActor.fetchTodayChallengeSnapshot(now: day1)
+        let secret = DailyChallengeService.generate(for: day1).secret
+        let wrongGuess = rotatedGuess(from: secret)
+
+        do {
+            _ = try await modelActor.submitDailyChallengeGuess(guess: wrongGuess, challengeID: snapshot.id, now: day2)
+            Issue.record("Se esperaba DailyChallengeError.challengeExpired")
+        } catch let error as DailyChallengeError {
+            #expect(error == .challengeExpired)
+        } catch {
+            Issue.record("Se esperaba DailyChallengeError, llegó \(error)")
+        }
+
+        let afterRejectedAttempt = try await modelActor.fetchTodayChallengeSnapshot(now: day1)
+        #expect(afterRejectedAttempt.attemptsCount == 0, "El intento rechazado no debe quedar registrado")
     }
 }
