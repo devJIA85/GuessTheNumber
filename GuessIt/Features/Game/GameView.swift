@@ -79,8 +79,8 @@ struct GameView: View {
                     vm.configure(env: env)
                     await vm.initialize()
                 }
-                .onChange(of: vm.currentGame?.state) { _, newValue in
-                    handleGameStateChange(newValue)
+                .onChange(of: vm.currentGame?.state) { oldValue, newValue in
+                    handleGameStateChange(from: oldValue, to: newValue)
                 }
                 .onChange(of: vm.currentGame?.id) { _, _ in
                     resetHintUIState()
@@ -408,17 +408,20 @@ struct GameView: View {
         }
     }
     
-    private func handleGameStateChange(_ newValue: GameState?) {
+    private func handleGameStateChange(from oldValue: GameState?, to newValue: GameState?) {
         if newValue == .won {
-            withAnimation(.easeOut(duration: 0.2)) {
-                victorySplash.present()
-            }
-            triggerVictoryHapticIfNeeded()
+            // Solo celebrar (splash + háptica + score) si la victoria ocurrió en esta sesión.
+            // Una partida cargada ya ganada (nil → .won) se muestra sin re-disparar efectos.
+            if GameViewModel.isFreshWin(from: oldValue, to: newValue) {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    victorySplash.present()
+                }
+                triggerVictoryHapticIfNeeded()
 
-            // Enviar puntuación a leaderboards
-            if let game = vm.currentGame {
-                Task {
-                    await env.leaderboardService.submitScore(attempts: game.attempts.count)
+                if let game = vm.currentGame {
+                    Task {
+                        await env.leaderboardService.submitScore(attempts: game.attempts.count)
+                    }
                 }
             }
         } else {

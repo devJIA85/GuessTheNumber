@@ -43,6 +43,13 @@ final class GameViewModel {
 
     // MARK: - Estado derivado
 
+    /// Decide si una transición de estado corresponde a una victoria ganada EN esta sesión.
+    /// - Why: al arrancar, `loadCurrentGame` puede cargar una partida ya ganada (nil → .won);
+    ///   esa transición no debe re-disparar splash/háptica/envío de score.
+    static func isFreshWin(from oldState: GameState?, to newState: GameState?) -> Bool {
+        oldState == .inProgress && newState == .won
+    }
+
     /// Texto de estado para el subtítulo de navegación.
     var statusText: String {
         guard let game = currentGame else {
