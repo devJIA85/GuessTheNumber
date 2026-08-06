@@ -11,9 +11,9 @@ extension DigitMark {
     /// Texto hablado (VoiceOver) del estado del dígito.
     ///
     /// # Por qué vive acá
-    /// - Este mismo `switch` estaba duplicado, idéntico, en `DigitNoteCell`,
-    ///   `AdaptiveDigitCell` y `SimpleBoardView`.
-    /// - Centralizarlo evita que las tres copias se desincronicen.
+    /// - Este mismo `switch` estaba duplicado, idéntico, en vistas anteriores
+    ///   del tablero y en `SimpleBoardView`.
+    /// - Centralizarlo evita que las copias se desincronicen.
     /// - Es una extensión de presentación (capa Features), no toca el dominio puro.
     var spokenText: String {
         switch self {

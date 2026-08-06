@@ -1055,7 +1055,5 @@ private struct FeedbackBar: View {
 }
 
 // MARK: - CompactDeductionBoardView y CompactDigitCell eliminados
-// Reemplazados por CollapsibleBoardHeader y AdaptiveDigitCell.
-// - CollapsibleBoardHeader: header colapsable con grilla 2×5 adaptativa.
-// - AdaptiveDigitCell: celda que interpola dimensiones según scroll offset.
-// Ver CollapsibleBoardHeader.swift y AdaptiveDigitCell.swift.
+// Reemplazados por SimpleBoardView, el tablero de deducción actual.
+// Ver SimpleBoardView.swift.

@@ -44,7 +44,7 @@ enum DigitMark: String, Codable, CaseIterable {
     ///
     /// # Por qué vive en el enum
     /// - Centraliza la lógica de cycling que antes estaba duplicada
-    ///   en `CollapsibleBoardHeader` y `DigitBoardView`.
+    ///   en una vista anterior del tablero, y hoy vive en `SimpleBoardView`.
     /// - Es lógica de dominio, no de presentación.
     func next() -> DigitMark {
         guard let idx = Self.cycleOrder.firstIndex(of: self) else { return .unknown }

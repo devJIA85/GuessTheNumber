@@ -15,8 +15,8 @@ import SwiftData
 /// - Usa `DigitNoteSnapshot` (Sendable) en lugar de objetos @Model.
 /// - Diseñado para vistas de detalle de partidas terminadas.
 ///
-/// # Diferencias con DigitBoardView
-/// - DigitBoardView: editable, usa Game @Model, persiste cambios.
+/// # Diferencias con SimpleBoardView
+/// - SimpleBoardView: editable, usa Game @Model, persiste cambios.
 /// - DigitBoardSnapshotView: read-only, usa snapshots, sin persistencia.
 struct DigitBoardSnapshotView: View {
     

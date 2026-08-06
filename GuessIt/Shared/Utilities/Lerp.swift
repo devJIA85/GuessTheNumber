@@ -15,8 +15,7 @@ import CoreGraphics
 /// ```
 ///
 /// # Por qué existe
-/// - Antes estaba duplicada como método privado en `CollapsibleBoardHeader`
-///   y `AdaptiveDigitCell`.
+/// - Antes estaba duplicada como método privado en una vista anterior del tablero.
 /// - Es una función matemática pura sin dependencias — helper global natural.
 ///
 /// - Parameters:
