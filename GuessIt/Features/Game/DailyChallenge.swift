@@ -119,6 +119,9 @@ enum DailyChallengeError: LocalizedError, Equatable, Sendable {
     /// El desafío existe, pero ya no acepta más intentos.
     case challengeNotActive(currentState: ChallengeState)
 
+    /// El desafío ya no es el del día en curso (la pantalla cruzó la medianoche UTC).
+    case challengeExpired
+
     var errorDescription: String? {
         switch self {
         case .challengeNotActive(let currentState):
@@ -130,6 +133,8 @@ enum DailyChallengeError: LocalizedError, Equatable, Sendable {
             case .notStarted, .inProgress:
                 return "El desafío diario está activo."
             }
+        case .challengeExpired:
+            return "Este desafío ya expiró. Hoy hay uno nuevo."
         }
     }
 }

@@ -643,17 +643,19 @@ actor GuessItModelActor {
     /// - Si ya existe el desafío de hoy: retornar.
     /// - Si no existe: generar con seed determinístico y crear.
     ///
+    /// - Parameter now: instante de referencia para determinar "hoy" (seam de testing;
+    ///   el código de producción nunca debe pasar un valor distinto de `Date()`).
     /// - Returns: desafío del día actual.
-    func fetchOrCreateTodayChallenge() throws -> DailyChallenge {
-        let today = DailyChallengeService.generateToday()
-        
+    func fetchOrCreateTodayChallenge(now: Date = Date()) throws -> DailyChallenge {
+        let today = DailyChallengeService.generate(for: now)
+
         // Buscar desafío de hoy - filtramos en código porque #Predicate no soporta variables capturadas
         let descriptor = FetchDescriptor<DailyChallenge>(
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
-        
+
         let challenges = try modelContext.fetch(descriptor)
-        
+
         // Camino principal: el seed UTC define de forma unívoca el desafío global del día.
         if let existing = challenges.first(where: { $0.seed == today.seed }) {
             return existing
@@ -662,45 +664,57 @@ actor GuessItModelActor {
         // Compatibilidad conservadora:
         // si el usuario ya tiene un desafío "de hoy" persistido con la lógica vieja
         // basada en timezone local, lo preservamos durante ese día para no resetearle el progreso.
-        let legacyToday = Calendar.current.startOfDay(for: Date())
+        let legacyToday = Calendar.current.startOfDay(for: now)
         if let legacy = challenges.first(where: { Calendar.current.isDate($0.date, inSameDayAs: legacyToday) }) {
             return legacy
         }
-        
+
         // No existe: crear nuevo
         let newChallenge = DailyChallenge(date: today.date, secret: today.secret, seed: today.seed)
         modelContext.insert(newChallenge)
         try modelContext.save()
-        
+
         return newChallenge
     }
-    
+
     /// Obtiene snapshot del desafío del día.
     ///
-    /// - Parameter revealSecret: si true, incluye el secreto en el snapshot si el desafío ya cerró.
+    /// - Parameters:
+    ///   - revealSecret: si true, incluye el secreto en el snapshot si el desafío ya cerró.
+    ///   - now: instante de referencia para determinar "hoy" (seam de testing).
     /// - Returns: snapshot del desafío de hoy.
-    func fetchTodayChallengeSnapshot(revealSecret: Bool = false) throws -> DailyChallengeSnapshot {
-        let challenge = try fetchOrCreateTodayChallenge()
+    func fetchTodayChallengeSnapshot(revealSecret: Bool = false, now: Date = Date()) throws -> DailyChallengeSnapshot {
+        let challenge = try fetchOrCreateTodayChallenge(now: now)
         let shouldReveal = revealSecret && challenge.state.isClosed
         return DailyChallengeSnapshot(from: challenge, revealSecret: shouldReveal)
     }
-    
+
     /// Envía un intento en el desafío diario.
     ///
     /// - Parameters:
     ///   - guess: intento del usuario (3 dígitos).
     ///   - challengeID: identificador del desafío.
+    ///   - now: instante de referencia para determinar si el desafío sigue siendo el de hoy
+    ///     (seam de testing; el código de producción nunca debe pasar un valor distinto de `Date()`).
     /// - Returns: feedback del intento.
-    func submitDailyChallengeGuess(guess: String, challengeID: PersistentIdentifier) throws -> AttemptFeedback {
+    func submitDailyChallengeGuess(guess: String, challengeID: PersistentIdentifier, now: Date = Date()) throws -> AttemptFeedback {
         guard let challenge = modelContext.model(for: challengeID) as? DailyChallenge else {
             throw ModelActorError.gameNotFound(challengeID)
         }
-        
+
         // Validar que el desafío sigue activo.
         guard challenge.state.isActive else {
             throw DailyChallengeError.challengeNotActive(currentState: challenge.state)
         }
-        
+
+        // Contrato UTC: solo se puede jugar el desafío del día en curso.
+        // Un desafío de un día anterior que quedó .inProgress (pantalla abierta
+        // cruzando la medianoche UTC) no debe aceptar más intentos.
+        let todaySeed = DailyChallengeService.generate(for: now).seed
+        guard challenge.seed == todaySeed else {
+            throw DailyChallengeError.challengeExpired
+        }
+
         // Si es el primer intento, marcar como iniciado
         if challenge.state == .notStarted {
             challenge.state = .inProgress
