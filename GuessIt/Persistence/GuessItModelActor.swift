@@ -261,6 +261,25 @@ actor GuessItModelActor {
         try updateStatsAfterGame(gameID: gameID)
     }
 
+    /// Cierra la partida en progreso antes de un reset:
+    /// - Con al menos un intento: la marca abandonada (cuenta en stats, rompe la racha).
+    /// - Sin intentos: la elimina silenciosamente (el jugador nunca jugó esa partida;
+    ///   no debe inflar `totalGames` ni resetear `currentStreak`).
+    /// - Si no hay partida en progreso: no hace nada.
+    ///
+    /// - Why aquí y no en `GameActor`: la decisión depende de `attempts.count` y debe ser
+    ///   atómica dentro del único writer de SwiftData (evita check-then-act entre actores).
+    func abandonOrDiscardInProgressGame() throws {
+        guard let game = try fetchInProgressGame() else { return }
+
+        if game.attempts.isEmpty {
+            modelContext.delete(game)
+            try modelContext.save()
+        } else {
+            try markGameAbandoned(gameID: game.persistentID)
+        }
+    }
+
     /// Elimina una partida del historial (y en cascada sus intentos y notas).
     ///
     /// # Nota
