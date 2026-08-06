@@ -129,7 +129,7 @@ struct DailyChallengeView: View {
     private func activeView(challenge: DailyChallengeSnapshot) -> some View {
         ScrollView {
             VStack(spacing: AppTheme.Spacing.medium) {
-                DailyHeaderCard(challenge: challenge)
+                DailyHeaderCard(challenge: challenge, onRollover: { Task { await loadChallenge() } })
 
                 if !challenge.attempts.isEmpty {
                     DailyAttemptsCard(attempts: challenge.attempts, highlightWinner: false)
@@ -151,7 +151,7 @@ struct DailyChallengeView: View {
     private func completedView(challenge: DailyChallengeSnapshot) -> some View {
         ScrollView {
             VStack(spacing: AppTheme.Spacing.medium) {
-                CountdownCard()
+                CountdownCard(onRollover: { Task { await loadChallenge() } })
 
                 VStack(spacing: AppTheme.Spacing.medium) {
                     Text("🎉").font(.system(size: 48))
@@ -195,7 +195,7 @@ struct DailyChallengeView: View {
     private func failedView(challenge: DailyChallengeSnapshot) -> some View {
         ScrollView {
             VStack(spacing: AppTheme.Spacing.medium) {
-                CountdownCard()
+                CountdownCard(onRollover: { Task { await loadChallenge() } })
 
                 VStack(spacing: AppTheme.Spacing.medium) {
                     Text("😔").font(.system(size: 48))
@@ -319,6 +319,7 @@ struct DailyChallengeView: View {
 /// Card superior del estado activo: fecha + countdown + barra de progreso 3/10.
 private struct DailyHeaderCard: View {
     let challenge: DailyChallengeSnapshot
+    var onRollover: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.medium) {
@@ -339,7 +340,7 @@ private struct DailyHeaderCard: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("daily.next_in_short")
                         .focusSectionLabel()
-                    CountdownText(font: .system(size: 22, weight: .bold, design: .monospaced))
+                    CountdownText(font: .system(size: 22, weight: .bold, design: .monospaced), onRollover: onRollover)
                 }
             }
 
@@ -639,7 +640,11 @@ private struct DailyKeypad: View {
 struct CountdownText: View {
     var font: Font = .system(size: 24, weight: .bold, design: .monospaced)
 
+    /// Se invoca cuando el countdown cruza la medianoche UTC (nuevo desafío disponible).
+    var onRollover: (() -> Void)? = nil
+
     @State private var timeRemaining: String = ""
+    @State private var lastRemaining: Int = .max
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -652,16 +657,23 @@ struct CountdownText: View {
     }
 
     private func update() {
-        let calendar = Calendar.current
         let now = Date()
-        let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))!
-        let c = calendar.dateComponents([.hour, .minute, .second], from: now, to: tomorrow)
-        timeRemaining = String(format: "%02d:%02d:%02d", c.hour ?? 0, c.minute ?? 0, c.second ?? 0)
+        // Contrato UTC: el desafío rota a la medianoche UTC, no a la local.
+        let nextRollover = DailyChallengeService.challengeDayStart(for: now).addingTimeInterval(86_400)
+        let remaining = max(0, Int(nextRollover.timeIntervalSince(now)))
+        // Si el remaining "creció" respecto del tick anterior, cruzamos la medianoche UTC.
+        if remaining > lastRemaining {
+            onRollover?()
+        }
+        lastRemaining = remaining
+        timeRemaining = String(format: "%02d:%02d:%02d", remaining / 3600, (remaining % 3600) / 60, remaining % 60)
     }
 }
 
 /// Card de cuenta regresiva horizontal (completado / fallado).
 struct CountdownCard: View {
+    var onRollover: (() -> Void)? = nil
+
     var body: some View {
         HStack(spacing: AppTheme.Spacing.small) {
             Text("⏰").font(.system(size: 22))
@@ -669,7 +681,7 @@ struct CountdownCard: View {
                 .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
             Spacer()
-            CountdownText(font: .system(size: 22, weight: .bold, design: .monospaced))
+            CountdownText(font: .system(size: 22, weight: .bold, design: .monospaced), onRollover: onRollover)
         }
         .focusCard(padding: AppTheme.CardPadding.standard)
     }
