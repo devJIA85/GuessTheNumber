@@ -680,11 +680,11 @@ actor GuessItModelActor {
             return existing
         }
 
-        // Compatibilidad conservadora:
-        // si el usuario ya tiene un desafío "de hoy" persistido con la lógica vieja
-        // basada en timezone local, lo preservamos durante ese día para no resetearle el progreso.
-        let legacyToday = Calendar.current.startOfDay(for: now)
-        if let legacy = challenges.first(where: { Calendar.current.isDate($0.date, inSameDayAs: legacyToday) }) {
+        // Conserva el progreso de un desafío guardado con el seed anterior
+        // mientras su fecha pertenezca al día UTC vigente.
+        if let legacy = challenges.first(where: {
+            DailyChallengeService.challengeDayStart(for: $0.date) == today.date
+        }) {
             return legacy
         }
 
@@ -729,8 +729,7 @@ actor GuessItModelActor {
         // Contrato UTC: solo se puede jugar el desafío del día en curso.
         // Un desafío de un día anterior que quedó .inProgress (pantalla abierta
         // cruzando la medianoche UTC) no debe aceptar más intentos.
-        let todaySeed = DailyChallengeService.generate(for: now).seed
-        guard challenge.seed == todaySeed else {
+        guard DailyChallengeService.utcCalendar.isDate(challenge.date, inSameDayAs: now) else {
             throw DailyChallengeError.challengeExpired
         }
 

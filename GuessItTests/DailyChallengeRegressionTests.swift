@@ -294,12 +294,9 @@ struct DailyChallengeRegressionTests {
         let modelActor = makeModelActor(container: container)
         let utc = TimeZone(secondsFromGMT: 0)!
 
-        // day1 y day2 separados por dos días completos y ambos a mediodía UTC, para que
-        // ningún offset de timezone local (el que usa la rama legacy de compatibilidad)
-        // pueda hacerlos colisionar en `Calendar.current.isDate(_:inSameDayAs:)`.
         let day1Morning = makeDate(year: 2026, month: 3, day: 10, hour: 10, timeZone: utc)
         let day1Night = makeDate(year: 2026, month: 3, day: 10, hour: 23, minute: 59, timeZone: utc)
-        let day2 = makeDate(year: 2026, month: 3, day: 12, hour: 12, timeZone: utc)
+        let day2 = makeDate(year: 2026, month: 3, day: 11, hour: 0, timeZone: utc)
 
         let firstSnapshot = try await modelActor.fetchTodayChallengeSnapshot(now: day1Morning)
         let secondSnapshot = try await modelActor.fetchTodayChallengeSnapshot(now: day1Night)
@@ -321,7 +318,7 @@ struct DailyChallengeRegressionTests {
         let utc = TimeZone(secondsFromGMT: 0)!
 
         let day1 = makeDate(year: 2026, month: 3, day: 10, hour: 12, timeZone: utc)
-        let day2 = makeDate(year: 2026, month: 3, day: 12, hour: 12, timeZone: utc)
+        let day2 = makeDate(year: 2026, month: 3, day: 11, hour: 0, timeZone: utc)
 
         let snapshot = try await modelActor.fetchTodayChallengeSnapshot(now: day1)
         let secret = DailyChallengeService.generate(for: day1).secret
