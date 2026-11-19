@@ -4,31 +4,52 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   test:
-    runs-on: macos-26
+    # https://github.com/actions/runner-images/blob/main/images/macos/xcode-27-arm64-Readme.md
+    runs-on: xcode-27
     timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
 
-      - name: Select newest Xcode
+      - name: Verify Xcode 27.2 (27B52)
         run: |
-          sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)/Contents/Developer"
-          xcodebuild -version
+          if [[ ! -x "$DEVELOPER_DIR/usr/bin/xcodebuild" ]]; then
+            echo "::error::Xcode 27.2 is missing at $DEVELOPER_DIR"
+            exit 1
+          fi
+          version="$(xcodebuild -version)"
+          printf '%s\n' "$version"
+          if [[ "$version" != $'Xcode 27.2\nBuild version 27B52' ]]; then
+            echo "::error::Expected Xcode 27.2 (27B52)"
+            exit 1
+          fi
+          xcrun swift --version
+          git log -1 --format='Commit %H | Tree %T'
 
-      - name: Pick a simulator
-        id: sim
-        run: |
-          DEVICE=$(xcrun simctl list devices available | grep -E "iPhone" | head -1 | sed -E 's/^ *([^(]+) \(.*/\1/' | xargs)
-          echo "device=$DEVICE" >> "$GITHUB_OUTPUT"
-          echo "Using simulator: $DEVICE"
-
-      - name: Run unit tests
+      - name: Run unit and UI tests
         run: |
           xcodebuild test \
             -project GuessIt.xcodeproj \
             -scheme GuessIt \
-            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
-            -only-testing:GuessItTests \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=27.2' \
+            -resultBundlePath "$RUNNER_TEMP/GuessIt.xcresult" \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: GuessIt-test-results
+          path: ${{ runner.temp }}/GuessIt.xcresult
+          if-no-files-found: ignore
