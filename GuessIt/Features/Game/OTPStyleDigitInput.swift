@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-/// Input visual de 5 celdas individuales para dígitos, similar a códigos OTP.
+/// Input visual de celdas individuales para dígitos, similar a códigos OTP.
 ///
 /// # Características
 /// - SOLO visualización (no hay TextField, no invoca teclado del sistema)
-/// - 5 celdas visuales que se llenan de izquierda a derecha
+/// - Celdas visuales que se llenan de izquierda a derecha
 /// - El input es manejado por SimpleBoardView (teclado numérico custom)
 /// - El borrado vacía de derecha a izquierda
 /// - Accesible: VoiceOver lee el valor completo como un número
@@ -26,10 +26,11 @@ struct OTPStyleDigitInput: View {
     @Binding var text: String
     
     /// Número de dígitos a mostrar.
-    private let digitCount: Int = 5
+    private let digitCount: Int
     
-    init(text: Binding<String>) {
+    init(text: Binding<String>, digitCount: Int = GameConstants.secretLength) {
         self._text = text
+        self.digitCount = digitCount
     }
     
     var body: some View {
@@ -37,14 +38,14 @@ struct OTPStyleDigitInput: View {
         // NO hay TextField - el input es 100% manejado por SimpleBoardView
         digitCellsView
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Ingreso de número de 5 dígitos")
+            .accessibilityLabel("accessibility.guess_input_digits \(digitCount)")
             .accessibilityValue(text.isEmpty ? "Vacío" : text)
-            .accessibilityHint("Ingresá un número de 5 dígitos")
+            .accessibilityHint("accessibility.keypad_hint")
     }
     
     // MARK: - Subvistas
     
-    /// Vista de las 5 celdas individuales.
+    /// Vista de las celdas individuales.
     private var digitCellsView: some View {
         HStack(spacing: 8) {
             ForEach(0..<digitCount, id: \.self) { index in

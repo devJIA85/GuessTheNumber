@@ -109,10 +109,10 @@ final class GameViewModel {
     /// Reinicia la partida (nueva) y refresca el snapshot.
     /// - Returns: `true` si se reinició sin error.
     @discardableResult
-    func startNewGame() async -> Bool {
+    func startNewGame(length: ClassicGameLength = .five) async -> Bool {
         guard let env else { return false }
         do {
-            try await env.gameActor.resetGame()
+            try await env.gameActor.resetGame(length: length)
             await loadCurrentGame()
             return true
         } catch {
@@ -201,6 +201,7 @@ final class GameViewModel {
             createdAt: game.createdAt,
             finishedAt: game.finishedAt,
             secret: game.secret,
+            digitCount: game.digitCount,
             attempts: game.attempts,
             digitNotes: notes
         )

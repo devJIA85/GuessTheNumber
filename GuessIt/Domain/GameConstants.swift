@@ -16,13 +16,19 @@ import Foundation
 /// - facilitar cambios controlados y revisables.
 ///
 /// Si alguno de estos valores cambia, **cambia la naturaleza del juego**.
+enum ClassicGameLength: Int, CaseIterable, Sendable {
+    case three = 3
+    case four = 4
+    case five = 5
+}
+
 enum GameConstants {
 
     // MARK: - Estructura del número secreto
 
     /// Cantidad exacta de dígitos que componen el número secreto.
-    /// Regla del juego: siempre son 5 dígitos.
-    static let secretLength: Int = 5
+    /// Longitud predeterminada del modo clásico.
+    static let secretLength: Int = ClassicGameLength.five.rawValue
 
     /// Indica si los dígitos del número secreto deben ser únicos.
     /// Regla del juego: no se permiten dígitos repetidos.

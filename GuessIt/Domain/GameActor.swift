@@ -51,7 +51,7 @@ actor GameActor {
     /// - Crea una partida nueva.
     ///
     /// - Note: Manejo robusto de errores - si falla cerrar la partida anterior, igual crea nueva partida.
-    func resetGame() async throws {
+    func resetGame(length: ClassicGameLength = .five) async throws {
         // Cierra (abandona o descarta) la partida en progreso de forma atómica en el writer.
         // - Partidas con intentos: abandono normal (cuenta en stats).
         // - Partidas sin intentos: descarte silencioso (no son partidas jugadas).
@@ -63,7 +63,7 @@ actor GameActor {
         }
         // Crear siempre una nueva partida.
         // Usamos la variante que no devuelve el `@Model` (seguro para cruzar actores en Swift 6).
-        try await modelActor.startNewGame()
+        try await modelActor.startNewGame(length: length)
     }
 
     /// Envía un intento del usuario.
@@ -93,10 +93,11 @@ actor GameActor {
         }
 
         // 2) Validar input.
-        try GuessValidator.validate(guess)
+        let length = ClassicGameLength(rawValue: gameData.secret.count) ?? .five
+        try GuessValidator.validate(guess, length: length)
 
         // 3) Evaluar usando el secreto persistido.
-        let evaluation = try GuessEvaluator.evaluate(secret: gameData.secret, guess: guess)
+        let evaluation = try GuessEvaluator.evaluate(secret: gameData.secret, guess: guess, length: length)
         let feedback = AttemptFeedback(
             good: evaluation.good,
             fair: evaluation.fair,
@@ -114,7 +115,7 @@ actor GameActor {
         )
 
         // 5) Transicionar estado (persistido).
-        if evaluation.good == GameConstants.secretLength {
+        if evaluation.good == length.rawValue {
             try await modelActor.markGameWon(gameID: gameID)
         }
 

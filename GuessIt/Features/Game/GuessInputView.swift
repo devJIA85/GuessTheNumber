@@ -59,11 +59,11 @@ struct GuessInputView: View {
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.small) {
-            // SECCIÓN 1: Slots visuales de 5 dígitos
-            OTPStyleDigitInput(text: $guessText)
+            // SECCIÓN 1: Slots visuales del intento
+            OTPStyleDigitInput(text: $guessText, digitCount: digitCount)
                 .frame(maxWidth: .infinity)
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("accessibility.guess_input_5")
+                .accessibilityLabel("accessibility.guess_input_digits \(digitCount)")
                 .accessibilityValue(guessText.isEmpty ? String(localized: "accessibility.empty") : guessText)
                 .accessibilityHint("accessibility.keypad_hint")
 
@@ -146,9 +146,10 @@ struct GuessInputView: View {
     
     // MARK: - Helpers
 
-    /// Estado del botón: disabled cuando el input no tiene exactamente 5 dígitos.
+    private var digitCount: Int { game?.digitCount ?? GameConstants.secretLength }
+
     private var isButtonDisabled: Bool {
-        guessText.count != 5
+        guessText.count != digitCount
     }
 }
 

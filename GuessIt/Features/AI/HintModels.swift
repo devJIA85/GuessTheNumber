@@ -25,6 +25,19 @@ struct HintInput: Sendable {
     let gameID: PersistentIdentifier
     let attempts: [HintAttempt]
     let digitNotes: [HintDigitNote]
+    let digitCount: Int
+
+    init(
+        gameID: PersistentIdentifier,
+        digitCount: Int = GameConstants.secretLength,
+        attempts: [HintAttempt],
+        digitNotes: [HintDigitNote]
+    ) {
+        self.gameID = gameID
+        self.digitCount = digitCount
+        self.attempts = attempts
+        self.digitNotes = digitNotes
+    }
 }
 
 /// Snapshot Sendable de un intento para construir el contexto de la pista.

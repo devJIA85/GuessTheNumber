@@ -94,9 +94,9 @@ actor GuessItModelActor {
 
     /// Crea una partida nueva y la deja lista para jugar.
     /// - Returns: `Game` creado (ya insertado en el contexto).
-    func createNewGame() throws -> Game {
+    func createNewGame(length: ClassicGameLength = .five) throws -> Game {
         // 1) Secreto del dominio (puro).
-        let secret = SecretGenerator.generate()
+        let secret = SecretGenerator.generate(length: length)
 
         // 2) Creamos el Game primero para poder referenciarlo desde las notas.
         let game = Game(secret: secret, digitNotes: [])
@@ -128,8 +128,8 @@ actor GuessItModelActor {
     ///   identificador (`Sendable`), útil tanto para el dominio (lo descarta) como
     ///   para los tests (lo usan para pedir snapshots).
     @discardableResult
-    func startNewGame() throws -> GameIdentifier {
-        try createNewGame().persistentID
+    func startNewGame(length: ClassicGameLength = .five) throws -> GameIdentifier {
+        try createNewGame(length: length).persistentID
     }
 
     /// Devuelve la partida activa o crea una nueva si no existe.
@@ -528,6 +528,7 @@ actor GuessItModelActor {
             createdAt: game.createdAt,
             finishedAt: game.finishedAt,
             secret: secret,
+            digitCount: game.secret.count,
             attempts: attemptSnapshots,
             digitNotes: digitNoteSnapshots
         )

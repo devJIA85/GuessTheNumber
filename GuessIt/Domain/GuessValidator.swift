@@ -52,8 +52,8 @@ struct GuessValidator {
     /// Valida un intento ingresado por el usuario.
     /// - Parameter input: String crudo proveniente de la UI.
     /// - Throws: `ValidationError` si alguna regla del dominio no se cumple.
-    static func validate(_ input: String) throws {
-        try validateLength(input)
+    static func validate(_ input: String, length: ClassicGameLength = .five) throws {
+        try validateLength(input, expected: length.rawValue)
         try validateNumeric(input)
         try validateDigitRange(input)
         try validateUniquenessIfNeeded(input)

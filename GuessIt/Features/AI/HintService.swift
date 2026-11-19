@@ -164,7 +164,7 @@ actor HintService {
             try Task.checkCancellation()
             
             // 4. Validar salida (guardrails)
-            guard builder.isOutputSafe(rawText) else {
+            guard builder.isOutputSafe(rawText, digitCount: input.digitCount) else {
                 let error = HintError.unsafeOutput
                 lastErrorDescription = "Output violó guardrails"
                 throw error

@@ -56,6 +56,33 @@ struct GameActorIntegrationTests {
 
     // MARK: - Tests de submitGuess
 
+    @Test("Cada largo se guarda y permite ganar", arguments: ClassicGameLength.allCases)
+    func testClassicGameLength(length: ClassicGameLength) async throws {
+        let gameActor = makeTestGameActor()
+        try await gameActor.resetGame(length: length)
+        let current = try await gameActor.modelActor.fetchCurrentGameDetailSnapshot()
+        let snapshot = try #require(current)
+        let secret = try await gameActor.debugSecret()
+        #expect(snapshot.digitCount == length.rawValue)
+        #expect(snapshot.secret == nil)
+        #expect(secret.count == length.rawValue)
+        #expect(Set(secret).count == length.rawValue)
+
+        do {
+            _ = try await gameActor.submitGuess(String(secret.dropLast()))
+            Issue.record("Se esperaba un error de longitud")
+        } catch let error as GuessValidator.ValidationError {
+            #expect(error == .invalidLength(expected: length.rawValue))
+        }
+
+        let win = try await gameActor.submitGuess(secret)
+        let saved = try await gameActor.modelActor.fetchGameDetailSnapshot(gameID: snapshot.id)
+        #expect(win.gameState == .won)
+        #expect(win.feedback.good == length.rawValue)
+        #expect(saved.digitCount == length.rawValue)
+        #expect(saved.attempts.count == 1)
+    }
+
     @Test("submitGuess persiste intento y devuelve feedback correcto")
     func testSubmitGuessPersistsAttemptAndReturnsFeedback() async throws {
         // Arrange: crear actor con secreto conocido
