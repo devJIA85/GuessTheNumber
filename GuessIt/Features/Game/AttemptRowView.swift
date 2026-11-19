@@ -95,12 +95,12 @@ struct AttemptRowView: View {
 
     /// ¿Es el intento ganador? (todos los dígitos GOOD).
     private var isWinning: Bool {
-        data.good == GameConstants.secretLength
+        data.good == data.guess.count
     }
 
     /// Conteo de POOR deducido del largo del secreto cuando el intento no tuvo GOOD/FAIR.
     private var poorCount: Int {
-        max(0, GameConstants.secretLength - data.good - data.fair)
+        max(0, data.guess.count - data.good - data.fair)
     }
 
     /// Pill "Repetido" tenue, junto al guess.

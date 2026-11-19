@@ -10,7 +10,7 @@ import Foundation
 /// Genera el número secreto del juego cumpliendo las invariantes de `GameConstants`.
 ///
 /// # Objetivo
-/// - Longitud fija (5 dígitos).
+/// - Longitud elegida para la partida.
 /// - Dígitos dentro de 0–9.
 /// - Sin repetidos (regla actual del juego).
 ///
@@ -19,9 +19,9 @@ struct SecretGenerator: Sendable {
 
     /// Genera un secreto usando el RNG del sistema.
     /// - Returns: String con el número secreto (ej: "50317").
-    static func generate() -> String {
+    static func generate(length: ClassicGameLength = .five) -> String {
         var rng = SystemRandomNumberGenerator()
-        return generate(using: &rng)
+        return generate(length: length, using: &rng)
     }
     
     /// Genera un secreto para desafío diario (3 dígitos) usando el RNG del sistema.
@@ -35,9 +35,9 @@ struct SecretGenerator: Sendable {
     /// - Why: esto facilita tests deterministas (podés pasar un RNG controlado).
     /// - Parameter rng: generador de números aleatorios.
     /// - Returns: String con el número secreto.
-    static func generate(using rng: inout some RandomNumberGenerator) -> String {
+    static func generate(length: ClassicGameLength = .five, using rng: inout some RandomNumberGenerator) -> String {
         generateSecret(
-            length: GameConstants.secretLength,
+            length: length.rawValue,
             requiresUnique: GameConstants.requiresUniqueDigits,
             using: &rng
         )

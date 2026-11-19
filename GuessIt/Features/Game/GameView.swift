@@ -29,6 +29,10 @@ struct GameView: View {
 
     /// Input del usuario (string crudo).
     @State private var guessText: String = ""
+    @AppStorage("lastClassicGameLength") private var preferredLength = ClassicGameLength.five
+    @State private var selectedLength = ClassicGameLength.five
+    @State private var isNewGamePresented = false
+    @State private var isStartingGame = false
     
     #if DEBUG
     /// Controla el alert de debug para revelar el secreto actual.
@@ -79,8 +83,8 @@ struct GameView: View {
                     vm.configure(env: env)
                     await vm.initialize()
                 }
-                .onChange(of: vm.currentGame?.state) { _, newValue in
-                    handleGameStateChange(newValue)
+                .onChange(of: vm.currentGame?.state) { oldValue, newValue in
+                    handleGameStateChange(from: oldValue, to: newValue)
                 }
                 .onChange(of: vm.currentGame?.id) { _, _ in
                     resetHintUIState()
@@ -107,6 +111,9 @@ struct GameView: View {
                     }
                 )
                 #endif
+                .sheet(isPresented: $isNewGamePresented) {
+                    newGamePicker
+                }
                 .sheet(isPresented: $isHintPresented, onDismiss: onHintDismiss) {
                     hintSheet
                 }
@@ -191,9 +198,9 @@ struct GameView: View {
                     Label("game.how_to_play", systemImage: "questionmark.circle")
                 }
                 Button {
-                    startNewGame()
+                    chooseNewGame()
                 } label: {
-                    Label("game.reset", systemImage: "arrow.counterclockwise")
+                    Label("game.new_classic", systemImage: "plus.circle")
                 }
                 #if DEBUG
                 Button {
@@ -205,6 +212,7 @@ struct GameView: View {
             } label: {
                 actionIcon("ellipsis", label: "Más")
             }
+            .accessibilityIdentifier("game.actions")
         }
         .padding(.horizontal, AppTheme.Spacing.large)
         .padding(.top, AppTheme.Spacing.small)
@@ -231,7 +239,7 @@ struct GameView: View {
                     }
 
                     if game.state == .won {
-                        VictorySectionView(game: game, onNewGame: startNewGame)
+                        VictorySectionView(game: game, onNewGame: chooseNewGame)
                     }
 
                     attemptsHistory(for: game)
@@ -382,43 +390,37 @@ struct GameView: View {
         }
     }
     
-    /// Maneja el dismiss de la splash de victoria y resetea el juego.
-    /// - Why: centraliza la lógica para asegurar que siempre funcione correctamente.
     private func handleVictorySplashDismiss() {
-        // 1. Cerrar la splash con animación
         withAnimation(.easeOut(duration: 0.2)) {
             victorySplash.dismiss()
         }
         
-        // 2. Esperar a que la animación termine antes de iniciar nueva partida
-        // Why: evita conflictos de estado durante la transición
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(250))
-            startNewGame()
-        }
     }
     
     // MARK: - Action Handlers
     
     private func handleDigitTap(_ digit: Int) {
-        if guessText.count < 5 {
+        if guessText.count < (vm.currentGame?.digitCount ?? GameConstants.secretLength) {
             guessText.append("\(digit)")
 
             HapticFeedbackManager.keypadTap()
         }
     }
     
-    private func handleGameStateChange(_ newValue: GameState?) {
+    private func handleGameStateChange(from oldValue: GameState?, to newValue: GameState?) {
         if newValue == .won {
-            withAnimation(.easeOut(duration: 0.2)) {
-                victorySplash.present()
-            }
-            triggerVictoryHapticIfNeeded()
+            // Solo celebrar (splash + háptica + score) si la victoria ocurrió en esta sesión.
+            // Una partida cargada ya ganada (nil → .won) se muestra sin re-disparar efectos.
+            if GameViewModel.isFreshWin(from: oldValue, to: newValue) {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    victorySplash.present()
+                }
+                triggerVictoryHapticIfNeeded()
 
-            // Enviar puntuación a leaderboards
-            if let game = vm.currentGame {
-                Task {
-                    await env.leaderboardService.submitScore(attempts: game.attempts.count)
+                if let game = vm.currentGame, game.digitCount == GameConstants.secretLength {
+                    Task {
+                        await env.leaderboardService.submitScore(attempts: game.attempts.count)
+                    }
                 }
             }
         } else {
@@ -439,14 +441,48 @@ struct GameView: View {
 
     // MARK: - Helpers
 
-    /// Inicia una nueva partida y limpia el estado de UI local solo si el reinicio fue exitoso.
-    /// - Why: la orquestación (reset + reload) vive en la VM; la vista solo limpia su input/hint.
-    private func startNewGame() {
-        // Cerramos la splash antes de resetear para evitar el flash de “ganaste”.
+    private var newGamePicker: some View {
+        NavigationStack {
+            Form {
+                Picker("game.classic_digit_count", selection: $selectedLength) {
+                    ForEach(ClassicGameLength.allCases, id: \.self) { length in
+                        Text(length.rawValue.formatted()).tag(length)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                if let game = vm.currentGame, game.state == .inProgress, !game.attempts.isEmpty {
+                    Text("game.classic_abandon_warning")
+                }
+            }
+            .navigationTitle("game.new_classic")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("game.classic_cancel") { isNewGamePresented = false }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("game.classic_start") { startNewGame(length: selectedLength) }
+                }
+            }
+        }
+    }
+
+    private func chooseNewGame() {
+        guard !isStartingGame else { return }
+        selectedLength = preferredLength
+        isNewGamePresented = true
+    }
+
+    private func startNewGame(length: ClassicGameLength) {
+        guard !isStartingGame else { return }
+        isStartingGame = true
+        isNewGamePresented = false
         victorySplash.dismiss()
 
         Task { @MainActor in
-            if await vm.startNewGame() {
+            defer { isStartingGame = false }
+            if await vm.startNewGame(length: length) {
+                preferredLength = length
                 guessText = ""
                 resetHintUIState()
             }
@@ -455,6 +491,7 @@ struct GameView: View {
 
     /// Envía el guess al dominio (vía VM) y limpia el input solo si se procesó sin error.
     private func submit(_ guess: String) {
+        guard !isStartingGame else { return }
         Task { @MainActor in
             if await vm.submitGuess(guess) {
                 guessText = ""
@@ -746,6 +783,7 @@ struct GameView: View {
         
         return HintInput(
             gameID: snapshot.id,
+            digitCount: snapshot.digitCount,
             attempts: attempts,
             digitNotes: digitNotes
         )
@@ -978,7 +1016,7 @@ private struct LastAttemptCard: View {
 
     private var good: Int { attempt.good }
     private var fair: Int { attempt.fair }
-    private var poor: Int { max(0, GameConstants.secretLength - good - fair) }
+    private var poor: Int { max(0, attempt.guess.count - good - fair) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {

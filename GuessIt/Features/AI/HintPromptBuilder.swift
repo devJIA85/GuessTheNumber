@@ -70,7 +70,7 @@ struct HintPromptBuilder: Sendable {
         // 1. Instrucciones del rol
         sections.append("""
         Eres un asistente de estrategia para un juego tipo Mastermind numérico.
-        El jugador debe adivinar un número secreto de 5 dígitos (0-9, sin repetir).
+        El jugador debe adivinar un número secreto de \(input.digitCount) dígitos (0-9, sin repetir).
         
         Reglas del feedback:
         - GOOD: dígito correcto en posición correcta.
@@ -140,7 +140,7 @@ struct HintPromptBuilder: Sendable {
         - Basarte en el resumen táctico para priorizar el siguiente movimiento.
 
         LO QUE NO PUEDES HACER (REGLAS DE SEGURIDAD OBLIGATORIAS):
-        - NO REVELAR EL SECRETO NI DAR 5 DÍGITOS CONSECUTIVOS.
+        - NO REVELAR EL SECRETO NI DAR \(input.digitCount) DÍGITOS CONSECUTIVOS.
         - NO DECIR "EL NÚMERO ES..." O "LA RESPUESTA ES...".
         - NO PROPORCIONAR UN ÚNICO INTENTO ESPECÍFICO COMO SOLUCIÓN FINAL.
         - NO USAR LENGUAJE DE SOLVER NI ENUMERAR COMBINACIONES.
@@ -282,7 +282,7 @@ struct HintPromptBuilder: Sendable {
     ///
     /// - Parameter text: salida del modelo (o del fallback).
     /// - Returns: `true` si es segura, `false` si viola guardrails.
-    func isOutputSafe(_ text: String) -> Bool {
+    func isOutputSafe(_ text: String, digitCount: Int = GameConstants.secretLength) -> Bool {
         // Cap de longitud: una pista es breve; un texto largo huele a volcado de candidatos.
         guard text.count <= Self.maxOutputLength else { return false }
 
@@ -291,13 +291,13 @@ struct HintPromptBuilder: Sendable {
         // Regla de dígitos: contamos TODOS los dígitos sin importar separadores, saltos
         // de línea o campos. 5 o más ⇒ posible revelación del secreto, ya sea completo
         // ("12345"), con separadores ("1 2 3 4 5", "1-2-3-4-5") o repartido entre campos.
-        if text.filter(\.isNumber).count >= GameConstants.secretLength {
+        if text.filter(\.isNumber).count >= digitCount {
             return false
         }
 
         // Secreto escrito en palabras: "uno dos tres cuatro cinco" / "one two three...".
         let words = normalized.split { !$0.isLetter }.map(String.init)
-        if words.filter(Self.numberWords.contains).count >= GameConstants.secretLength {
+        if words.filter(Self.numberWords.contains).count >= digitCount {
             return false
         }
 

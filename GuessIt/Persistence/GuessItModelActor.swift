@@ -94,9 +94,9 @@ actor GuessItModelActor {
 
     /// Crea una partida nueva y la deja lista para jugar.
     /// - Returns: `Game` creado (ya insertado en el contexto).
-    func createNewGame() throws -> Game {
+    func createNewGame(length: ClassicGameLength = .five) throws -> Game {
         // 1) Secreto del dominio (puro).
-        let secret = SecretGenerator.generate()
+        let secret = SecretGenerator.generate(length: length)
 
         // 2) Creamos el Game primero para poder referenciarlo desde las notas.
         let game = Game(secret: secret, digitNotes: [])
@@ -128,8 +128,8 @@ actor GuessItModelActor {
     ///   identificador (`Sendable`), útil tanto para el dominio (lo descarta) como
     ///   para los tests (lo usan para pedir snapshots).
     @discardableResult
-    func startNewGame() throws -> GameIdentifier {
-        try createNewGame().persistentID
+    func startNewGame(length: ClassicGameLength = .five) throws -> GameIdentifier {
+        try createNewGame(length: length).persistentID
     }
 
     /// Devuelve la partida activa o crea una nueva si no existe.
@@ -259,6 +259,25 @@ actor GuessItModelActor {
         
         // Actualizar estadísticas (solo se ejecuta una vez por partida, rompe la racha)
         try updateStatsAfterGame(gameID: gameID)
+    }
+
+    /// Cierra la partida en progreso antes de un reset:
+    /// - Con al menos un intento: la marca abandonada (cuenta en stats, rompe la racha).
+    /// - Sin intentos: la elimina silenciosamente (el jugador nunca jugó esa partida;
+    ///   no debe inflar `totalGames` ni resetear `currentStreak`).
+    /// - Si no hay partida en progreso: no hace nada.
+    ///
+    /// - Why aquí y no en `GameActor`: la decisión depende de `attempts.count` y debe ser
+    ///   atómica dentro del único writer de SwiftData (evita check-then-act entre actores).
+    func abandonOrDiscardInProgressGame() throws {
+        guard let game = try fetchInProgressGame() else { return }
+
+        if game.attempts.isEmpty {
+            modelContext.delete(game)
+            try modelContext.save()
+        } else {
+            try markGameAbandoned(gameID: game.persistentID)
+        }
     }
 
     /// Elimina una partida del historial (y en cascada sus intentos y notas).
@@ -509,6 +528,7 @@ actor GuessItModelActor {
             createdAt: game.createdAt,
             finishedAt: game.finishedAt,
             secret: secret,
+            digitCount: game.secret.count,
             attempts: attemptSnapshots,
             digitNotes: digitNoteSnapshots
         )
@@ -643,68 +663,81 @@ actor GuessItModelActor {
     /// - Si ya existe el desafío de hoy: retornar.
     /// - Si no existe: generar con seed determinístico y crear.
     ///
+    /// - Parameter now: instante de referencia para determinar "hoy" (seam de testing;
+    ///   el código de producción nunca debe pasar un valor distinto de `Date()`).
     /// - Returns: desafío del día actual.
-    func fetchOrCreateTodayChallenge() throws -> DailyChallenge {
-        let today = DailyChallengeService.generateToday()
-        
+    func fetchOrCreateTodayChallenge(now: Date = Date()) throws -> DailyChallenge {
+        let today = DailyChallengeService.generate(for: now)
+
         // Buscar desafío de hoy - filtramos en código porque #Predicate no soporta variables capturadas
         let descriptor = FetchDescriptor<DailyChallenge>(
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
-        
+
         let challenges = try modelContext.fetch(descriptor)
-        
+
         // Camino principal: el seed UTC define de forma unívoca el desafío global del día.
         if let existing = challenges.first(where: { $0.seed == today.seed }) {
             return existing
         }
 
-        // Compatibilidad conservadora:
-        // si el usuario ya tiene un desafío "de hoy" persistido con la lógica vieja
-        // basada en timezone local, lo preservamos durante ese día para no resetearle el progreso.
-        let legacyToday = Calendar.current.startOfDay(for: Date())
-        if let legacy = challenges.first(where: { Calendar.current.isDate($0.date, inSameDayAs: legacyToday) }) {
+        // Conserva el progreso de un desafío guardado con el seed anterior
+        // mientras su fecha pertenezca al día UTC vigente.
+        if let legacy = challenges.first(where: {
+            DailyChallengeService.challengeDayStart(for: $0.date) == today.date
+        }) {
             return legacy
         }
-        
+
         // No existe: crear nuevo
         let newChallenge = DailyChallenge(date: today.date, secret: today.secret, seed: today.seed)
         modelContext.insert(newChallenge)
         try modelContext.save()
-        
+
         return newChallenge
     }
-    
+
     /// Obtiene snapshot del desafío del día.
     ///
-    /// - Parameter revealSecret: si true, incluye el secreto en el snapshot si el desafío ya cerró.
+    /// - Parameters:
+    ///   - revealSecret: si true, incluye el secreto en el snapshot si el desafío ya cerró.
+    ///   - now: instante de referencia para determinar "hoy" (seam de testing).
     /// - Returns: snapshot del desafío de hoy.
-    func fetchTodayChallengeSnapshot(revealSecret: Bool = false) throws -> DailyChallengeSnapshot {
-        let challenge = try fetchOrCreateTodayChallenge()
+    func fetchTodayChallengeSnapshot(revealSecret: Bool = false, now: Date = Date()) throws -> DailyChallengeSnapshot {
+        let challenge = try fetchOrCreateTodayChallenge(now: now)
         let shouldReveal = revealSecret && challenge.state.isClosed
         return DailyChallengeSnapshot(from: challenge, revealSecret: shouldReveal)
     }
-    
+
     /// Envía un intento en el desafío diario.
     ///
     /// - Parameters:
     ///   - guess: intento del usuario (3 dígitos).
     ///   - challengeID: identificador del desafío.
-    /// - Returns: feedback del intento.
-    func submitDailyChallengeGuess(guess: String, challengeID: PersistentIdentifier) throws -> AttemptFeedback {
+    ///   - now: instante de referencia para determinar si el desafío sigue siendo el de hoy
+    ///     (seam de testing; el código de producción nunca debe pasar un valor distinto de `Date()`).
+    /// - Returns: snapshot del desafío después de guardar el intento.
+    func submitDailyChallengeGuess(guess: String, challengeID: PersistentIdentifier, now: Date = Date()) throws -> DailyChallengeSnapshot {
         guard let challenge = modelContext.model(for: challengeID) as? DailyChallenge else {
             throw ModelActorError.gameNotFound(challengeID)
         }
-        
+
         // Validar que el desafío sigue activo.
         guard challenge.state.isActive else {
             throw DailyChallengeError.challengeNotActive(currentState: challenge.state)
         }
-        
+
+        // Contrato UTC: solo se puede jugar el desafío del día en curso.
+        // Un desafío de un día anterior que quedó .inProgress (pantalla abierta
+        // cruzando la medianoche UTC) no debe aceptar más intentos.
+        guard DailyChallengeService.utcCalendar.isDate(challenge.date, inSameDayAs: now) else {
+            throw DailyChallengeError.challengeExpired
+        }
+
         // Si es el primer intento, marcar como iniciado
         if challenge.state == .notStarted {
             challenge.state = .inProgress
-            challenge.startedAt = Date()
+            challenge.startedAt = now
         }
         
         // Evaluar intento (desafío diario usa 3 dígitos)
@@ -725,28 +758,23 @@ actor GuessItModelActor {
         )
         challenge.attempts.append(attempt)
         
-        // Si ganó, marcar como completado (victoria = 3 GOOD para desafío diario)
-        if evaluation.good == GameConstants.dailyChallengeLength {
+        let won = evaluation.good == GameConstants.dailyChallengeLength
+        if won {
             challenge.state = .completed
-            challenge.completedAt = Date()
-
-            // Reportar achievement de daily challenge a Game Center
-            if let reporter = achievementReporter,
-               let achievement = GameCenterAchievements.checkDailyChallengeAchievement(challengeCompleted: true) {
-                reporter([achievement])
-            }
-        }
-        // Si alcanzó el límite de intentos sin ganar, marcar como fallado
-        else if challenge.attempts.count >= GameConstants.dailyChallengeMaxAttempts {
+            challenge.completedAt = now
+        } else if challenge.attempts.count >= GameConstants.dailyChallengeMaxAttempts {
             challenge.state = .failed
-            challenge.completedAt = Date()
+            challenge.completedAt = now
         }
-        
+
         try modelContext.save()
-        
-        return feedback
+        if won, let reporter = achievementReporter,
+           let achievement = GameCenterAchievements.checkDailyChallengeAchievement(challengeCompleted: true) {
+            reporter([achievement])
+        }
+        return DailyChallengeSnapshot(from: challenge, revealSecret: challenge.state.isClosed)
     }
-    
+
     /// Marca el desafío diario como fallado (abandonado).
     ///
     /// - Parameter challengeID: identificador del desafío.

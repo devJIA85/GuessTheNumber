@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # https://github.com/actions/runner-images/blob/main/images/macos/xcode-27-arm64-Readme.md
+    runs-on: xcode-27
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Verify Xcode 27.2 (27B52)
+        run: |
+          if [[ ! -x "$DEVELOPER_DIR/usr/bin/xcodebuild" ]]; then
+            echo "::error::Xcode 27.2 is missing at $DEVELOPER_DIR"
+            exit 1
+          fi
+          version="$(xcodebuild -version)"
+          printf '%s\n' "$version"
+          if [[ "$version" != $'Xcode 27.2\nBuild version 27B52' ]]; then
+            echo "::error::Expected Xcode 27.2 (27B52)"
+            exit 1
+          fi
+          xcrun swift --version
+          git log -1 --format='Commit %H | Tree %T'
+
+      - name: Run unit and UI tests
+        run: |
+          xcodebuild test \
+            -project GuessIt.xcodeproj \
+            -scheme GuessIt \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=27.2' \
+            -resultBundlePath "$RUNNER_TEMP/GuessIt.xcresult" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Build unsigned iOS Release
+        if: ${{ !cancelled() }}
+        run: |
+          xcodebuild build \
+            -project GuessIt.xcodeproj \
+            -scheme GuessIt \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/GuessItRelease" \
+            CODE_SIGNING_ALLOWED=NO
+          plutil -lint "$RUNNER_TEMP/GuessItRelease/Build/Products/Release-iphoneos/GuessIt.app/PrivacyInfo.xcprivacy"
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: GuessIt-test-results
+          path: ${{ runner.temp }}/GuessIt.xcresult
+          if-no-files-found: ignore

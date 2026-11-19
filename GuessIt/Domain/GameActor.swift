@@ -44,27 +44,26 @@ actor GameActor {
     /// Reinicia la partida.
     ///
     /// Implementación MVP:
-    /// - Si hay una partida en progreso, intenta marcarla como abandonada.
+    /// - Si hay una partida en progreso con intentos, la marca como abandonada (cuenta en stats).
+    /// - Si hay una partida en progreso sin intentos, la descarta silenciosamente (el jugador
+    ///   nunca la jugó: no debe inflar `totalGames` ni resetear `currentStreak`).
     /// - Las partidas ya terminadas (won/abandoned) se ignoran automáticamente.
     /// - Crea una partida nueva.
     ///
-    /// - Note: Manejo robusto de errores - si falla marcar como abandonada, igual crea nueva partida.
-    func resetGame() async throws {
-        // fetchInProgressGameID() solo devuelve partidas con estado .inProgress.
-        // Si la partida está ganada o abandonada, devuelve nil y simplemente creamos una nueva.
-        if let existingID = try await modelActor.fetchInProgressGameID() {
-            // Intentar marcar como abandonada, pero si falla (datos corruptos), continuar igual
-            do {
-                try await modelActor.markGameAbandoned(gameID: existingID)
-            } catch {
-                // Log del error pero continuar
-                print("⚠️ No se pudo marcar partida como abandonada: \(error)")
-                // No propagamos el error - crear nueva partida es más importante
-            }
+    /// - Note: Manejo robusto de errores - si falla cerrar la partida anterior, igual crea nueva partida.
+    func resetGame(length: ClassicGameLength = .five) async throws {
+        // Cierra (abandona o descarta) la partida en progreso de forma atómica en el writer.
+        // - Partidas con intentos: abandono normal (cuenta en stats).
+        // - Partidas sin intentos: descarte silencioso (no son partidas jugadas).
+        do {
+            try await modelActor.abandonOrDiscardInProgressGame()
+        } catch {
+            // Manejo robusto: si falla el cierre, igual creamos la nueva partida.
+            print("⚠️ No se pudo cerrar la partida en progreso: \(error)")
         }
         // Crear siempre una nueva partida.
         // Usamos la variante que no devuelve el `@Model` (seguro para cruzar actores en Swift 6).
-        try await modelActor.startNewGame()
+        try await modelActor.startNewGame(length: length)
     }
 
     /// Envía un intento del usuario.
@@ -94,10 +93,11 @@ actor GameActor {
         }
 
         // 2) Validar input.
-        try GuessValidator.validate(guess)
+        let length = ClassicGameLength(rawValue: gameData.secret.count) ?? .five
+        try GuessValidator.validate(guess, length: length)
 
         // 3) Evaluar usando el secreto persistido.
-        let evaluation = try GuessEvaluator.evaluate(secret: gameData.secret, guess: guess)
+        let evaluation = try GuessEvaluator.evaluate(secret: gameData.secret, guess: guess, length: length)
         let feedback = AttemptFeedback(
             good: evaluation.good,
             fair: evaluation.fair,
@@ -115,7 +115,7 @@ actor GameActor {
         )
 
         // 5) Transicionar estado (persistido).
-        if evaluation.good == GameConstants.secretLength {
+        if evaluation.good == length.rawValue {
             try await modelActor.markGameWon(gameID: gameID)
         }
 

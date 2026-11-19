@@ -56,6 +56,33 @@ struct GameActorIntegrationTests {
 
     // MARK: - Tests de submitGuess
 
+    @Test("Cada largo se guarda y permite ganar", arguments: ClassicGameLength.allCases)
+    func testClassicGameLength(length: ClassicGameLength) async throws {
+        let gameActor = makeTestGameActor()
+        try await gameActor.resetGame(length: length)
+        let current = try await gameActor.modelActor.fetchCurrentGameDetailSnapshot()
+        let snapshot = try #require(current)
+        let secret = try await gameActor.debugSecret()
+        #expect(snapshot.digitCount == length.rawValue)
+        #expect(snapshot.secret == nil)
+        #expect(secret.count == length.rawValue)
+        #expect(Set(secret).count == length.rawValue)
+
+        do {
+            _ = try await gameActor.submitGuess(String(secret.dropLast()))
+            Issue.record("Se esperaba un error de longitud")
+        } catch let error as GuessValidator.ValidationError {
+            #expect(error == .invalidLength(expected: length.rawValue))
+        }
+
+        let win = try await gameActor.submitGuess(secret)
+        let saved = try await gameActor.modelActor.fetchGameDetailSnapshot(gameID: snapshot.id)
+        #expect(win.gameState == .won)
+        #expect(win.feedback.good == length.rawValue)
+        #expect(saved.digitCount == length.rawValue)
+        #expect(saved.attempts.count == 1)
+    }
+
     @Test("submitGuess persiste intento y devuelve feedback correcto")
     func testSubmitGuessPersistsAttemptAndReturnsFeedback() async throws {
         // Arrange: crear actor con secreto conocido
@@ -255,9 +282,83 @@ struct GameActorIntegrationTests {
         // Assert: nueva partida creada
         let secret = try await gameActor.debugSecret()
         #expect(secret.count == GameConstants.secretLength)
-        
+
         let state = try await gameActor.currentState()
         #expect(state == .inProgress)
+    }
+
+    @Test("resetGame con partida sin intentos la descarta sin afectar stats")
+    func testResetGameWithZeroAttemptsDiscardsSilently() async throws {
+        // Arrange: construimos el trío nosotros mismos para poder inspeccionar stats.
+        let container = TestModelContainerFactory.makeIsolatedInMemoryContainer()
+        let modelActor = GuessItModelActor(modelContainer: container)
+        let gameActor = GameActor(modelActor: modelActor)
+
+        // Crea una partida pero nunca envía un intento.
+        _ = try await modelActor.fetchOrCreateInProgressGameID()
+
+        // Act: resetear sin haber jugado ningún intento.
+        try await gameActor.resetGame()
+
+        // Assert: la partida sin intentos se descartó silenciosamente (no cuenta en stats).
+        let statsSnapshot = try await modelActor.fetchStatsSnapshot()
+        #expect(statsSnapshot.totalGames == 0, "Una partida sin intentos no debe contar como jugada")
+        #expect(statsSnapshot.currentStreak == 0, "La racha no debe verse afectada")
+
+        // Assert: no debe existir ninguna partida .abandoned en el historial.
+        let summaries = try await modelActor.fetchFinishedGameSummaries()
+        #expect(summaries.isEmpty, "La partida descartada no debe aparecer como .abandoned")
+    }
+
+    @Test("resetGame con al menos un intento abandona y cuenta en stats")
+    func testResetGameWithAtLeastOneAttemptAbandonsAndCounts() async throws {
+        // Arrange
+        let container = TestModelContainerFactory.makeIsolatedInMemoryContainer()
+        let modelActor = GuessItModelActor(modelContainer: container)
+        let gameActor = GameActor(modelActor: modelActor)
+
+        let gameID = try await modelActor.fetchOrCreateInProgressGameID()
+        try await modelActor.updateSecret(gameID: gameID, secret: "01234")
+
+        // Un intento válido pero no ganador.
+        _ = try await gameActor.submitGuess("56789")
+
+        // Act: resetear con al menos un intento registrado.
+        try await gameActor.resetGame()
+
+        // Assert: cuenta como partida jugada y rompe la racha.
+        let statsSnapshot = try await modelActor.fetchStatsSnapshot()
+        #expect(statsSnapshot.totalGames == 1, "Una partida con intentos debe contar como jugada")
+        #expect(statsSnapshot.currentStreak == 0, "Abandonar debe romper la racha")
+
+        // Assert: la partida aparece como .abandoned en el historial.
+        let summaries = try await modelActor.fetchFinishedGameSummaries()
+        #expect(summaries.count == 1, "Debe haber exactamente 1 partida terminada")
+        #expect(summaries.first?.state == .abandoned, "La partida debe estar marcada como abandonada")
+    }
+
+    @Test("la racha sobrevive victoria -> nueva partida automática -> reset")
+    func testStreakSurvivesWinThenAutoNewGameThenReset() async throws {
+        // Arrange: el caso exacto del bug reportado por el usuario.
+        let container = TestModelContainerFactory.makeIsolatedInMemoryContainer()
+        let modelActor = GuessItModelActor(modelContainer: container)
+        let gameActor = GameActor(modelActor: modelActor)
+
+        let gameID = try await modelActor.fetchOrCreateInProgressGameID()
+        try await modelActor.updateSecret(gameID: gameID, secret: "01234")
+
+        // Act 1: ganar la partida A.
+        let winResult = try await gameActor.submitGuess("01234")
+        #expect(winResult.gameState == .won, "Debe ganar con el secreto exacto")
+
+        // Act 2: la UI auto-crea la partida B (0 intentos) y el usuario resetea de nuevo.
+        try await gameActor.resetGame() // Crea partida B (0 intentos).
+        try await gameActor.resetGame() // Descarta B (0 intentos), crea C.
+
+        // Assert: la racha ganada en A debe sobrevivir intacta.
+        let statsSnapshot = try await modelActor.fetchStatsSnapshot()
+        #expect(statsSnapshot.currentStreak == 1, "La racha de la victoria no debe resetearse por partidas fantasma")
+        #expect(statsSnapshot.totalGames == 1, "Solo la partida ganada (A) debe contar; B fue descartada")
     }
 
     // MARK: - Tests de Evaluación de Feedback

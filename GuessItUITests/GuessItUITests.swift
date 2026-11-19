@@ -32,6 +32,76 @@ final class GuessItUITests: XCTestCase {
     }
 
     @MainActor
+    func testClassicGameDigitSelector() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-hasCompletedTutorial", "YES", "-AppleLanguages", "(en)"]
+        app.launch()
+
+        for length in [3, 4, 5] {
+            openNewGame(in: app)
+            let option = app.segmentedControls.buttons[String(length)]
+            XCTAssertTrue(option.waitForExistence(timeout: 10))
+            option.tap()
+            app.buttons["Start"].tap()
+
+            let input = app.descendants(matching: .any)["game.guess.input"].firstMatch
+            let label = NSPredicate(format: "label == %@", "\(length)-digit guess")
+            expectation(for: label, evaluatedWith: input)
+            waitForExpectations(timeout: 10)
+
+            let submit = app.buttons["game.guess.submit"]
+            XCTAssertFalse(submit.isEnabled)
+            for digit in 0..<length {
+                let key = app.descendants(matching: .any)["game.digit.\(digit)"].firstMatch
+                XCTAssertTrue(key.waitForExistence(timeout: 10))
+                key.tap()
+                XCTAssertEqual(submit.isEnabled, digit == length - 1)
+            }
+        }
+
+        openNewGame(in: app)
+        app.segmentedControls.buttons["4"].tap()
+        app.buttons["Start"].tap()
+        let input = app.descendants(matching: .any)["game.guess.input"].firstMatch
+        expectation(for: NSPredicate(format: "label == %@", "4-digit guess"), evaluatedWith: input)
+        waitForExpectations(timeout: 10)
+
+        app.terminate()
+        app.launch()
+
+        expectation(for: NSPredicate(format: "label == %@", "4-digit guess"), evaluatedWith: input)
+        waitForExpectations(timeout: 10)
+        let submit = app.buttons["game.guess.submit"]
+        for digit in 0..<4 {
+            app.descendants(matching: .any)["game.digit.\(digit)"].firstMatch.tap()
+        }
+        XCTAssertTrue(submit.isEnabled)
+
+        openNewGame(in: app)
+        app.segmentedControls.buttons["3"].tap()
+        app.buttons["Cancel"].tap()
+        XCTAssertEqual(input.label, "4-digit guess")
+        XCTAssertTrue(submit.isEnabled)
+
+        openNewGame(in: app)
+        app.buttons["Start"].tap()
+        let resetInput = NSPredicate(format: "label == %@", "4-digit guess")
+        expectation(for: resetInput, evaluatedWith: input)
+        expectation(for: NSPredicate(format: "enabled == false"), evaluatedWith: submit)
+        waitForExpectations(timeout: 10)
+    }
+
+    @MainActor
+    private func openNewGame(in app: XCUIApplication) {
+        let menu = app.buttons["game.actions"]
+        XCTAssertTrue(menu.waitForExistence(timeout: 15))
+        menu.tap()
+        let newGame = app.buttons["New game"]
+        XCTAssertTrue(newGame.waitForExistence(timeout: 10))
+        newGame.tap()
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

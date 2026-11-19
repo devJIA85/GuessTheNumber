@@ -51,15 +51,16 @@ struct GuessEvaluator {
     ///   - guess: Intento del usuario (por ejemplo: "57310").
     /// - Returns: `Evaluation` con conteos de Good/Fair y bandera de Poor.
     /// - Throws: `EvaluatorError` si las longitudes no coinciden.
-    static func evaluate(secret: String, guess: String) throws -> Evaluation {
-        guard secret.count == GameConstants.secretLength else {
-            throw EvaluatorError.invalidSecretLength(expected: GameConstants.secretLength, got: secret.count)
+    static func evaluate(secret: String, guess: String, length: ClassicGameLength = .five) throws -> Evaluation {
+        let expected = length.rawValue
+        guard secret.count == expected else {
+            throw EvaluatorError.invalidSecretLength(expected: expected, got: secret.count)
         }
-        guard guess.count == GameConstants.secretLength else {
-            throw EvaluatorError.invalidGuessLength(expected: GameConstants.secretLength, got: guess.count)
+        guard guess.count == expected else {
+            throw EvaluatorError.invalidGuessLength(expected: expected, got: guess.count)
         }
 
-        return evaluateInternal(secret: secret, guess: guess, expectedLength: GameConstants.secretLength)
+        return evaluateInternal(secret: secret, guess: guess, expectedLength: expected)
     }
 
     /// Evalúa un intento del desafío diario contra el secreto.

@@ -2,6 +2,102 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+    "accessibility.guess_input_digits %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld-digit guess"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Número de %lld dígitos"
+          }
+        }
+      }
+    },
+    "game.classic_abandon_warning": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starting a new game will abandon the current one."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si empezás una partida nueva, vas a abandonar la actual."
+          }
+        }
+      }
+    },
+    "game.classic_cancel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        }
+      }
+    },
+    "game.classic_digit_count": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Number of digits"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cantidad de dígitos"
+          }
+        }
+      }
+    },
+    "game.classic_start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empezar"
+          }
+        }
+      }
+    },
+    "game.new_classic": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New game"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nueva partida"
+          }
+        }
+      }
+    },
     "accessibility.attempt_row": {
       "localizations": {
         "en": {
@@ -199,13 +295,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enter 5 digits to enable"
+            "value": "Complete the number to enable"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ingresá 5 dígitos para habilitar"
+            "value": "Completá el número para habilitar"
           }
         }
       }
@@ -1959,13 +2055,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enter a 5-digit number (no repeats)"
+            "value": "Enter a number with the chosen length and no repeated digits"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ingresá un número de 5 dígitos (sin repetir)"
+            "value": "Ingresá un número del largo elegido, sin repetir dígitos"
           }
         }
       }
@@ -2071,13 +2167,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A deduction game where you have to guess a secret 5-digit number"
+            "value": "Guess a secret number of 3, 4, or 5 digits"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un juego de deducción donde tenés que adivinar un número secreto de 5 dígitos"
+            "value": "Adiviná un número secreto de 3, 4 o 5 dígitos"
           }
         }
       }

@@ -43,6 +43,13 @@ final class GameViewModel {
 
     // MARK: - Estado derivado
 
+    /// Decide si una transición de estado corresponde a una victoria ganada EN esta sesión.
+    /// - Why: al arrancar, `loadCurrentGame` puede cargar una partida ya ganada (nil → .won);
+    ///   esa transición no debe re-disparar splash/háptica/envío de score.
+    static func isFreshWin(from oldState: GameState?, to newState: GameState?) -> Bool {
+        oldState == .inProgress && newState == .won
+    }
+
     /// Texto de estado para el subtítulo de navegación.
     var statusText: String {
         guard let game = currentGame else {
@@ -102,10 +109,10 @@ final class GameViewModel {
     /// Reinicia la partida (nueva) y refresca el snapshot.
     /// - Returns: `true` si se reinició sin error.
     @discardableResult
-    func startNewGame() async -> Bool {
+    func startNewGame(length: ClassicGameLength = .five) async -> Bool {
         guard let env else { return false }
         do {
-            try await env.gameActor.resetGame()
+            try await env.gameActor.resetGame(length: length)
             await loadCurrentGame()
             return true
         } catch {
@@ -194,6 +201,7 @@ final class GameViewModel {
             createdAt: game.createdAt,
             finishedAt: game.finishedAt,
             secret: game.secret,
+            digitCount: game.digitCount,
             attempts: game.attempts,
             digitNotes: notes
         )

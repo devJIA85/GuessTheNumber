@@ -106,6 +106,7 @@ struct GameDetailSnapshot: Sendable, Equatable {
     let finishedAt: Date?
     /// Secreto de la partida (solo revelado si state == .won).
     let secret: String?
+    let digitCount: Int
     let attempts: [AttemptSnapshot]
     let digitNotes: [DigitNoteSnapshot]
 }
