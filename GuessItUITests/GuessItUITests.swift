@@ -71,11 +71,24 @@ final class GuessItUITests: XCTestCase {
 
         expectation(for: NSPredicate(format: "label == %@", "4-digit guess"), evaluatedWith: input)
         waitForExpectations(timeout: 10)
+        let submit = app.buttons["game.guess.submit"]
+        for digit in 0..<4 {
+            app.descendants(matching: .any)["game.digit.\(digit)"].firstMatch.tap()
+        }
+        XCTAssertTrue(submit.isEnabled)
+
         openNewGame(in: app)
-        XCTAssertTrue(app.segmentedControls.buttons["4"].isSelected)
         app.segmentedControls.buttons["3"].tap()
         app.buttons["Cancel"].tap()
         XCTAssertEqual(input.label, "4-digit guess")
+        XCTAssertTrue(submit.isEnabled)
+
+        openNewGame(in: app)
+        app.buttons["Start"].tap()
+        let resetInput = NSPredicate(format: "label == %@", "4-digit guess")
+        expectation(for: resetInput, evaluatedWith: input)
+        expectation(for: NSPredicate(format: "enabled == false"), evaluatedWith: submit)
+        waitForExpectations(timeout: 10)
     }
 
     @MainActor
