@@ -66,6 +66,7 @@ struct GuessInputView: View {
                 .accessibilityLabel("accessibility.guess_input_digits \(digitCount)")
                 .accessibilityValue(guessText.isEmpty ? String(localized: "accessibility.empty") : guessText)
                 .accessibilityHint("accessibility.keypad_hint")
+                .accessibilityIdentifier("game.guess.input")
 
             // SECCIÓN 2: Tablero de dígitos 0-9 (clickeable para input)
             if let game = game {
@@ -139,6 +140,7 @@ struct GuessInputView: View {
                 .opacity(isButtonDisabled ? 0.4 : 1.0)
                 .animation(.easeOut(duration: 0.2), value: isButtonDisabled)
                 .accessibilityLabel("accessibility.submit_guess")
+                .accessibilityIdentifier("game.guess.submit")
                 .accessibilityHint(isButtonDisabled ? Text("accessibility.submit_disabled_hint") : Text("accessibility.submit_enabled_hint"))
             }
         }

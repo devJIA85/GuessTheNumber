@@ -212,6 +212,7 @@ struct GameView: View {
             } label: {
                 actionIcon("ellipsis", label: "Más")
             }
+            .accessibilityIdentifier("game.actions")
         }
         .padding(.horizontal, AppTheme.Spacing.large)
         .padding(.top, AppTheme.Spacing.small)

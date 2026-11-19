@@ -221,6 +221,7 @@ struct SimpleDigitCell: View {
             .accessibilityLabel(isInputMode ? "Dígito \(digit). \(isUsed ? "Ya usado" : "Tocá para ingresar")" : "Dígito \(digit). Estado \(mark.spokenText)")
             .accessibilityHint(isUsed ? "" : (isInputMode ? "Doble toque para agregar. Mantén presionado para marcar" : "Doble toque para cambiar estado"))
             .accessibilityAddTraits(isUsed ? [] : .isButton)
+            .accessibilityIdentifier("game.digit.\(digit)")
     }
     
     // MARK: - Presentación
