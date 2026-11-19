@@ -299,10 +299,16 @@ struct DailyChallengeView: View {
         Task { @MainActor in
             do {
                 try GuessValidator.validateDailyChallenge(guess)
-                _ = try await env.modelActor.submitDailyChallengeGuess(guess: guess, challengeID: challenge.id)
+                let result = try await env.modelActor.submitDailyChallengeGuess(guess: guess, challengeID: challenge.id)
                 guessText = ""
                 HapticFeedbackManager.attemptSubmitted()
                 await loadChallenge()
+                if result.state == .completed {
+                    await env.leaderboardService.submitDailyChallengeScore(
+                        attempts: result.attemptsCount,
+                        challengeDate: result.date
+                    )
+                }
             } catch let error as GuessValidator.ValidationError {
                 errorMessage = error.errorDescription
                 HapticFeedbackManager.validationFailed()

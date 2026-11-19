@@ -209,6 +209,31 @@ struct DailyChallengeRegressionTests {
 
     // MARK: - Plan 004: tope de intentos, failDailyChallenge y rollover UTC
 
+    @Test("El envío ganador devuelve la fecha y la cantidad de intentos para el ranking diario")
+    @MainActor
+    func test_submitDailyChallengeGuess_returnsPersistedWin() async throws {
+        let container = makeTestContainer()
+        let modelActor = makeModelActor(container: container)
+        let utc = TimeZone(secondsFromGMT: 0)!
+        let now = makeDate(year: 2026, month: 3, day: 10, hour: 12, timeZone: utc)
+        let challenge = try await modelActor.fetchTodayChallengeSnapshot(now: now)
+        let secret = DailyChallengeService.generate(for: now).secret
+
+        let first = try await modelActor.submitDailyChallengeGuess(
+            guess: rotatedGuess(from: secret), challengeID: challenge.id, now: now
+        )
+        let win = try await modelActor.submitDailyChallengeGuess(
+            guess: secret, challengeID: challenge.id, now: now
+        )
+        let persisted = try await modelActor.fetchTodayChallengeSnapshot(revealSecret: true, now: now)
+
+        #expect(first.state == .inProgress)
+        #expect(win.state == .completed)
+        #expect(win.attemptsCount == 2)
+        #expect(win.date == challenge.date)
+        #expect(win == persisted)
+    }
+
     @Test("El intento número 10 sin ganar falla el desafío; los intentos 1-9 lo mantienen en progreso")
     @MainActor
     func test_submitDailyChallengeGuess_capsAtMaxAttempts() async throws {

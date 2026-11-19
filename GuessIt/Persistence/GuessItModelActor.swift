@@ -715,8 +715,8 @@ actor GuessItModelActor {
     ///   - challengeID: identificador del desafío.
     ///   - now: instante de referencia para determinar si el desafío sigue siendo el de hoy
     ///     (seam de testing; el código de producción nunca debe pasar un valor distinto de `Date()`).
-    /// - Returns: feedback del intento.
-    func submitDailyChallengeGuess(guess: String, challengeID: PersistentIdentifier, now: Date = Date()) throws -> AttemptFeedback {
+    /// - Returns: snapshot del desafío después de guardar el intento.
+    func submitDailyChallengeGuess(guess: String, challengeID: PersistentIdentifier, now: Date = Date()) throws -> DailyChallengeSnapshot {
         guard let challenge = modelContext.model(for: challengeID) as? DailyChallenge else {
             throw ModelActorError.gameNotFound(challengeID)
         }
@@ -736,7 +736,7 @@ actor GuessItModelActor {
         // Si es el primer intento, marcar como iniciado
         if challenge.state == .notStarted {
             challenge.state = .inProgress
-            challenge.startedAt = Date()
+            challenge.startedAt = now
         }
         
         // Evaluar intento (desafío diario usa 3 dígitos)
@@ -757,28 +757,23 @@ actor GuessItModelActor {
         )
         challenge.attempts.append(attempt)
         
-        // Si ganó, marcar como completado (victoria = 3 GOOD para desafío diario)
-        if evaluation.good == GameConstants.dailyChallengeLength {
+        let won = evaluation.good == GameConstants.dailyChallengeLength
+        if won {
             challenge.state = .completed
-            challenge.completedAt = Date()
-
-            // Reportar achievement de daily challenge a Game Center
-            if let reporter = achievementReporter,
-               let achievement = GameCenterAchievements.checkDailyChallengeAchievement(challengeCompleted: true) {
-                reporter([achievement])
-            }
-        }
-        // Si alcanzó el límite de intentos sin ganar, marcar como fallado
-        else if challenge.attempts.count >= GameConstants.dailyChallengeMaxAttempts {
+            challenge.completedAt = now
+        } else if challenge.attempts.count >= GameConstants.dailyChallengeMaxAttempts {
             challenge.state = .failed
-            challenge.completedAt = Date()
+            challenge.completedAt = now
         }
-        
+
         try modelContext.save()
-        
-        return feedback
+        if won, let reporter = achievementReporter,
+           let achievement = GameCenterAchievements.checkDailyChallengeAchievement(challengeCompleted: true) {
+            reporter([achievement])
+        }
+        return DailyChallengeSnapshot(from: challenge, revealSecret: challenge.state.isClosed)
     }
-    
+
     /// Marca el desafío diario como fallado (abandonado).
     ///
     /// - Parameter challengeID: identificador del desafío.
