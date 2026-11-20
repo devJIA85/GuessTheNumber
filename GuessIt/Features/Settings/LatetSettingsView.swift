@@ -30,10 +30,12 @@ struct LatetSettingsView: View {
 
     var body: some View {
         Form {
-            Picker("settings.appearance", selection: $appearance) {
+            Picker(selection: $appearance) {
                 ForEach(LatetAppearance.allCases, id: \.self) { option in
                     Text(option.title).tag(option)
                 }
+            } label: {
+                Label("settings.appearance", systemImage: "circle.lefthalf.filled")
             }
             Button {
                 isTutorialPresented = true
