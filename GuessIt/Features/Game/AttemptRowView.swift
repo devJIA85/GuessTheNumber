@@ -126,7 +126,7 @@ struct AttemptRowView: View {
     /// - Why: evita que el usuario tenga que interpretar etiquetas visuales.
     private var accessibilityLabel: String {
         var parts: [String] = []
-        parts.append("Intento \(data.guess)")
+        parts.append(String(localized: "accessibility.attempt.number \(data.guess)"))
         parts.append("GOOD \(data.good)")
         parts.append("FAIR \(data.fair)")
 
@@ -135,7 +135,7 @@ struct AttemptRowView: View {
         }
 
         if data.isRepeated {
-            parts.append("repetido")
+            parts.append(String(localized: "accessibility.attempt.repeated"))
         }
 
         return parts.joined(separator: ", ")

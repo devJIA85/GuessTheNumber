@@ -126,13 +126,13 @@ struct VictorySplashView: View {
     private var rank: (title: String, color: Color, emoji: String) {
         switch attempts {
         case 1:
-            return ("¡IMPOSIBLE!", Color.cyan, "⚡")
+            return (String(localized: "game.victory.rank.impossible"), Color.cyan, "⚡")
         case 2...19:
-            return ("¡GENIO!", Color(red: 1.0, green: 0.84, blue: 0.0), "🏆")
+            return (String(localized: "game.victory.rank.genius"), Color(red: 1.0, green: 0.84, blue: 0.0), "🏆")
         case 20...30:
-            return ("¡EXCELENTE!", Color(red: 0.75, green: 0.75, blue: 0.80), "🥈")
+            return (String(localized: "game.victory.rank.excellent"), Color(red: 0.75, green: 0.75, blue: 0.80), "🥈")
         default:
-            return ("¡BIEN HECHO!", Color(red: 0.80, green: 0.50, blue: 0.20), "🥉")
+            return (String(localized: "game.victory.rank.well_done"), Color(red: 0.80, green: 0.50, blue: 0.20), "🥉")
         }
     }
 
@@ -141,7 +141,8 @@ struct VictorySplashView: View {
     /// Backdrop: fondo "Focus" inmersivo + aurora rotatoria teñida por el rango + viñeta.
     private var backdrop: some View {
         ZStack {
-            AppTheme.Focus.background.opacity(showBackground ? 1 : 0)
+            // La celebración usa texto claro y un fondo propio para mantener el contraste.
+            AppTheme.Focus.celebrationBackground.opacity(showBackground ? 1 : 0)
                 .ignoresSafeArea()
 
             // La aurora rotatoria solo se muestra si el usuario no pidió reducir movimiento.

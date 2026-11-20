@@ -607,7 +607,9 @@ extension AppTheme {
     enum Focus {
         // Conservamos la aurora en ambas apariencias y resolvemos las superficies
         // con el sistema para que los controles nativos sigan el mismo tema.
-        static let background = adaptive(light: UIColor(white: 0.96, alpha: 1), dark: UIColor(red: 0x0B / 255, green: 0x0B / 255, blue: 0x12 / 255, alpha: 1))
+        private static let darkSurface = UIColor(red: 0x0B / 255, green: 0x0B / 255, blue: 0x12 / 255, alpha: 1)
+        static let background = adaptive(light: UIColor(white: 0.96, alpha: 1), dark: darkSurface)
+        static let celebrationBackground = Color(uiColor: darkSurface)
         static let textPrimary = Color(uiColor: .label)
         static let textSecondary = adaptive(light: UIColor(white: 0.26, alpha: 1), dark: UIColor(white: 0.84, alpha: 1))
         static let textTertiary = textSecondary

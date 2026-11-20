@@ -2,6 +2,118 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+    "game.victory.rank.well_done": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WELL DONE!"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡BIEN HECHO!"
+          }
+        }
+      }
+    },
+    "game.victory.rank.excellent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EXCELLENT!"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡EXCELENTE!"
+          }
+        }
+      }
+    },
+    "game.victory.rank.genius": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GENIUS!"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡GENIO!"
+          }
+        }
+      }
+    },
+    "game.victory.rank.impossible": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IMPOSSIBLE!"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡IMPOSIBLE!"
+          }
+        }
+      }
+    },
+    "accessibility.attempt.repeated": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeated"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repetido"
+          }
+        }
+      }
+    },
+    "accessibility.attempt.number %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guess %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intento %@"
+          }
+        }
+      }
+    },
+    "accessibility.game.won %@ %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You won. Secret: %1$@. Attempts: %2$lld."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ganaste. Secreto: %1$@. Intentos: %2$lld."
+          }
+        }
+      }
+    },
     "accessibility.mark.good": {
       "localizations": {
         "en": {

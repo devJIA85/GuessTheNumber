@@ -967,7 +967,7 @@ private struct VictorySectionView: View {
 
             // CTA: Nueva partida
             Button(action: onNewGame) {
-                Label("Nueva partida", systemImage: "plus.circle.fill")
+                Label("game.victory.new_game", systemImage: "plus.circle.fill")
                     .font(.system(.body, design: .rounded, weight: .bold))
                     .foregroundStyle(AppTheme.Focus.actionText)
                     .frame(maxWidth: .infinity)
@@ -986,7 +986,7 @@ private struct VictorySectionView: View {
         .frame(maxWidth: .infinity)
         .focusCard(tint: .appActionPrimary)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Ganaste. Secreto: \(game.secret ?? "desconocido"). Intentos: \(game.attempts.count).")
+        .accessibilityLabel("accessibility.game.won \(game.secret ?? String(localized: "accessibility.empty")) \(game.attempts.count)")
     }
 }
 
