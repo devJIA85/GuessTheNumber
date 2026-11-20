@@ -10,6 +10,7 @@ import SwiftData
 
 @main
 struct GuessItApp: App {
+    @AppStorage(LatetAppearance.storageKey) private var appearance = LatetAppearance.system
 
     // MARK: - SwiftData
 
@@ -52,6 +53,7 @@ struct GuessItApp: App {
             RootView()
                 // Inyectamos el environment propio de la app.
                 .environment(\.appEnvironment, environment)
+                .preferredColorScheme(appearance.colorScheme)
         }
         // Inyectamos el contenedor SwiftData a toda la jerarquía.
         .modelContainer(modelContainer)

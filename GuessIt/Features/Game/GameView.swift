@@ -7,6 +7,14 @@
 
 import SwiftUI
 
+enum GameRoute: Hashable {
+    case history
+    case statistics
+    case daily
+    case settings
+    case about
+}
+
 /// Pantalla principal del juego.
 ///
 /// # Rol
@@ -27,6 +35,7 @@ struct GameView: View {
     /// Store observable del flujo principal: dueño del snapshot de partida y del error.
     /// - Why: separa la orquestación (carga/submit/reset/notas) de la vista declarativa.
     @State private var vm = GameViewModel()
+    @State private var navigationPath = NavigationPath()
 
     /// Input del usuario (string crudo).
     @State private var guessText: String = ""
@@ -68,17 +77,12 @@ struct GameView: View {
     /// - Why: permite coordinar presentación + haptic sin persistencia.
     @State private var victorySplash = VictorySplashState()
     
-    /// Controla la presentación del tutorial.
-    @State private var isTutorialPresented = false
-
-
-
     var body: some View {
         navigationContent
     }
     
     private var navigationContent: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             contentWithOverlay
                 .task {
                     vm.configure(env: env)
@@ -117,8 +121,14 @@ struct GameView: View {
                 .sheet(isPresented: $isHintPresented, onDismiss: onHintDismiss) {
                     hintSheet
                 }
-                .fullScreenCover(isPresented: $isTutorialPresented) {
-                    TutorialView(isPresented: $isTutorialPresented)
+                .navigationDestination(for: GameRoute.self) { route in
+                    switch route {
+                    case .history: HistoryView()
+                    case .statistics: StatsView()
+                    case .daily: DailyChallengeView()
+                    case .settings: LatetSettingsView()
+                    case .about: LatetAboutView()
+                    }
                 }
         }
     }
@@ -167,13 +177,13 @@ struct GameView: View {
         HStack(spacing: 4) {
             Spacer()
 
-            NavigationLink { HistoryView() } label: {
+            NavigationLink(value: GameRoute.history) {
                 actionIcon("clock.arrow.circlepath", label: "history.title")
             }
-            NavigationLink { StatsView() } label: {
+            NavigationLink(value: GameRoute.statistics) {
                 actionIcon("chart.bar.fill", label: "stats.title")
             }
-            NavigationLink { DailyChallengeView() } label: {
+            NavigationLink(value: GameRoute.daily) {
                 actionIcon("calendar", label: "daily.title")
             }
 
@@ -188,9 +198,9 @@ struct GameView: View {
 
             Menu {
                 Button {
-                    isTutorialPresented = true
+                    navigationPath.append(GameRoute.settings)
                 } label: {
-                    Label("game.how_to_play", systemImage: "questionmark.circle")
+                    Label("settings.title", systemImage: "gearshape")
                 }
                 Button {
                     chooseNewGame()

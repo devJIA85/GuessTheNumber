@@ -49,6 +49,9 @@ struct HistoryView: View {
         }
         // Barra transparente pero visible (conserva el botón "atrás"); el header
         // grande vive en el contenido, como en el mock.
+        .navigationDestination(for: GameIdentifier.self) { gameID in
+            GameDetailView(gameID: gameID)
+        }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
@@ -146,9 +149,7 @@ struct HistoryView: View {
                 header
 
                 ForEach(games) { snapshot in
-                    NavigationLink {
-                        GameDetailView(gameID: snapshot.id)
-                    } label: {
+                    NavigationLink(value: snapshot.id) {
                         GameSummaryRowView(snapshot: snapshot, isBest: snapshot.id == bestID)
                     }
                     .buttonStyle(.plain)
