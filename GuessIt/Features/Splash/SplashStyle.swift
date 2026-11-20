@@ -28,7 +28,7 @@ enum SplashStyle {
     /// # Secuencia completa (~1.2s)
     /// ```
     /// t=0.00s  Fase 1: fade-in + scale spring
-    /// t=0.42s  Fase 2: micro-pop del "?"
+    /// t=0.42s  Fase 2: micro-pop del ícono
     /// t=0.75s  Fase 3: disolución + crossfade
     /// t=1.20s  Splash se remueve
     /// ```
@@ -36,7 +36,7 @@ enum SplashStyle {
         /// Fase 1: fade-in + scale-up del ícono (spring).
         static let iconEntrance: CGFloat = 0.40
 
-        /// Fase 2: micro-pop del "?" (scale 1.0 → 1.06 → 1.0).
+        /// Fase 2: micro-pop del ícono (scale 1.0 → 1.06 → 1.0).
         static let symbolPop: CGFloat = 0.30
 
         /// Fase 3: disolución del ícono + crossfade a contenido.
@@ -66,41 +66,23 @@ enum SplashStyle {
         /// Escala objetivo del ícono (tamaño real).
         static let target: CGFloat = 1.0
 
-        /// Escala pico del micro-pop del "?".
+        /// Escala pico del micro-pop del ícono.
         /// - Why: 1.06 es sutil pero perceptible. Más de 1.10 se siente exagerado.
         static let popPeak: CGFloat = 1.06
     }
 
-    // MARK: - Colores del ícono
+    // MARK: - Fondo
 
-    /// Gradiente vertical del ícono (réplica del app icon).
-    ///
-    /// # Colores
-    /// - Top: lavanda suave → Mid: azul cielo → Bottom: cyan fresco
-    /// - Estos colores replican el ícono real de la app.
-    enum IconColors {
-        /// Top del gradiente: lavanda suave.
-        static let lavender = Color(red: 0.84, green: 0.78, blue: 0.94)   // #D6C8F0
-
-        /// Medio del gradiente: azul cielo.
-        static let skyBlue  = Color(red: 0.66, green: 0.85, blue: 0.96)   // #A9D9F5
-
-        /// Bottom del gradiente: cyan fresco.
-        static let cyan     = Color(red: 0.44, green: 0.80, blue: 0.95)   // #6FCDF2
-    }
-
-    // MARK: - Opacidades
-
-    /// Opacidades para los elementos visuales del ícono.
-    enum Opacity {
-        /// Opacidad del símbolo "?" (blanco).
-        static let questionMark: CGFloat = 0.92
-
-        /// Opacidad de los puntos decorativos.
-        static let dots: CGFloat = 0.6
-
-        /// Color de los puntos (blanco soft).
-        static let dotsColor = Color(red: 0.96, green: 0.97, blue: 1.0)  // #F4F8FF
+    enum Background {
+        // El plata en claro y el grafito en oscuro mantienen el contraste de la barra del sistema.
+        static let light = [
+            Color(red: 0.93, green: 0.95, blue: 0.97),
+            Color(red: 0.72, green: 0.77, blue: 0.83)
+        ]
+        static let dark = [
+            Color(red: 0.19, green: 0.22, blue: 0.27),
+            Color(red: 0.06, green: 0.07, blue: 0.09)
+        ]
     }
 
     // MARK: - Dimensiones
@@ -114,14 +96,5 @@ enum SplashStyle {
         /// Corner radius del ícono (super-rounded, icon-like).
         /// - Why: 32pt da la forma de "squircle" de los iconos de iOS.
         static let iconCornerRadius: CGFloat = 44
-
-        /// Tamaño del font del símbolo "?".
-        static let questionMarkFont: CGFloat = 104
-
-        /// Tamaño de cada punto decorativo.
-        static let dot: CGFloat = 8
-
-        /// Spacing entre puntos.
-        static let dotSpacing: CGFloat = 12
     }
 }
