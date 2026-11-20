@@ -7,6 +7,14 @@
 
 import SwiftUI
 
+enum GameRoute: Hashable {
+    case history
+    case statistics
+    case daily
+    case settings
+    case about
+}
+
 /// Pantalla principal del juego.
 ///
 /// # Rol
@@ -69,7 +77,6 @@ struct GameView: View {
     @State private var victorySplash = VictorySplashState()
     
     /// Controla la presentación del tutorial.
-    @State private var isTutorialPresented = false
 
 
 
@@ -117,8 +124,14 @@ struct GameView: View {
                 .sheet(isPresented: $isHintPresented, onDismiss: onHintDismiss) {
                     hintSheet
                 }
-                .fullScreenCover(isPresented: $isTutorialPresented) {
-                    TutorialView(isPresented: $isTutorialPresented)
+                .navigationDestination(for: GameRoute.self) { route in
+                    switch route {
+                    case .history: HistoryView()
+                    case .statistics: StatsView()
+                    case .daily: DailyChallengeView()
+                    case .settings: LatetSettingsView()
+                    case .about: LatetAboutView()
+                    }
                 }
         }
     }
@@ -167,13 +180,13 @@ struct GameView: View {
         HStack(spacing: 4) {
             Spacer()
 
-            NavigationLink { HistoryView() } label: {
+            NavigationLink(value: GameRoute.history) {
                 actionIcon("clock.arrow.circlepath", label: "history.title")
             }
-            NavigationLink { StatsView() } label: {
+            NavigationLink(value: GameRoute.statistics) {
                 actionIcon("chart.bar.fill", label: "stats.title")
             }
-            NavigationLink { DailyChallengeView() } label: {
+            NavigationLink(value: GameRoute.daily) {
                 actionIcon("calendar", label: "daily.title")
             }
 
@@ -187,10 +200,8 @@ struct GameView: View {
             }
 
             Menu {
-                Button {
-                    isTutorialPresented = true
-                } label: {
-                    Label("game.how_to_play", systemImage: "questionmark.circle")
+                NavigationLink(value: GameRoute.settings) {
+                    Label("settings.title", systemImage: "gearshape")
                 }
                 Button {
                     chooseNewGame()
