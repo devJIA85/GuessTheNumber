@@ -38,6 +38,7 @@ struct TutorialView: View {
     // MARK: - Environment
     
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     // MARK: - Body
     
@@ -54,7 +55,7 @@ struct TutorialView: View {
                         completeTutorial()
                     } label: {
                         Text(String(localized: "tutorial.skip"))
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .font(.system(.callout, design: .rounded, weight: .semibold))
                             .foregroundStyle(AppTheme.Focus.textSecondary)
                     }
                     .padding(.horizontal, AppTheme.Spacing.large)
@@ -63,10 +64,10 @@ struct TutorialView: View {
 
                 // Contenido de las páginas (dots custom abajo, no los nativos)
                 TabView(selection: $currentPage) {
-                    Page1View().tag(0)
-                    Page2View().tag(1)
-                    Page3View().tag(2)
-                    Page4View().tag(3)
+                    tutorialPage { Page1View() }.tag(0)
+                    tutorialPage { Page2View() }.tag(1)
+                    tutorialPage { Page3View() }.tag(2)
+                    tutorialPage { Page4View() }.tag(3)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
 
@@ -83,10 +84,10 @@ struct TutorialView: View {
                     }
                 } label: {
                     Text(String(localized: currentPage < totalPages - 1 ? "tutorial.next" : "tutorial.start"))
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .font(.system(.body, design: .rounded, weight: .bold))
+                        .foregroundStyle(AppTheme.Focus.solidActionLabel)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 56)
+                        .frame(minHeight: 56)
                         .background(
                             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous)
                                 .fill(Color.appActionPrimary)
@@ -100,6 +101,15 @@ struct TutorialView: View {
     }
 
     /// Indicador de página custom: el activo es una pill coral, el resto puntos tenues.
+    @ViewBuilder
+    private func tutorialPage<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            ScrollView { content() }
+        } else {
+            content()
+        }
+    }
+
     private var pageDots: some View {
         HStack(spacing: 8) {
             ForEach(0..<totalPages, id: \.self) { index in
@@ -152,7 +162,7 @@ struct Page1View: View {
                 VStack(spacing: 8) {
                     Text("?")
                         .font(.system(size: 64, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.95))
+                        .foregroundStyle(AppTheme.Focus.textPrimary)
                     
                     HStack(spacing: 6) {
                         ForEach(0..<4, id: \.self) { _ in
@@ -167,14 +177,14 @@ struct Page1View: View {
             
             // Título
             Text(String(localized: "tutorial.welcome.title"))
-                .font(.system(size: 36, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
                 .multilineTextAlignment(.center)
 
             // Descripción
             Text(String(localized: "tutorial.welcome.description"))
                 .font(AppTheme.Typography.body())
-                .foregroundStyle(.white.opacity(0.9))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, AppTheme.Spacing.xxLarge)
             
@@ -195,8 +205,8 @@ struct Page2View: View {
             
             // Título
             Text(String(localized: "tutorial.how_to_play.title"))
-                .font(.system(size: 32, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
             
             // Pasos
             VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
@@ -231,8 +241,8 @@ struct Page3View: View {
             
             // Título
             Text(String(localized: "tutorial.feedback.title"))
-                .font(.system(size: 32, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
             
             // Ejemplos de feedback
             VStack(spacing: AppTheme.Spacing.medium) {
@@ -263,22 +273,22 @@ struct Page3View: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                 Text(String(localized: "tutorial.feedback.example"))
                     .font(.caption.bold())
-                    .foregroundStyle(.white.opacity(0.9))
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
 
                 HStack(spacing: AppTheme.Spacing.small) {
                     Text(String(localized: "tutorial.feedback.your_attempt"))
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(AppTheme.Focus.textPrimary)
                     
                     Text("1 2 3 4 5")
                         .font(.system(.title3, design: .monospaced, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(AppTheme.Focus.textPrimary)
                 }
                 
                 HStack(spacing: 4) {
                     Text(String(localized: "tutorial.feedback.label"))
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(AppTheme.Focus.textPrimary)
                     
                     HStack(spacing: 2) {
                         Circle().fill(Color.appMarkGood).frame(width: 12, height: 12)
@@ -290,7 +300,7 @@ struct Page3View: View {
                     
                     Text("(2 GOOD, 1 FAIR)")
                         .font(.caption2.bold())
-                        .foregroundStyle(.white.opacity(0.9))
+                        .foregroundStyle(AppTheme.Focus.textPrimary)
                 }
             }
             .padding(AppTheme.Spacing.medium)
@@ -318,13 +328,13 @@ struct Page4View: View {
             
             // Título
             Text(String(localized: "tutorial.board.title"))
-                .font(.system(size: 32, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
             
             // Descripción
             Text(String(localized: "tutorial.board.description"))
                 .font(AppTheme.Typography.body())
-                .foregroundStyle(.white.opacity(0.9))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, AppTheme.Spacing.xxLarge)
             
@@ -386,8 +396,8 @@ struct InstructionRow: View {
     var body: some View {
         HStack(spacing: AppTheme.Spacing.medium) {
             Text(number)
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .font(.system(.title2, design: .rounded, weight: .bold))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
                 .frame(width: 40, height: 40)
                 .background(
                     Circle()
@@ -396,7 +406,7 @@ struct InstructionRow: View {
             
             Text(text)
                 .font(AppTheme.Typography.body())
-                .foregroundStyle(.white.opacity(0.95))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -412,18 +422,18 @@ struct FeedbackExample: View {
     var body: some View {
         HStack(spacing: AppTheme.Spacing.medium) {
             Image(systemName: icon)
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(.white)
+                .font(.system(.body, design: .default, weight: .bold))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
                 .frame(width: 44, height: 44)
                 .background(Circle().fill(color.opacity(0.85)))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(label)
-                    .font(.system(size: 17, weight: .heavy, design: .rounded))
+                    .font(.system(.body, design: .rounded, weight: .heavy))
                     .foregroundStyle(color)
 
                 Text(description)
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundStyle(AppTheme.Focus.textSecondary)
             }
 
@@ -447,8 +457,8 @@ struct ExampleInputView: View {
         HStack(spacing: 8) {
             ForEach(["1", "2", "3", "4", "5"], id: \.self) { digit in
                 Text(digit)
-                    .font(.system(size: 30, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.white)
+                    .font(.system(.title, design: .monospaced, weight: .bold))
+                    .foregroundStyle(AppTheme.Focus.textPrimary)
                     .frame(width: 50, height: 62)
                     .background(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -497,7 +507,7 @@ struct DeductionCellExample: View {
 
     var body: some View {
         Text("\(digit)")
-            .font(.system(size: 20, weight: .bold, design: .rounded))
+            .font(.system(.title3, design: .rounded, weight: .bold))
             .foregroundStyle(textColor)
             .frame(width: 44, height: 48)
             .background(
@@ -524,7 +534,7 @@ struct LegendRow: View {
             
             Text(label)
                 .font(.callout)
-                .foregroundStyle(.white.opacity(0.9))
+                .foregroundStyle(AppTheme.Focus.textPrimary)
         }
     }
 }

@@ -58,12 +58,11 @@ struct GameDetailView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("detail.title_short")
-                    .font(.system(size: 17, weight: .heavy, design: .rounded))
+                    .font(.system(.body, design: .rounded, weight: .heavy))
                     .foregroundStyle(AppTheme.Focus.textPrimary)
             }
         }
         .tint(.appActionPrimary)
-        .preferredColorScheme(.dark)
         .task(id: gameID) {
             await loadGameDetail()
         }
@@ -131,22 +130,22 @@ struct GameDetailView: View {
         return VStack(spacing: AppTheme.Spacing.medium) {
             HStack(spacing: AppTheme.Spacing.small) {
                 Image(systemName: isWon ? "checkmark" : "xmark")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(.body, design: .default, weight: .bold))
                     .foregroundStyle(isWon ? Color.appMarkGood : AppTheme.Focus.textSecondary)
                     .frame(width: 44, height: 44)
                     .background(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(isWon ? Color.appMarkGood.opacity(0.18) : Color.white.opacity(0.06))
+                            .fill(isWon ? Color.appMarkGood.opacity(0.18) : AppTheme.Focus.textPrimary.opacity(0.06))
                     )
 
                 Text(stateText(for: snapshot.state))
-                    .font(.system(size: 24, weight: .heavy, design: .rounded))
+                    .font(.system(.title2, design: .rounded, weight: .heavy))
                     .foregroundStyle(AppTheme.Focus.textPrimary)
 
                 Spacer()
 
                 Text(displayDate(for: snapshot), format: .dateTime.day().month(.abbreviated).hour().minute())
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundStyle(AppTheme.Focus.textSecondary)
             }
 
@@ -184,7 +183,7 @@ struct GameDetailView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
             Text(label)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.system(.footnote, design: .rounded, weight: .medium))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
         }
         .frame(maxWidth: .infinity)
@@ -210,13 +209,13 @@ struct GameDetailView: View {
 
             if attempts.isEmpty {
                 Text("detail.no_attempts")
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundStyle(AppTheme.Focus.textSecondary)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(attempts.enumerated()), id: \.element.id) { index, attempt in
                         if index > 0 {
-                            Divider().overlay(Color.white.opacity(0.06))
+                            Divider().overlay(AppTheme.Focus.textPrimary.opacity(0.06))
                         }
                         AttemptRowView(snapshot: attempt)
                             .padding(.vertical, AppTheme.Spacing.small)

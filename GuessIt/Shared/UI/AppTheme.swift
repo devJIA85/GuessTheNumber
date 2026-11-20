@@ -603,29 +603,28 @@ struct PremiumBackgroundGradient: View {
 /// difusa, superficies de vidrio blanco sutiles, labels en versalitas y números
 /// monoespaciados. Se adopta pantalla por pantalla.
 ///
-/// # Por qué tokens fijos (no adaptativos light/dark)
-/// - "Focus" es una estética **siempre oscura** (todos los mocks son casi negros).
-/// - Las pantallas que lo adoptan fuerzan `colorScheme .dark` en su raíz, de modo
-///   que los acentos adaptativos (`appActionPrimary`, `appMark*`) resuelven a sus
-///   variantes dark, que ya coinciden con los valores del handoff.
 extension AppTheme {
     enum Focus {
-        /// Fondo de pantalla: casi negro (`#0B0B12`).
-        static let background = Color(red: 0x0B / 255, green: 0x0B / 255, blue: 0x12 / 255)
-        /// Superficie de card: vidrio blanco sutil.
-        static let card = Color.white.opacity(0.05)
-        /// Borde de card.
-        static let cardStroke = Color.white.opacity(0.10)
-        /// Sub-superficie interna (tiles dentro de una card).
-        static let subSurface = Color.white.opacity(0.04)
-        /// Borde de sub-superficie.
-        static let subSurfaceStroke = Color.white.opacity(0.08)
-        /// Texto primario.
-        static let textPrimary = Color.white
-        /// Texto secundario.
-        static let textSecondary = Color.white.opacity(0.55)
-        /// Texto terciario / labels de sección.
-        static let textTertiary = Color.white.opacity(0.40)
+        // Conservamos la aurora en ambas apariencias y resolvemos las superficies
+        // con el sistema para que los controles nativos sigan el mismo tema.
+        private static let darkSurface = UIColor(red: 0x0B / 255, green: 0x0B / 255, blue: 0x12 / 255, alpha: 1)
+        static let background = adaptive(light: UIColor(white: 0.96, alpha: 1), dark: darkSurface)
+        static let celebrationBackground = Color(uiColor: darkSurface)
+        static let textPrimary = Color(uiColor: .label)
+        static let textSecondary = adaptive(light: UIColor(white: 0.26, alpha: 1), dark: UIColor(white: 0.84, alpha: 1))
+        static let textTertiary = textSecondary
+        static let card = textPrimary.opacity(0.05)
+        static let cardStroke = textPrimary.opacity(0.14)
+        static let subSurface = textPrimary.opacity(0.06)
+        static let subSurfaceStroke = textPrimary.opacity(0.18)
+        static let actionText = adaptive(light: UIColor(red: 0.58, green: 0.17, blue: 0.08, alpha: 1), dark: UIColor(red: 1, green: 0.58, blue: 0.39, alpha: 1))
+        static let solidActionLabel = Color(red: 0.10, green: 0.04, blue: 0.02)
+
+        private static func adaptive(light: UIColor, dark: UIColor) -> Color {
+            Color(uiColor: UIColor { traits in
+                traits.userInterfaceStyle == .dark ? dark : light
+            })
+        }
 
         /// Tinte de aurora según la carga emocional de la pantalla.
         enum AuroraTint {
@@ -642,6 +641,7 @@ extension AppTheme {
 /// - Blob púrpura arriba-izquierda + blob azul arriba-derecha.
 /// - `tint` agrega un tercer blob (verde o magenta) para pantallas con carga emocional.
 struct FocusBackground: View {
+    @Environment(\.colorScheme) private var colorScheme
     var tint: AppTheme.Focus.AuroraTint = .neutral
 
     var body: some View {
@@ -686,7 +686,7 @@ struct FocusBackground: View {
     /// Blob radial difuso (transición suave a transparente, sin blur costoso).
     private func auroraBlob(color: Color, opacity: Double, center: UnitPoint, radius: CGFloat) -> some View {
         RadialGradient(
-            gradient: Gradient(colors: [color.opacity(opacity), color.opacity(0)]),
+            gradient: Gradient(colors: [color.opacity(colorScheme == .dark ? opacity : opacity * 0.35), color.opacity(0)]),
             center: center,
             startRadius: 0,
             endRadius: radius
@@ -715,7 +715,7 @@ struct FocusCardStyle: ViewModifier {
                     }
                     .overlay {
                         shape.strokeBorder(
-                            (tint ?? Color.white).opacity(tint == nil ? 0.10 : 0.30),
+                            (tint ?? AppTheme.Focus.textPrimary).opacity(tint == nil ? 0.10 : 0.30),
                             lineWidth: 1
                         )
                     }
@@ -727,7 +727,7 @@ extension View {
     /// Label de sección "Focus": versalitas, 11pt heavy, tracking 2, texto terciario.
     func focusSectionLabel() -> some View {
         self
-            .font(.system(size: 11, weight: .heavy, design: .rounded))
+            .font(.system(.caption2, design: .rounded, weight: .heavy))
             .tracking(2)
             .textCase(.uppercase)
             .foregroundStyle(AppTheme.Focus.textTertiary)

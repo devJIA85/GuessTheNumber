@@ -35,11 +35,11 @@ struct GameSummaryRowView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(stateText(for: snapshot.state))
-                    .font(.system(size: 20, weight: .heavy, design: .rounded))
+                    .font(.system(.title3, design: .rounded, weight: .heavy))
                     .foregroundStyle(AppTheme.Focus.textPrimary)
 
                 Text("\(dateText) · \(attemptsText)")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundStyle(AppTheme.Focus.textSecondary)
             }
 
@@ -49,7 +49,7 @@ struct GameSummaryRowView: View {
                 bestBadge
             } else {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(.subheadline, design: .default, weight: .semibold))
                     .foregroundStyle(AppTheme.Focus.textTertiary)
             }
         }
@@ -62,21 +62,21 @@ struct GameSummaryRowView: View {
 
     private var statusIcon: some View {
         Image(systemName: isWon ? "checkmark" : "xmark")
-            .font(.system(size: 18, weight: .bold))
+            .font(.system(.body, design: .default, weight: .bold))
             .foregroundStyle(isWon ? Color.appMarkGood : AppTheme.Focus.textSecondary)
             .frame(width: 44, height: 44)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isWon ? Color.appMarkGood.opacity(0.18) : Color.white.opacity(0.06))
+                    .fill(isWon ? Color.appMarkGood.opacity(0.18) : AppTheme.Focus.textPrimary.opacity(0.06))
             )
     }
 
     private var bestBadge: some View {
         HStack(spacing: 5) {
             Image(systemName: "star.fill")
-                .font(.system(size: 11, weight: .bold))
+                .font(.system(.caption2, design: .default, weight: .bold))
             Text("history.best")
-                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .font(.system(.footnote, design: .rounded, weight: .bold))
         }
         .foregroundStyle(Color.appMarkFair)
         .padding(.horizontal, 10)
@@ -135,5 +135,4 @@ struct GameSummaryRowView: View {
         }
         .padding()
     }
-    .preferredColorScheme(.dark)
 }

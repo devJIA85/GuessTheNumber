@@ -68,7 +68,7 @@ struct SimpleBoardView: View {
             resetBoard()
         } label: {
             Label("game.board.reset", systemImage: "arrow.counterclockwise")
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .font(.system(.caption, design: .rounded, weight: .semibold))
                 .foregroundStyle(AppTheme.Focus.textTertiary)
         }
     }
@@ -151,10 +151,10 @@ struct SimpleDigitCell: View {
     
     var body: some View {
         Text("\(digit)")
-            .font(.system(size: 22, weight: .bold, design: .rounded))
+            .font(.system(.title2, design: .rounded, weight: .bold))
             .foregroundStyle(textColor)
             .frame(maxWidth: .infinity)
-            .frame(height: 46)
+            .frame(minHeight: 46)
             .background(cellBackground)
             .overlay { cellBorder }
             .scaleEffect(isPressed ? 0.95 : 1.0)
@@ -218,17 +218,28 @@ struct SimpleDigitCell: View {
             }
             .opacity(isUsed ? 0.4 : 1.0)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(isInputMode ? "Dígito \(digit). \(isUsed ? "Ya usado" : "Tocá para ingresar")" : "Dígito \(digit). Estado \(mark.spokenText)")
-            .accessibilityHint(isUsed ? "" : (isInputMode ? "Doble toque para agregar. Mantén presionado para marcar" : "Doble toque para cambiar estado"))
+            .accessibilityLabel(spokenLabel)
+            .accessibilityHint(spokenHint)
             .accessibilityAddTraits(isUsed ? [] : .isButton)
             .accessibilityIdentifier("game.digit.\(digit)")
     }
     
     // MARK: - Presentación
     
+    private var spokenLabel: Text {
+        if !isInputMode { return Text("accessibility.board.marked \(digit) \(mark.spokenText)") }
+        if isUsed { return Text("accessibility.board.used \(digit)") }
+        return Text("accessibility.board.input \(digit)")
+    }
+
+    private var spokenHint: Text {
+        if isUsed { return Text(verbatim: "") }
+        return isInputMode ? Text("accessibility.board.input_hint") : Text("accessibility.board.mark_hint")
+    }
+
     private var textColor: Color {
-        if isUsed { return .white.opacity(0.35) }
-        return mark == .unknown ? .white : markColor
+        if isUsed { return AppTheme.Focus.textPrimary.opacity(0.35) }
+        return mark == .unknown ? AppTheme.Focus.textPrimary : markColor
     }
 
     private var cellBackground: some View {
@@ -238,12 +249,12 @@ struct SimpleDigitCell: View {
 
     private var backgroundFillColor: Color {
         if isUsed {
-            return Color.white.opacity(0.03)
+            return AppTheme.Focus.textPrimary.opacity(0.03)
         }
 
         switch mark {
         case .unknown:
-            return Color.white.opacity(0.05)
+            return AppTheme.Focus.textPrimary.opacity(0.05)
         case .poor:
             return Color.appMarkPoor.opacity(0.18)
         case .good:
@@ -260,11 +271,11 @@ struct SimpleDigitCell: View {
 
     private var borderColor: Color {
         if isUsed {
-            return Color.white.opacity(0.06)
+            return AppTheme.Focus.textPrimary.opacity(0.06)
         }
 
         if mark == .unknown {
-            return Color.white.opacity(0.16)
+            return AppTheme.Focus.textPrimary.opacity(0.16)
         }
 
         return markColor.opacity(0.7)
@@ -277,7 +288,7 @@ struct SimpleDigitCell: View {
     private var markColor: Color {
         switch mark {
         case .unknown:
-            return .white
+            return AppTheme.Focus.textPrimary
         case .poor:
             return .appMarkPoor
         case .fair:
