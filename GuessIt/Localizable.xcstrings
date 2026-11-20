@@ -18,6 +18,86 @@
         }
       }
     },
+    "hint.fallback.first_guess": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try a first guess with different digits to learn which ones might belong."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probá un primer intento con dígitos distintos para descubrir cuáles podrían estar."
+          }
+        }
+      }
+    },
+    "hint.fallback.repeated": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You already tried that number. Change a digit or its position to get new information."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya probaste ese número. Cambiá un dígito o su posición para obtener información nueva."
+          }
+        }
+      }
+    },
+    "hint.fallback.none_match": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None of the digits from your last guess belong. Try digits you left out."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ningún dígito de tu último intento está en el secreto. Probá con los que dejaste afuera."
+          }
+        }
+      }
+    },
+    "hint.fallback.misplaced": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your last guess had at least one correct digit in the wrong place. Try moving some digits while keeping others fixed."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En tu último intento hubo al menos un dígito correcto fuera de lugar. Mové algunos dígitos y dejá otros fijos para comparar."
+          }
+        }
+      }
+    },
+    "hint.fallback.exact": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your last guess had correct positions. Keep a few digits fixed and swap some others to narrow down which positions were right."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En tu último intento acertaste posiciones. Dejá algunos dígitos fijos y cambiá otros para acotar cuáles estaban bien."
+          }
+        }
+      }
+    },
     "game.victory.rank.well_done": {
       "localizations": {
         "en": {
