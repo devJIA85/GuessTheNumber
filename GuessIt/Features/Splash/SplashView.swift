@@ -84,9 +84,9 @@ struct SplashView: View {
 
     // MARK: - Icon Card
 
-    /// Card del ícono: usa el asset real del app icon para match 1:1.
+    /// Comparte la imagen de bienvenida para mantener la misma identidad al abrir Latet.
     private var iconCard: some View {
-        Image("SplashIcon")
+        Image(decorative: "LatetBrandIcon")
             .resizable()
             .scaledToFit()
             .frame(

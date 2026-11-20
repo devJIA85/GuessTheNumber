@@ -143,38 +143,13 @@ struct Page1View: View {
         VStack(spacing: AppTheme.Spacing.large) {
             Spacer()
             
-            // Ícono del juego
-            ZStack {
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.7, green: 0.6, blue: 1.0),
-                                Color(red: 0.4, green: 0.7, blue: 1.0),
-                                Color(red: 0.2, green: 0.8, blue: 0.9)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(width: 120, height: 120)
-                
-                VStack(spacing: 8) {
-                    Text("?")
-                        .font(.system(size: 64, weight: .bold, design: .rounded))
-                        .foregroundStyle(AppTheme.Focus.textPrimary)
-                    
-                    HStack(spacing: 6) {
-                        ForEach(0..<4, id: \.self) { _ in
-                            Circle()
-                                .fill(Color.white.opacity(0.6))
-                                .frame(width: 8, height: 8)
-                        }
-                    }
-                }
-            }
-            .shadow(color: .black.opacity(0.2), radius: 20, y: 10)
-            
+            Image(decorative: "LatetBrandIcon")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 120, height: 120)
+                .clipShape(RoundedRectangle(cornerRadius: 32))
+                .shadow(color: .black.opacity(0.2), radius: 20, y: 10)
+
             // Título
             Text(String(localized: "tutorial.welcome.title"))
                 .font(.system(.largeTitle, design: .rounded, weight: .bold))
