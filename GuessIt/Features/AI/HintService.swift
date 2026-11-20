@@ -32,7 +32,7 @@ import OSLog
 actor HintService {
 
     private let builder: HintPromptBuilder
-    private let engine: any HintEngine
+    private let engine = AppleHintEngine()
 
     /// Timeout máximo para la generación de una pista (en segundos).
     private static let generationTimeoutSeconds: UInt64 = 15
@@ -65,133 +65,43 @@ actor HintService {
     
     // MARK: - Init
     
-    /// Inicializa el servicio de pistas.
-    ///
-    /// # Disponibilidad
-    /// - Si Apple Intelligence está disponible → usa AppleHintEngine.
-    /// - Si NO está disponible → usa FallbackHintEngine (heurísticas simples).
-    ///
-    /// # Por qué verificar en init
-    /// - La disponibilidad de Apple Intelligence no cambia durante la vida de la app
-    ///   (requiere reinicio de la app si el usuario habilita/deshabilita la feature del sistema).
-    /// - Verificar una sola vez reduce overhead.
     init() {
-        self.builder = HintPromptBuilder()
-        
-        // Verificar disponibilidad de Apple Intelligence
-        if SystemLanguageModel.default.isAvailable {
-            self.engine = AppleHintEngine()
-        } else {
-            self.engine = FallbackHintEngine()
-        }
+        builder = HintPromptBuilder()
     }
-    
-    // MARK: - Public API
-    
-    /// Genera una pista para la partida actual.
-    ///
-    /// # Flujo
-    /// 1. Incrementar requestCount (telemetría).
-    /// 2. Verificar disponibilidad del engine.
-    /// 3. Construir prompt con HintPromptBuilder.
-    /// 4. Generar texto con el engine.
-    /// 5. Validar salida con guardrails.
-    /// 6. Actualizar telemetría (engine usado, error si hubo).
-    /// 7. Retornar HintOutput.
-    ///
-    /// # Cancelación
-    /// - Respeta Task.isCancelled en cada paso.
-    /// - Si se cancela, lanza CancellationError.
-    ///
-    /// # Errores
-    /// - `HintError.unavailable`: el engine no está disponible.
-    /// - `HintError.generationFailed`: el engine falló al generar.
-    /// - `HintError.unsafeOutput`: la salida violó guardrails.
-    ///
-    /// - Parameter input: contexto del juego (intentos y notas de dígitos).
-    /// - Returns: pista generada (1-4 líneas).
+
     func generateHint(input: HintInput) async throws -> HintOutput {
-        // Rate limiting: prevenir spam a Apple Intelligence
+        try Task.checkCancellation()
         guard requestCount < Self.maxRequestsPerSession else {
             lastErrorDescription = "Límite de requests por sesión alcanzado"
             throw HintError.rateLimited
         }
-
-        // Telemetría: incrementar contador
         requestCount += 1
 
-        // Check cancelación temprano
-        try Task.checkCancellation()
-
-        do {
-            // 1. Verificar disponibilidad
-            guard engine.isAvailable else {
-                let error = HintError.unavailable
-                lastErrorDescription = "Engine no disponible"
-                throw error
-            }
-
-            try Task.checkCancellation()
-
-            // 2. Construir prompt
+        let currentEngine = engine
+        if currentEngine.isAvailable {
             let prompt = builder.makePrompt(input: input)
-
-            try Task.checkCancellation()
-
-            // 3. Generar texto con engine (con timeout y fallback)
-            let usedEngine: any HintEngine
-            let rawText: String
-            let currentEngine = self.engine
             do {
-                rawText = try await withTimeout(seconds: Self.generationTimeoutSeconds) {
+                let text = try await withTimeout(seconds: Self.generationTimeoutSeconds) {
                     try await currentEngine.generate(prompt: prompt)
+                }.trimmingCharacters(in: .whitespacesAndNewlines)
+                try Task.checkCancellation()
+                if !text.isEmpty, builder.isOutputSafe(text, digitCount: input.digitCount) {
+                    lastEngineUsed = "apple"
+                    lastErrorDescription = nil
+                    return HintOutput(text: text)
                 }
-                usedEngine = currentEngine
             } catch {
-                // Si falla Apple Intelligence por guardrails o timeout, usamos fallback.
-                if error is CancellationError {
-                    throw error
-                }
-                if currentEngine is AppleHintEngine {
-                    let fallbackEngine = FallbackHintEngine()
-                    rawText = try await fallbackEngine.generate(prompt: prompt)
-                    usedEngine = fallbackEngine
-                } else {
-                    throw error
-                }
+                if error is CancellationError { throw error }
             }
-            
-            try Task.checkCancellation()
-            
-            // 4. Validar salida (guardrails)
-            guard builder.isOutputSafe(rawText, digitCount: input.digitCount) else {
-                let error = HintError.unsafeOutput
-                lastErrorDescription = "Output violó guardrails"
-                throw error
-            }
-            
-            // 5. Telemetría: registrar engine usado y limpiar último error
-            lastEngineUsed = engineName(usedEngine)
-            lastErrorDescription = nil
-            
-            // 6. Retornar resultado
-            return HintOutput(text: rawText.trimmingCharacters(in: .whitespacesAndNewlines))
-            
-        } catch let error as HintError {
-            // Registrar error específico de hint
-            lastErrorDescription = errorDescription(for: error)
-            throw error
-        } catch {
-            // Error genérico (ej: CancellationError)
-            if error is CancellationError {
-                lastErrorDescription = "Request cancelado"
-            } else {
-                lastErrorDescription = "Error inesperado: \(error.localizedDescription)"
-            }
-            throw error
         }
+
+        // Una salida rechazada o un modelo no disponible tampoco deben dejar al jugador sin pista.
+        try Task.checkCancellation()
+        lastEngineUsed = "fallback"
+        lastErrorDescription = nil
+        return HintOutput(text: String(localized: FallbackHintEngine.strategy(for: input.attempts).message))
     }
-    
+
     // MARK: - Debug API
     
     /// Retorna información de debug/telemetría de la sesión actual.
@@ -213,42 +123,6 @@ actor HintService {
         )
     }
     
-    // MARK: - Helpers (telemetría)
-    
-    /// Retorna el nombre del engine para telemetría.
-    ///
-    /// # Por qué este helper
-    /// - Evita duplicar lógica de detección de tipo en múltiples lugares.
-    /// - Centraliza el mapeo engine → string.
-    private func engineName(_ engine: any HintEngine) -> String {
-        if engine is AppleHintEngine {
-            return "apple"
-        } else if engine is FallbackHintEngine {
-            return "fallback"
-        } else {
-            return "unknown"
-        }
-    }
-    
-    /// Retorna descripción user-friendly de un HintError.
-    ///
-    /// # Por qué este helper
-    /// - Centraliza el mapeo error → descripción.
-    /// - Facilita mantener mensajes consistentes.
-    private func errorDescription(for error: HintError) -> String {
-        switch error {
-        case .unavailable:
-            return "Engine no disponible"
-        case .generationFailed:
-            return "Fallo al generar pista"
-        case .unsafeOutput:
-            return "Output violó guardrails"
-        case .timedOut:
-            return "Timeout al generar pista"
-        case .rateLimited:
-            return "Límite de requests por sesión alcanzado"
-        }
-    }
 }
 
 // MARK: - HintEngine Protocol
@@ -366,41 +240,28 @@ private struct AppleHintEngine: HintEngine {
 /// - Analizar el historial de intentos (good, fair, poor).
 /// - Sugerir acciones basadas en patrones simples.
 /// - NO revelar el secreto (cumplir guardrails).
-private struct FallbackHintEngine: HintEngine {
-    
-    var isAvailable: Bool {
-        // El fallback siempre está disponible
-        true
+enum FallbackHintEngine {
+    enum Strategy: Equatable {
+        case firstGuess, repeated, noneMatch, misplaced, exact
+
+        var message: LocalizedStringResource {
+            switch self {
+            case .firstGuess: "hint.fallback.first_guess"
+            case .repeated: "hint.fallback.repeated"
+            case .noneMatch: "hint.fallback.none_match"
+            case .misplaced: "hint.fallback.misplaced"
+            case .exact: "hint.fallback.exact"
+            }
+        }
     }
-    
-    func generate(prompt: String) async throws -> String {
-        try Task.checkCancellation()
-        
-        // Simular latencia (para UX consistente con Apple engine)
-        try await Task.sleep(for: .milliseconds(500))
-        
-        try Task.checkCancellation()
-        
-        // Generar pista heurística simple
-        // Nota: en una implementación real, parsearíamos el prompt para extraer datos,
-        // pero para mantener DRY, generamos pistas genéricas estratégicas.
-        
-        let hints = [
-            "Intentá permutar las posiciones de los dígitos que ya tienen feedback FAIR.",
-            "Si tenés varios dígitos GOOD, enfocate en completar las posiciones restantes.",
-            "Probá introducir dígitos nuevos para explorar el espacio de búsqueda.",
-            "Recordá que POOR significa que ningún dígito del intento está en el secreto.",
-            "Si un intento tiene muchos FAIR, el secreto tiene esos dígitos en otras posiciones.",
-            "Considera verificar dígitos en posiciones con feedback FAIR, ya que podrían estar cerca del secreto.",
-            "Analizá los intentos con más GOOD para identificar patrones de posición.",
-            "Si algunos dígitos ya están confirmados (GOOD), concentrá tu búsqueda en las posiciones restantes."
-        ]
-        
-        // Seleccionar hint basado en el timestamp actual + contenido del prompt
-        // Esto asegura variabilidad entre llamadas consecutivas
-        let seed = Int(Date().timeIntervalSince1970 * 1000) + abs(prompt.count)
-        let index = seed % hints.count
-        return hints[index]
+
+    static func strategy(for attempts: [HintAttempt]) -> Strategy {
+        // Los intentos llegan de más reciente a más antiguo. Sólo usamos el feedback visible.
+        guard let latest = attempts.first else { return .firstGuess }
+        if latest.isRepeated { return .repeated }
+        if latest.good + latest.fair == 0 { return .noneMatch }
+        if latest.fair > 0 { return .misplaced }
+        return .exact
     }
 }
 
