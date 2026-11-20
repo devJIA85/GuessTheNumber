@@ -2,6 +2,22 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+    "game.menu.game_center": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Game Center"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Game Center"
+          }
+        }
+      }
+    },
     "game.victory.rank.well_done": {
       "localizations": {
         "en": {
