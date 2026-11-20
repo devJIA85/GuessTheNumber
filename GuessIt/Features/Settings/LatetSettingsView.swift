@@ -117,10 +117,14 @@ private struct AboutProductHeader: View {
 }
 
 private struct AboutDeveloperSignature: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         VStack(spacing: AppTheme.Spacing.small) {
             Image(decorative: "DeveloperLogo")
+                .renderingMode(colorScheme == .dark ? .template : .original)
                 .resizable()
+                .foregroundStyle(.white)
                 .scaledToFit()
                 .frame(maxWidth: 144)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
