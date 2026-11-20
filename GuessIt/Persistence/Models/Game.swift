@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 
-/// Modelo raíz de una partida del juego GuessIt.
+/// Modelo raíz de una partida del juego Latet.
 ///
 /// # Rol en la arquitectura
 /// - Es el **Aggregate Root** del dominio persistido.

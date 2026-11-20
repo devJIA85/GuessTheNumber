@@ -1,6 +1,6 @@
-# GuessIt
+# Latet
 
-GuessIt is an iOS number-deduction game. The player tries to discover a hidden
+Latet is an iOS number-deduction game. The player tries to discover a hidden
 secret number; after each guess the game returns per-digit feedback (Good / Fair /
 Poor) that the player uses to reason toward the answer. A separate **Daily
 Challenge** offers a shorter, globally-shared puzzle each day.
@@ -29,6 +29,8 @@ For the full ruleset see [`Docs/GAME_DESIGN.md`](Docs/GAME_DESIGN.md).
 | Device features | Game Center entitlement; AI hints require an Apple Intelligence–capable device (with a built-in fallback) |
 
 ## Targets
+
+The Xcode project, scheme, and targets retain the technical name `GuessIt`.
 
 | Target | Type | Purpose |
 |---|---|---|

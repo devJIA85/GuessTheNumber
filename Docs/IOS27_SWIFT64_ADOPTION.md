@@ -1,6 +1,6 @@
 # iOS 27 / Swift 6.4 adoption
 
-A **living** document tracking what GuessIt has adopted, what it has deliberately
+A **living** document tracking what Latet has adopted, what it has deliberately
 skipped, and what is a candidate for future PRs. Nothing here is "adopted" unless
 the code actually implements it.
 

@@ -1287,13 +1287,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Guess It"
+            "value": "Latet"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Guess It"
+            "value": "Latet"
           }
         }
       }
@@ -2183,13 +2183,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Welcome to\nGuess It"
+            "value": "Welcome to\nLatet"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bienvenido a\nGuess It"
+            "value": "Bienvenido a\nLatet"
           }
         }
       }

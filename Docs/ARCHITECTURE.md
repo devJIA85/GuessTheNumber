@@ -1,13 +1,13 @@
 # Architecture
 
-This document describes the **real** architecture of GuessIt as it exists in the
+This document describes the **real** architecture of Latet as it exists in the
 repository. Where something is known technical debt, it is labeled as such and
 linked to [`PR_ROADMAP.md`](PR_ROADMAP.md). This PR does not change any code; it
 only documents what is here.
 
 ## Overview
 
-GuessIt is a single-module SwiftUI app with a clean separation between **pure game
+Latet is a single-module SwiftUI app with a clean separation between **pure game
 logic**, **persistence**, and **presentation**. The defining choices are:
 
 - **SwiftData is the single source of truth** for game state. The domain layer
