@@ -95,6 +95,37 @@ struct GameViewModelIdentityTests {
         #expect(viewModel.currentGame?.id == activeID)
     }
 
+    @Test("Nueva partida funciona con una victoria antigua todavía indexada como activa")
+    func restartWithLegacyWin() async throws {
+        let container = TestModelContainerFactory.makeIsolatedInMemoryContainer()
+        let previous = Game(secret: "15360", digitNotes: [])
+        previous.attempts = [
+            Attempt(guess: "15360", good: 5, fair: 0, isPoor: false, isRepeated: false, game: previous)
+        ]
+        previous.updateState(.won)
+        previous.finishedAt = Date()
+        // Simula el dato guardado por una versión que no sincronizó el índice.
+        previous.stateRaw = GameState.inProgress.rawValue
+        container.mainContext.insert(previous)
+        try container.mainContext.save()
+        let previousID = previous.persistentModelID
+
+        let env = AppEnvironment(modelContainer: container)
+        let viewModel = GameViewModel()
+        viewModel.configure(env: env)
+        try #require(await viewModel.startNewGame(length: .three))
+        let active = try #require(viewModel.currentGame)
+        #expect(active.id != previousID)
+        #expect(active.state == .inProgress)
+        #expect(active.digitCount == 3)
+        #expect(active.attempts.isEmpty)
+        #expect(viewModel.errorMessage == nil)
+
+        let history = try await env.modelActor.fetchGameDetailSnapshot(gameID: previousID)
+        #expect(history.state == .won)
+        #expect(history.attempts.count == 1)
+    }
+
     @Test("Un envío atrasado nunca se aplica a otra partida del mismo largo")
     func staleSubmissionDoesNotWriteToReplacement() async throws {
         let container = TestModelContainerFactory.makeIsolatedInMemoryContainer()

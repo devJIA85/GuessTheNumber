@@ -82,14 +82,13 @@ actor GuessItModelActor {
             game.stateRaw == inProgressRaw
         }
 
-        var descriptor = FetchDescriptor<Game>(
+        let descriptor = FetchDescriptor<Game>(
             predicate: predicate,
             sortBy: [SortDescriptor(\Game.createdAt, order: .reverse)]
         )
-        descriptor.fetchLimit = 1 // Solo necesitamos la más reciente
-
-        let games = try modelContext.fetch(descriptor)
-        return games.first
+        // En partidas de builds anteriores, el índice puede conservar un estado
+        // en progreso aunque la partida esté ganada. El estado del juego manda.
+        return try modelContext.fetch(descriptor).first { $0.state == .inProgress }
     }
 
     /// Crea una partida nueva y la deja lista para jugar.
