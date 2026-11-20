@@ -1,4 +1,4 @@
-# 🎨 Guía de Paleta de Colores - Guess It (Game Edition)
+# 🎨 Guía de Paleta de Colores - Latet (Game Edition)
 
 Esta guía contiene los valores RGB para actualizar tus colores en **Assets.xcassets**.
 

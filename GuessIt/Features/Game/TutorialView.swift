@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// Tutorial interactivo que explica cómo jugar Guess It.
+/// Tutorial interactivo que explica cómo jugar Latet.
 ///
 /// # Responsabilidad
 /// - Enseñar las reglas del juego a nuevos usuarios.

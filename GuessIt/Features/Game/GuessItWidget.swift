@@ -48,7 +48,7 @@ struct WidgetStatsData: Codable, Sendable {
     }
 }
 
-/// Widget de Guess It que muestra la racha actual del jugador.
+/// Widget de Latet que muestra la racha actual del jugador.
 ///
 /// # Responsabilidad
 /// - Mostrar racha actual y stats básicas en Home Screen.
@@ -67,7 +67,7 @@ struct GuessItWidget: Widget {
             GuessItWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("Guess It")
+        .configurationDisplayName("game.title")
         .description("Mirá tu racha actual y estadísticas")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
