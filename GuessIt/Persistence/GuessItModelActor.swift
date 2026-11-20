@@ -132,6 +132,12 @@ actor GuessItModelActor {
         try createNewGame(length: length).persistentID
     }
 
+    /// El cierre y la creación no pueden intercalarse con otro intento o reinicio.
+    func replaceInProgressGame(length: ClassicGameLength) throws -> GameIdentifier {
+        try abandonOrDiscardInProgressGame()
+        return try startNewGame(length: length)
+    }
+
     /// Devuelve la partida activa o crea una nueva si no existe.
     func fetchOrCreateInProgressGame() throws -> Game {
         if let existing = try fetchInProgressGame() {
@@ -297,6 +303,33 @@ actor GuessItModelActor {
     }
 
     // MARK: - Attempts
+
+    /// Evalúa, guarda y devuelve el detalle de la misma partida sin ceder el actor.
+    func submitClassicGuess(_ guess: String, gameID: GameIdentifier?) throws -> SubmitGuessResult {
+        guard let activeID = try fetchInProgressGameID() else {
+            throw GameDomainError.gameNotInProgress(currentState: .abandoned)
+        }
+        if let gameID, gameID != activeID {
+            throw GameDomainError.gameNotInProgress(currentState: .abandoned)
+        }
+
+        let data = try fetchGameData(gameID: activeID)
+        guard data.state == .inProgress else {
+            throw GameDomainError.gameNotInProgress(currentState: data.state)
+        }
+        let length = ClassicGameLength(rawValue: data.secret.count) ?? .five
+        try GuessValidator.validate(guess, length: length)
+        let evaluation = try GuessEvaluator.evaluate(secret: data.secret, guess: guess, length: length)
+        let feedback = AttemptFeedback(good: evaluation.good, fair: evaluation.fair, isPoor: evaluation.isPoor)
+        try recordAttemptDiscardingResult(
+            gameID: activeID, guess: guess, good: feedback.good, fair: feedback.fair, isPoor: feedback.isPoor
+        )
+        if feedback.good == length.rawValue {
+            try markGameWon(gameID: activeID)
+        }
+        let snapshot = try fetchGameDetailSnapshot(gameID: activeID)
+        return SubmitGuessResult(guess: guess, feedback: feedback, game: snapshot)
+    }
 
     /// Persiste un intento ya evaluado por el dominio.
     ///

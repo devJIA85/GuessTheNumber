@@ -77,7 +77,9 @@ struct SubmitGuessResult: Equatable, Sendable {
     let feedback: AttemptFeedback
 
     /// Estado actualizado de la partida luego del intento.
-    let gameState: GameState
+    let game: GameDetailSnapshot
+
+    var gameState: GameState { game.state }
 
     /// Indica si el intento resolvió la partida.
     var didWin: Bool {

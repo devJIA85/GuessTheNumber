@@ -84,10 +84,9 @@ struct GameView: View {
                     vm.configure(env: env)
                     await vm.initialize()
                 }
-                .onChange(of: vm.currentGame?.state) { oldValue, newValue in
-                    handleGameStateChange(from: oldValue, to: newValue)
-                }
                 .onChange(of: vm.currentGame?.id) { _, _ in
+                    victorySplash.dismiss()
+                    victorySplash.resetHaptic()
                     resetHintUIState()
                 }
                 .alert(
@@ -412,30 +411,15 @@ struct GameView: View {
         }
     }
     
-    private func handleGameStateChange(from oldValue: GameState?, to newValue: GameState?) {
-        if newValue == .won {
-            // Solo celebrar (splash + háptica + score) si la victoria ocurrió en esta sesión.
-            // Una partida cargada ya ganada (nil → .won) se muestra sin re-disparar efectos.
-            if GameViewModel.isFreshWin(from: oldValue, to: newValue) {
-                withAnimation(.easeOut(duration: 0.2)) {
-                    victorySplash.present()
-                }
-                triggerVictoryHapticIfNeeded()
-
-                if let game = vm.currentGame, game.digitCount == GameConstants.secretLength {
-                    Task {
-                        await env.leaderboardService.submitScore(attempts: game.attempts.count)
-                    }
-                }
-            }
-        } else {
-            withAnimation(.easeOut(duration: 0.2)) {
-                victorySplash.dismiss()
-            }
-            victorySplash.resetHaptic()
+    private func celebrateVictory(_ game: GameDetailSnapshot) {
+        withAnimation(.easeOut(duration: 0.2)) {
+            victorySplash.present()
         }
-        if newValue == .inProgress {
-            resetHintUIState()
+        triggerVictoryHapticIfNeeded()
+        if game.digitCount == GameConstants.secretLength {
+            Task {
+                await env.leaderboardService.submitScore(attempts: game.attempts.count)
+            }
         }
     }
 
@@ -498,8 +482,14 @@ struct GameView: View {
     private func submit(_ guess: String) {
         guard !isStartingGame else { return }
         Task { @MainActor in
+            let previous = vm.currentGame
             if await vm.submitGuess(guess) {
                 guessText = ""
+                // La celebración nace del envío, nunca de una recarga de historial.
+                if let game = vm.currentGame, game.id == previous?.id,
+                   GameViewModel.isFreshWin(from: previous?.state, to: game.state) {
+                    celebrateVictory(game)
+                }
             }
         }
     }
