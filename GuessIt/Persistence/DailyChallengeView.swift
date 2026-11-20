@@ -51,12 +51,11 @@ struct DailyChallengeView: View {
             ToolbarItem(placement: .principal) {
                 Label("daily.title", systemImage: "calendar")
                     .labelStyle(.titleAndIcon)
-                    .font(.system(size: 17, weight: .heavy, design: .rounded))
+                    .font(.system(.body, design: .rounded, weight: .heavy))
                     .foregroundStyle(AppTheme.Focus.textPrimary)
             }
         }
         .tint(.appActionPrimary)
-        .preferredColorScheme(.dark)
         .task { await loadChallenge() }
         .alert(
             "Error",
@@ -157,8 +156,8 @@ struct DailyChallengeView: View {
                     Text("🎉").font(.system(size: 48))
 
                     Text("daily.completed_short")
-                        .font(.system(size: 24, weight: .heavy, design: .rounded))
-                        .foregroundStyle(Color.appActionPrimary)
+                        .font(.system(.title2, design: .rounded, weight: .heavy))
+                        .foregroundStyle(AppTheme.Focus.actionText)
 
                     HStack(spacing: AppTheme.Spacing.small) {
                         DailyResultTile(
@@ -201,11 +200,11 @@ struct DailyChallengeView: View {
                     Text("😔").font(.system(size: 48))
 
                     Text("daily.failed_title")
-                        .font(.system(size: 24, weight: .heavy, design: .rounded))
+                        .font(.system(.title2, design: .rounded, weight: .heavy))
                         .foregroundStyle(AppTheme.Focus.textPrimary)
 
                     Text("daily.failed_limit")
-                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .font(.system(.subheadline, design: .rounded, weight: .medium))
                         .foregroundStyle(AppTheme.Focus.textSecondary)
                         .multilineTextAlignment(.center)
 
@@ -217,8 +216,8 @@ struct DailyChallengeView: View {
                             HStack(spacing: AppTheme.Spacing.medium) {
                                 ForEach(Array(secret.enumerated()), id: \.offset) { _, char in
                                     Text(String(char))
-                                        .font(.system(size: 26, weight: .bold, design: .monospaced))
-                                        .foregroundStyle(Color.appActionPrimary)
+                                        .font(.system(.title2, design: .monospaced, weight: .bold))
+                                        .foregroundStyle(AppTheme.Focus.actionText)
                                         .frame(width: 52, height: 52)
                                         .background(Circle().fill(Color.appActionPrimary.opacity(0.15)))
                                         .overlay(Circle().strokeBorder(Color.appActionPrimary.opacity(0.6), lineWidth: 1.5))
@@ -237,10 +236,10 @@ struct DailyChallengeView: View {
                 VStack(spacing: AppTheme.Spacing.small) {
                     Text("💪").font(.system(size: 32))
                     Text("daily.dont_give_up")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(.system(.body, design: .rounded, weight: .bold))
                         .foregroundStyle(AppTheme.Focus.textPrimary)
                     Text("daily.try_tomorrow")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.system(.subheadline, design: .rounded, weight: .medium))
                         .foregroundStyle(AppTheme.Focus.textSecondary)
                         .multilineTextAlignment(.center)
                 }
@@ -261,8 +260,8 @@ struct DailyChallengeView: View {
     private func dailyShareLink(challenge: DailyChallengeSnapshot) -> some View {
         ShareLink(item: dailyShareText(challenge: challenge)) {
             Label("game.victory.share", systemImage: "square.and.arrow.up")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
-                .foregroundStyle(Color.appActionPrimary)
+                .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                .foregroundStyle(AppTheme.Focus.actionText)
         }
         .padding(.top, AppTheme.Spacing.xSmall)
     }
@@ -332,12 +331,12 @@ private struct DailyHeaderCard: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("daily.global_today_short")
-                        .font(.system(size: 11, weight: .heavy, design: .rounded))
+                        .font(.system(.caption2, design: .rounded, weight: .heavy))
                         .tracking(2)
                         .textCase(.uppercase)
-                        .foregroundStyle(Color.appActionPrimary)
+                        .foregroundStyle(AppTheme.Focus.actionText)
                     Text(challenge.challengeID)
-                        .font(.system(size: 24, weight: .bold, design: .monospaced))
+                        .font(.system(.title2, design: .monospaced, weight: .bold))
                         .foregroundStyle(AppTheme.Focus.textPrimary)
                 }
 
@@ -378,7 +377,7 @@ private struct DailyProgressBar: View {
             .frame(height: 10)
 
             Text("\(count)/\(max)")
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .font(.system(.subheadline, design: .monospaced, weight: .bold))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
         }
         .accessibilityElement(children: .combine)
@@ -422,7 +421,7 @@ private struct DailyAttemptRow: View {
             HStack(spacing: 6) {
                 ForEach(Array(attempt.guess.enumerated()), id: \.offset) { _, char in
                     Text(String(char))
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(.system(.body, design: .rounded, weight: .bold))
                         .foregroundStyle(isWinner ? Color.appMarkGood : AppTheme.Focus.textPrimary)
                         .frame(width: 34, height: 38)
                         .background(
@@ -446,7 +445,7 @@ private struct DailyAttemptRow: View {
                     }
                     if isWinner {
                         Image(systemName: "checkmark")
-                            .font(.system(size: 13, weight: .bold))
+                            .font(.system(.footnote, design: .default, weight: .bold))
                             .foregroundStyle(Color.appMarkGood)
                     }
                 }
@@ -462,7 +461,7 @@ private struct DailyBadge: ViewModifier {
     let color: Color
     func body(content: Content) -> some View {
         content
-            .font(.system(size: 15, weight: .bold, design: .rounded))
+            .font(.system(.subheadline, design: .rounded, weight: .bold))
             .foregroundStyle(color)
             .monospacedDigit()
     }
@@ -484,7 +483,7 @@ private struct DailyResultTile: View {
                 .tracking(isMono ? 4 : 0)
                 .foregroundStyle(valueColor)
             Text(label)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.system(.footnote, design: .rounded, weight: .medium))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
         }
         .frame(maxWidth: .infinity)
@@ -537,8 +536,8 @@ private struct DailyInputDock: View {
                     }
                 } label: {
                     Image(systemName: "delete.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Color.appActionPrimary)
+                        .font(.system(.body, design: .default, weight: .semibold))
+                        .foregroundStyle(AppTheme.Focus.actionText)
                         .frame(width: 56, height: 54)
                         .background(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous).fill(AppTheme.Focus.subSurface))
                         .overlay(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous).strokeBorder(AppTheme.Focus.subSurfaceStroke, lineWidth: 1))
@@ -550,8 +549,8 @@ private struct DailyInputDock: View {
                     onSubmit(guessText)
                 } label: {
                     Text("game.submit.attempt")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.appActionPrimary)
+                        .font(.system(.body, design: .rounded, weight: .bold))
+                        .foregroundStyle(AppTheme.Focus.actionText)
                         .frame(maxWidth: .infinity)
                         .frame(height: 54)
                         .background(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous).fill(Color.appActionPrimary.opacity(0.14)))
@@ -586,15 +585,15 @@ private struct DailyDigitSlot: View {
 
             if let digit {
                 Text(digit)
-                    .font(.system(size: 30, weight: .bold, design: .monospaced))
+                    .font(.system(.title, design: .monospaced, weight: .bold))
                     .foregroundStyle(AppTheme.Focus.textPrimary)
             } else {
-                Text("·").font(.system(size: 26, weight: .bold)).foregroundStyle(Color.white.opacity(0.25))
+                Text("·").font(.system(.title2, design: .default, weight: .bold)).foregroundStyle(AppTheme.Focus.textPrimary.opacity(0.25))
             }
         }
         .overlay(alignment: .bottom) {
             RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                .fill(highlighted ? Color.appActionPrimary : Color.white.opacity(0.12))
+                .fill(highlighted ? Color.appActionPrimary : AppTheme.Focus.textPrimary.opacity(0.12))
                 .frame(height: 3)
                 .padding(.horizontal, 8)
         }
@@ -626,17 +625,17 @@ private struct DailyKeypad: View {
             if !isUsed { onTap(d) }
         } label: {
             Text("\(d)")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundStyle(isUsed ? Color.white.opacity(0.35) : AppTheme.Focus.textPrimary)
+                .font(.system(.title2, design: .rounded, weight: .bold))
+                .foregroundStyle(isUsed ? AppTheme.Focus.textPrimary.opacity(0.35) : AppTheme.Focus.textPrimary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(AppTheme.Focus.card))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(isUsed ? 0.06 : 0.16), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(AppTheme.Focus.textPrimary.opacity(isUsed ? 0.06 : 0.16), lineWidth: 1))
         }
         .buttonStyle(.plain)
         .disabled(isUsed)
         .opacity(isUsed ? 0.4 : 1.0)
-        .accessibilityLabel("Dígito \(d)\(isUsed ? ", ya usado" : "")")
+        .accessibilityLabel(isUsed ? Text("accessibility.board.used \(d)") : Text("accessibility.board.input \(d)"))
     }
 }
 
@@ -656,7 +655,7 @@ struct CountdownText: View {
     var body: some View {
         Text(timeRemaining)
             .font(font)
-            .foregroundStyle(Color.appActionPrimary)
+            .foregroundStyle(AppTheme.Focus.actionText)
             .onReceive(timer) { _ in update() }
             .onAppear { update() }
             .accessibilityLabel("Próximo desafío en \(timeRemaining)")
@@ -684,7 +683,7 @@ struct CountdownCard: View {
         HStack(spacing: AppTheme.Spacing.small) {
             Text("⏰").font(.system(size: 22))
             Text("daily.next_in")
-                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .font(.system(.subheadline, design: .rounded, weight: .medium))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
             Spacer()
             CountdownText(font: .system(size: 22, weight: .bold, design: .monospaced), onRollover: onRollover)

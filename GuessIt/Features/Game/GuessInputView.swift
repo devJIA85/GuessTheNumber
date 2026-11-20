@@ -94,8 +94,8 @@ struct GuessInputView: View {
                     }
                 } label: {
                     Image(systemName: "delete.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Color.appActionPrimary)
+                        .font(.system(.body, design: .default, weight: .semibold))
+                        .foregroundStyle(AppTheme.Focus.actionText)
                         .frame(width: 54, height: 48)
                         .background(
                             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous)
@@ -118,11 +118,11 @@ struct GuessInputView: View {
                     onSubmit(normalized)
                 } label: {
                     Text("game.submit.attempt")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
-                        // Texto en coral más claro (#FF8A5C) que el borde, como en el mock.
-                        .foregroundStyle(Color(red: 1.0, green: 0.54, blue: 0.36))
+                        .font(.system(.body, design: .rounded, weight: .bold))
+                        // El texto usa un coral con contraste en ambas apariencias.
+                        .foregroundStyle(AppTheme.Focus.actionText)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 48)
+                        .frame(minHeight: 48)
                         .background(
                             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous)
                                 .fill(Color.appActionPrimary.opacity(0.14))

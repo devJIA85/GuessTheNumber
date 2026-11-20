@@ -52,7 +52,6 @@ struct HistoryView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
-        .preferredColorScheme(.dark)
         .task {
             await loadGames()
         }
@@ -78,7 +77,7 @@ struct HistoryView: View {
             Text("game.title")
                 .focusSectionLabel()
             Text("history.title")
-                .font(.system(size: 34, weight: .heavy, design: .rounded))
+                .font(.system(.largeTitle, design: .rounded, weight: .heavy))
                 .foregroundStyle(AppTheme.Focus.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

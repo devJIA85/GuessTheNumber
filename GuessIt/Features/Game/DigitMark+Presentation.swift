@@ -17,10 +17,10 @@ extension DigitMark {
     /// - Es una extensión de presentación (capa Features), no toca el dominio puro.
     var spokenText: String {
         switch self {
-        case .unknown: return "sin estado"
-        case .poor:    return "POOR"
-        case .fair:    return "FAIR"
-        case .good:    return "GOOD"
+        case .unknown: return String(localized: "accessibility.mark.unknown")
+        case .poor:    return String(localized: "accessibility.mark.poor")
+        case .fair:    return String(localized: "accessibility.mark.fair")
+        case .good:    return String(localized: "accessibility.mark.good")
         }
     }
 }

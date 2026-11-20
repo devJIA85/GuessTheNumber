@@ -20,6 +20,7 @@ struct GameView: View {
 
     /// Acceso al composition root (actores y servicios de alto nivel).
     @Environment(\.appEnvironment) private var env
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // MARK: - UI State
 
@@ -132,9 +133,7 @@ struct GameView: View {
             // esquina superior izquierda vía GKAccessPoint (sistema).
             .toolbar(.hidden, for: .navigationBar)
             .tint(.appActionPrimary)
-            // "Focus" es una estética siempre oscura: forzamos dark para que el status
-            // bar y los acentos adaptativos resuelvan a sus variantes dark.
-            .preferredColorScheme(.dark)
+
     }
 
     private var errorBinding: Binding<Bool> {
@@ -159,7 +158,7 @@ struct GameView: View {
                 scrollableContent
             }
             .safeAreaInset(edge: .bottom) {
-                inputSection
+                if !dynamicTypeSize.isAccessibilitySize { inputSection }
             }
         }
     }
@@ -169,17 +168,17 @@ struct GameView: View {
     /// Fila superior de acciones: íconos de línea livianos a la derecha (sin pills).
     /// El badge de Game Center vive en la esquina izquierda vía `GKAccessPoint`.
     private var topActionsRow: some View {
-        HStack(spacing: 22) {
+        HStack(spacing: 4) {
             Spacer()
 
             NavigationLink { HistoryView() } label: {
-                actionIcon("clock.arrow.circlepath", label: "Historial")
+                actionIcon("clock.arrow.circlepath", label: "history.title")
             }
             NavigationLink { StatsView() } label: {
-                actionIcon("chart.bar.fill", label: "Estadísticas")
+                actionIcon("chart.bar.fill", label: "stats.title")
             }
             NavigationLink { DailyChallengeView() } label: {
-                actionIcon("calendar", label: "Desafío Diario")
+                actionIcon("calendar", label: "daily.title")
             }
 
             if let game = vm.currentGame, game.state == .inProgress {
@@ -187,7 +186,7 @@ struct GameView: View {
                     prepareHintPresentation()
                     isHintPresented = true
                 } label: {
-                    actionIcon("lightbulb", label: "Pista")
+                    actionIcon("lightbulb", label: "hint.title")
                 }
             }
 
@@ -210,7 +209,7 @@ struct GameView: View {
                 }
                 #endif
             } label: {
-                actionIcon("ellipsis", label: "Más")
+                actionIcon("ellipsis", label: "accessibility.game.actions")
             }
             .accessibilityIdentifier("game.actions")
         }
@@ -219,11 +218,11 @@ struct GameView: View {
     }
 
     /// Ícono de acción de la barra superior: línea liviana, sin contenedor.
-    private func actionIcon(_ systemName: String, label: String) -> some View {
+    private func actionIcon(_ systemName: String, label: LocalizedStringKey) -> some View {
         Image(systemName: systemName)
-            .font(.system(size: 20, weight: .regular))
-            .foregroundStyle(Color.white.opacity(0.8))
-            .frame(width: 30, height: 34)
+            .font(.system(.title3, design: .default, weight: .regular))
+            .foregroundStyle(AppTheme.Focus.textPrimary.opacity(0.8))
+            .frame(minWidth: 44, minHeight: 44)
             .contentShape(Rectangle())
             .accessibilityLabel(label)
     }
@@ -242,6 +241,8 @@ struct GameView: View {
                         VictorySectionView(game: game, onNewGame: chooseNewGame)
                     }
 
+                    // En AX, el teclado queda antes de la lista para acceder sin recorrer intentos previos.
+                    if dynamicTypeSize.isAccessibilitySize { inputSection }
                     attemptsHistory(for: game)
 
                     // Aún sin intentos: guía al primer movimiento en vez de dejar un hueco.
@@ -250,6 +251,7 @@ struct GameView: View {
                     }
                 } else {
                     EmptyStateSectionView()
+                    if dynamicTypeSize.isAccessibilitySize { inputSection }
                 }
             }
             .padding(.horizontal, AppTheme.Spacing.large)
@@ -262,17 +264,20 @@ struct GameView: View {
 
     /// Header "Focus": marca + título grande a la izquierda, contador de intentos a la derecha.
     private var gameHeader: some View {
-        HStack(alignment: .top) {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .top))
+        return layout {
             VStack(alignment: .leading, spacing: 4) {
                 Text("game.title")
                     .focusSectionLabel()
                 Text("game.header.title")
-                    .font(.system(size: 34, weight: .heavy, design: .rounded))
+                    .font(.system(.largeTitle, design: .rounded, weight: .heavy))
                     .foregroundStyle(AppTheme.Focus.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Spacer(minLength: AppTheme.Spacing.small)
+            if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppTheme.Spacing.small) }
 
             attemptsCounter
         }
@@ -283,8 +288,8 @@ struct GameView: View {
     private var attemptsCounter: some View {
         VStack(spacing: 2) {
             Text(String(format: "%02d", vm.currentGame?.attempts.count ?? 0))
-                .focusMonoDigits(size: 30, weight: .heavy, tracking: 1)
-                .foregroundStyle(Color.appActionPrimary)
+                .font(.system(.title, design: .monospaced, weight: .heavy))
+                .foregroundStyle(AppTheme.Focus.actionText)
             Text("common.attempts")
                 .focusSectionLabel()
         }
@@ -316,7 +321,7 @@ struct GameView: View {
                 ForEach(Array(rest.enumerated()), id: \.element.id) { index, attempt in
                     if index > 0 {
                         Divider()
-                            .overlay(Color.white.opacity(0.06))
+                            .overlay(AppTheme.Focus.textPrimary.opacity(0.06))
                     }
                     AttemptRowView(snapshot: attempt)
                         .padding(.vertical, AppTheme.Spacing.small)
@@ -370,7 +375,7 @@ struct GameView: View {
         AppTheme.Focus.background
             .overlay(alignment: .top) {
                 Rectangle()
-                    .fill(Color.white.opacity(0.10))
+                    .fill(AppTheme.Focus.textPrimary.opacity(0.10))
                     .frame(height: 1)
             }
             .ignoresSafeArea(edges: .bottom)
@@ -893,7 +898,7 @@ private struct DisabledInputSectionView: View {
                 .font(.title3)
 
             Text("game.input.disabled")
-                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .font(.system(.subheadline, design: .rounded, weight: .medium))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -916,7 +921,7 @@ private struct EmptyStateSectionView: View {
                 .foregroundStyle(AppTheme.Focus.textTertiary)
 
             Text("Ingresá tu primer intento para comenzar")
-                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .font(.system(.subheadline, design: .rounded, weight: .medium))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
                 .multilineTextAlignment(.center)
         }
@@ -942,8 +947,8 @@ private struct VictorySectionView: View {
     var body: some View {
         VStack(alignment: .center, spacing: AppTheme.Spacing.large) {
             Text("game.victory.title")
-                .font(.system(size: 22, weight: .heavy, design: .rounded))
-                .foregroundStyle(Color.appActionPrimary)
+                .font(.system(.title2, design: .rounded, weight: .heavy))
+                .foregroundStyle(AppTheme.Focus.actionText)
 
             // Métricas del juego
             VStack(spacing: AppTheme.Spacing.small) {
@@ -963,8 +968,8 @@ private struct VictorySectionView: View {
             // CTA: Nueva partida
             Button(action: onNewGame) {
                 Label("Nueva partida", systemImage: "plus.circle.fill")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.appActionPrimary)
+                    .font(.system(.body, design: .rounded, weight: .bold))
+                    .foregroundStyle(AppTheme.Focus.actionText)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
                     .background(
@@ -995,7 +1000,7 @@ private struct MetricRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .font(.system(size: 15, weight: .regular, design: .rounded))
+                .font(.system(.subheadline, design: .rounded, weight: .regular))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
             Spacer()
             Text(value)
@@ -1025,12 +1030,12 @@ private struct LastAttemptCard: View {
                     .focusSectionLabel()
                 Spacer()
                 Text("game.last_attempt.hint")
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(.system(.caption, design: .rounded, weight: .medium))
                     .foregroundStyle(AppTheme.Focus.textTertiary)
             }
 
             Text(attempt.guess)
-                .focusMonoDigits(size: 40, weight: .bold, tracking: 6)
+                .font(.system(.largeTitle, design: .monospaced, weight: .bold))
                 .foregroundStyle(AppTheme.Focus.textPrimary)
 
             FeedbackBar(good: good, fair: fair, poor: poor)
@@ -1040,14 +1045,14 @@ private struct LastAttemptCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .focusCard()
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Último intento \(attempt.guess). \(good) Good, \(fair) Fair, \(poor) Poor.")
+        .accessibilityLabel("accessibility.game.last_attempt \(attempt.guess) \(good) \(fair) \(poor)")
     }
 
     private var legend: some View {
         HStack(spacing: AppTheme.Spacing.medium) {
             legendItem(color: .appMarkGood, count: good, term: "Good")
             legendItem(color: .appMarkFair, count: fair, term: "Fair")
-            legendItem(color: Color.white.opacity(0.30), count: poor, term: "Poor")
+            legendItem(color: AppTheme.Focus.textPrimary.opacity(0.30), count: poor, term: "Poor")
         }
     }
 
@@ -1057,7 +1062,7 @@ private struct LastAttemptCard: View {
                 .fill(color)
                 .frame(width: 9, height: 9)
             Text("\(count) \(term)")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.system(.subheadline, design: .rounded, weight: .semibold))
                 .foregroundStyle(AppTheme.Focus.textPrimary)
         }
     }
@@ -1082,7 +1087,7 @@ private struct FeedbackBar: View {
                     .fill(Color.appMarkFair)
                     .frame(width: w * CGFloat(fair) / total)
                 Rectangle()
-                    .fill(Color.white.opacity(0.12))
+                    .fill(AppTheme.Focus.textPrimary.opacity(0.12))
                     .frame(width: w * CGFloat(poor) / total)
             }
         }

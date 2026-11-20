@@ -2,6 +2,182 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+    "accessibility.mark.good": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Good"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Good"
+          }
+        }
+      }
+    },
+    "accessibility.mark.fair": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fair"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fair"
+          }
+        }
+      }
+    },
+    "accessibility.mark.poor": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poor"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poor"
+          }
+        }
+      }
+    },
+    "accessibility.mark.unknown": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unmarked"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin marca"
+          }
+        }
+      }
+    },
+    "accessibility.game.last_attempt %@ %lld %lld %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last guess %1$@. %2$lld Good, %3$lld Fair, %4$lld Poor."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Último intento %1$@. %2$lld Good, %3$lld Fair, %4$lld Poor."
+          }
+        }
+      }
+    },
+    "accessibility.board.input %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digit %lld. Available"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dígito %lld. Disponible"
+          }
+        }
+      }
+    },
+    "accessibility.board.input_hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-tap to enter. Touch and hold to mark."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tocá dos veces para ingresar. Mantené presionado para marcar."
+          }
+        }
+      }
+    },
+    "accessibility.board.mark_hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-tap to change the mark."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tocá dos veces para cambiar la marca."
+          }
+        }
+      }
+    },
+    "accessibility.board.marked %lld %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digit %lld. Status: %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dígito %lld. Estado: %@"
+          }
+        }
+      }
+    },
+    "accessibility.board.used %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digit %lld. Already entered"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dígito %lld. Ya ingresado"
+          }
+        }
+      }
+    },
+    "accessibility.game.actions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More actions"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más acciones"
+          }
+        }
+      }
+    },
     "accessibility.guess_input_digits %lld": {
       "localizations": {
         "en": {

@@ -50,12 +50,11 @@ struct StatsView: View {
             ToolbarItem(placement: .principal) {
                 Label("stats.title", systemImage: "chart.bar.fill")
                     .labelStyle(.titleAndIcon)
-                    .font(.system(size: 17, weight: .heavy, design: .rounded))
+                    .font(.system(.body, design: .rounded, weight: .heavy))
                     .foregroundStyle(AppTheme.Focus.textPrimary)
             }
         }
         .tint(.appActionPrimary)
-        .preferredColorScheme(.dark)
         .task {
             await loadStats()
         }
@@ -275,22 +274,22 @@ private struct MetricCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(.subheadline, design: .default, weight: .semibold))
                 .foregroundStyle(color)
 
             HStack(alignment: .firstTextBaseline, spacing: 1) {
                 Text(value)
-                    .font(.system(size: 30, weight: .heavy, design: .rounded))
+                    .font(.system(.title, design: .rounded, weight: .heavy))
                     .foregroundStyle(AppTheme.Focus.textPrimary)
                 if let unit {
                     Text(unit)
-                        .font(.system(size: 18, weight: .heavy, design: .rounded))
+                        .font(.system(.body, design: .rounded, weight: .heavy))
                         .foregroundStyle(AppTheme.Focus.textSecondary)
                 }
             }
 
             Text(label)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.system(.footnote, design: .rounded, weight: .medium))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -324,11 +323,11 @@ private struct StreakCard: View {
                 .foregroundStyle(color)
 
             Text(value)
-                .font(.system(size: 30, weight: .heavy, design: .rounded))
+                .font(.system(.title, design: .rounded, weight: .heavy))
                 .foregroundStyle(AppTheme.Focus.textPrimary)
 
             Text(label)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.system(.footnote, design: .rounded, weight: .medium))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
                 .multilineTextAlignment(.center)
         }
@@ -353,7 +352,7 @@ private struct DistributionBar: View {
     var body: some View {
         HStack(spacing: AppTheme.Spacing.small) {
             Text("\(attempts)")
-                .font(.system(size: 15, weight: .bold, design: .monospaced))
+                .font(.system(.subheadline, design: .monospaced, weight: .bold))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
                 .frame(width: 20, alignment: .leading)
 
@@ -371,7 +370,7 @@ private struct DistributionBar: View {
                         .frame(width: fillWidth)
                         .overlay(alignment: .trailing) {
                             Text("\(count)")
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .font(.system(.footnote, design: .rounded, weight: .bold))
                                 .foregroundStyle(isBest ? .black.opacity(0.8) : .white)
                                 .padding(.trailing, 8)
                         }

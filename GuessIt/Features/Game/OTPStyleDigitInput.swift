@@ -79,21 +79,21 @@ struct OTPStyleDigitInput: View {
 
             if let digit {
                 Text(String(digit))
-                    .focusMonoDigits(size: 26, weight: .bold, tracking: 0)
+                    .font(.system(.title2, design: .monospaced, weight: .bold))
                     .foregroundStyle(AppTheme.Focus.textPrimary)
             } else {
                 Text("·")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(Color.white.opacity(0.25))
+                    .font(.system(.title2, design: .default, weight: .bold))
+                    .foregroundStyle(AppTheme.Focus.textPrimary.opacity(0.25))
             }
         }
         .overlay(alignment: .bottom) {
             RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                .fill(isHighlighted ? Color.appActionPrimary : Color.white.opacity(0.12))
+                .fill(isHighlighted ? Color.appActionPrimary : AppTheme.Focus.textPrimary.opacity(0.12))
                 .frame(height: 3)
                 .padding(.horizontal, 6)
         }
-        .frame(width: 44, height: 52)
+        .frame(maxWidth: 56, minHeight: 52)
         .animation(.easeInOut(duration: 0.15), value: isActive)
         .animation(.easeInOut(duration: 0.15), value: digit)
     }
