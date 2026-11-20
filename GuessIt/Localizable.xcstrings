@@ -114,34 +114,82 @@
         }
       }
     },
-    "settings.version": {
+    "settings.about.subtitle": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Version"
+            "value": "A game of numerical deduction"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Versión"
+            "value": "Un juego de deducción numérica"
           }
         }
       }
     },
-    "game.menu.game_center": {
+    "settings.about.version %@ %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Game Center"
+            "value": "Version %1$@ (%2$@)"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Game Center"
+            "value": "Versión %1$@ (%2$@)"
+          }
+        }
+      }
+    },
+    "settings.about.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find the secret number using feedback from each guess. Play a classic game or take on the daily challenge."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descubrí el número secreto con las pistas de cada intento. Jugá una partida clásica o probá el desafío diario."
+          }
+        }
+      }
+    },
+    "settings.about.linkedin": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Developer on LinkedIn"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desarrollador en LinkedIn"
+          }
+        }
+      }
+    },
+    "settings.about.developed_by": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Developed by Juan Ignacio Antolini"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desarrollado por Juan Ignacio Antolini"
           }
         }
       }

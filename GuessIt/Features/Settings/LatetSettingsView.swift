@@ -54,20 +54,65 @@ struct LatetSettingsView: View {
 }
 
 struct LatetAboutView: View {
+    private static let developerProfile = URL(string: "https://www.linkedin.com/in/jantolini")
+
     var body: some View {
-        Form {
-            Section("settings.developer") {
-                Image(decorative: "DeveloperLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 240)
-                    .frame(maxWidth: .infinity)
-                Text(verbatim: "Juan Ignacio Antolini")
+        ScrollView {
+            VStack(spacing: AppTheme.Spacing.xxLarge) {
+                VStack(spacing: AppTheme.Spacing.medium) {
+                    Image(decorative: "LatetBrandIcon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 96, height: 96)
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
+
+                    Text("game.title")
+                        .font(.system(.largeTitle, design: .rounded, weight: .heavy))
+                        .accessibilityAddTraits(.isHeader)
+                    Text("settings.about.subtitle")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+
+                    if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+                       let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String {
+                        Text("settings.about.version \(version) \(build)")
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, AppTheme.Spacing.medium)
+                            .padding(.vertical, AppTheme.Spacing.small)
+                            .background(.thinMaterial, in: Capsule())
+                    }
+                }
+
+                Text("settings.about.description")
+                    .foregroundStyle(.secondary)
+
+                if let profile = Self.developerProfile {
+                    Link(destination: profile) {
+                        Label("settings.about.linkedin", systemImage: "person.crop.circle")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(minHeight: 44)
+                            .padding(.horizontal, AppTheme.Spacing.medium)
+                    }
+                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
+                }
+
+                VStack(spacing: AppTheme.Spacing.small) {
+                    Image(decorative: "DeveloperLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 144)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    Text("settings.about.developed_by")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
-            if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
-                LabeledContent("settings.version", value: version)
-            }
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: 480)
+            .padding(AppTheme.Spacing.large)
+            .frame(maxWidth: .infinity)
         }
+        .background { FocusBackground() }
         .navigationTitle("settings.about")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarVisibility(.visible, for: .navigationBar)
