@@ -34,6 +34,7 @@ final class GameViewModel {
 
     /// Dependencias de alto nivel. Se inyectan una vez con `configure(env:)`.
     /// - Note: `@ObservationIgnored` porque es una dependencia fija, no estado observable.
+    @ObservationIgnored private var isUpdatingGame = false
     @ObservationIgnored private var env: AppEnvironment?
 
     /// Inyecta el environment (idempotente). Llamar desde `.task` de la vista.
@@ -44,7 +45,7 @@ final class GameViewModel {
     // MARK: - Estado derivado
 
     /// Decide si una transición de estado corresponde a una victoria ganada EN esta sesión.
-    /// - Why: al arrancar, `loadCurrentGame` puede cargar una partida ya ganada (nil → .won);
+    /// - Why: al arrancar, `initialize` puede cargar una partida ya ganada (nil → .won);
     ///   esa transición no debe re-disparar splash/háptica/envío de score.
     static func isFreshWin(from oldState: GameState?, to newState: GameState?) -> Bool {
         oldState == .inProgress && newState == .won
@@ -66,24 +67,16 @@ final class GameViewModel {
 
     /// Carga inicial: crea una partida si no hay ninguna visible.
     func initialize() async {
-        await loadCurrentGame(createIfMissing: true)
-    }
-
-    /// Carga o refresca el snapshot que gobierna la pantalla principal.
-    /// - Parameter createIfMissing: si no hay partida visible, crea una nueva antes de refrescar.
-    func loadCurrentGame(createIfMissing: Bool = false) async {
-        guard let env else { return }
+        guard let env, currentGame == nil, !isUpdatingGame else { return }
+        isUpdatingGame = true
+        defer { isUpdatingGame = false }
         do {
             if let snapshot = try await env.modelActor.fetchCurrentGameDetailSnapshot() {
                 currentGame = snapshot
-                return
+            } else {
+                let gameID = try await env.gameActor.resetGame()
+                currentGame = try await env.modelActor.fetchGameDetailSnapshot(gameID: gameID)
             }
-            guard createIfMissing else {
-                currentGame = nil
-                return
-            }
-            try await env.gameActor.resetGame()
-            currentGame = try await env.modelActor.fetchCurrentGameDetailSnapshot()
         } catch {
             errorMessage = Self.message(for: error)
         }
@@ -95,10 +88,13 @@ final class GameViewModel {
     /// - Returns: `true` si se procesó sin error (la vista limpia el input solo en ese caso).
     @discardableResult
     func submitGuess(_ guess: String) async -> Bool {
-        guard let env else { return false }
+        guard let env, let gameID = currentGame?.id, !isUpdatingGame else { return false }
+        isUpdatingGame = true
+        defer { isUpdatingGame = false }
         do {
-            _ = try await env.gameActor.submitGuess(guess)
-            await loadCurrentGame()
+            // Mantener el resultado por ID evita sustituirlo por una victoria histórica.
+            let result = try await env.gameActor.submitGuess(guess, gameID: gameID)
+            currentGame = result.game
             return true
         } catch {
             errorMessage = Self.message(for: error)
@@ -110,15 +106,23 @@ final class GameViewModel {
     /// - Returns: `true` si se reinició sin error.
     @discardableResult
     func startNewGame(length: ClassicGameLength = .five) async -> Bool {
-        guard let env else { return false }
+        guard let env, !isUpdatingGame else { return false }
+        isUpdatingGame = true
+        defer { isUpdatingGame = false }
         do {
-            try await env.gameActor.resetGame(length: length)
-            await loadCurrentGame()
+            let gameID = try await env.gameActor.resetGame(length: length)
+            currentGame = try await env.modelActor.fetchGameDetailSnapshot(gameID: gameID)
             return true
         } catch {
             errorMessage = Self.message(for: error)
             return false
         }
+    }
+
+    private func refreshGame(id: GameIdentifier) async {
+        guard let env, let snapshot = try? await env.modelActor.fetchGameDetailSnapshot(gameID: id),
+              currentGame?.id == id, currentGame?.state == snapshot.state else { return }
+        currentGame = snapshot
     }
 
     // MARK: - Tablero de notas (mutación local optimista + persistencia)
@@ -135,9 +139,9 @@ final class GameViewModel {
         HapticFeedbackManager.markChanged()
         do {
             try await env.modelActor.cycleDigitMark(digit: digit, gameID: game.id)
-            await loadCurrentGame()
+            await refreshGame(id: game.id)
         } catch {
-            await loadCurrentGame()
+            await refreshGame(id: game.id)
             assertionFailure("No se pudo ciclar la marca del dígito \(digit): \(error)")
         }
     }
@@ -153,9 +157,9 @@ final class GameViewModel {
         HapticFeedbackManager.markChanged()
         do {
             try await env.modelActor.setDigitMark(digit: digit, mark: mark, gameID: game.id)
-            await loadCurrentGame()
+            await refreshGame(id: game.id)
         } catch {
-            await loadCurrentGame()
+            await refreshGame(id: game.id)
             assertionFailure("No se pudo establecer la marca del dígito \(digit): \(error)")
         }
     }
@@ -169,9 +173,9 @@ final class GameViewModel {
         HapticFeedbackManager.markChanged()
         do {
             try await env.modelActor.resetDigitNotes(gameID: game.id)
-            await loadCurrentGame()
+            await refreshGame(id: game.id)
         } catch {
-            await loadCurrentGame()
+            await refreshGame(id: game.id)
             assertionFailure("No se pudo resetear el tablero: \(error)")
         }
     }
