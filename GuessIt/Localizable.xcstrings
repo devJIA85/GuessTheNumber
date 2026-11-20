@@ -1234,6 +1234,22 @@
         }
       }
     },
+    "game.empty.first_guess": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter your first guess to get started"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingresá tu primer intento para comenzar"
+          }
+        }
+      }
+    },
     "game.header.title": {
       "localizations": {
         "en": {

@@ -365,7 +365,7 @@ struct GameView: View {
             }
         }
         .background {
-            inputSectionBackground
+            if !dynamicTypeSize.isAccessibilitySize { inputSectionBackground }
         }
     }
 
@@ -920,7 +920,7 @@ private struct EmptyStateSectionView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(AppTheme.Focus.textTertiary)
 
-            Text("Ingresá tu primer intento para comenzar")
+            Text("game.empty.first_guess")
                 .font(.system(.subheadline, design: .rounded, weight: .medium))
                 .foregroundStyle(AppTheme.Focus.textSecondary)
                 .multilineTextAlignment(.center)

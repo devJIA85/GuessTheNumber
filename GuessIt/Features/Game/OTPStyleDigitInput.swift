@@ -24,6 +24,7 @@ struct OTPStyleDigitInput: View {
     
     /// Texto del input (controlado por el padre).
     @Binding var text: String
+    @ScaledMetric(relativeTo: .title2) private var cellHeight = 52.0
     
     /// Número de dígitos a mostrar.
     private let digitCount: Int
@@ -39,7 +40,7 @@ struct OTPStyleDigitInput: View {
         digitCellsView
             .accessibilityElement(children: .combine)
             .accessibilityLabel("accessibility.guess_input_digits \(digitCount)")
-            .accessibilityValue(text.isEmpty ? "Vacío" : text)
+            .accessibilityValue(text.isEmpty ? String(localized: "accessibility.empty") : text)
             .accessibilityHint("accessibility.keypad_hint")
     }
     
@@ -93,7 +94,7 @@ struct OTPStyleDigitInput: View {
                 .frame(height: 3)
                 .padding(.horizontal, 6)
         }
-        .frame(maxWidth: 56, minHeight: 52)
+        .frame(width: 44, height: cellHeight)
         .animation(.easeInOut(duration: 0.15), value: isActive)
         .animation(.easeInOut(duration: 0.15), value: digit)
     }
