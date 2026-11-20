@@ -127,9 +127,7 @@ struct GameView: View {
         mainContent
             .overlay { victorySplashOverlay }
             .animation(.easeOut(duration: 0.2), value: victorySplash.isPresented)
-            // La barra de navegación se oculta: las acciones viven en una fila propia
-            // de íconos de línea (topActionsRow) y el badge de Game Center ocupa la
-            // esquina superior izquierda vía GKAccessPoint (sistema).
+            // La fila superior del juego ya reúne las acciones de navegación.
             .toolbar(.hidden, for: .navigationBar)
             .tint(.appActionPrimary)
 
@@ -165,7 +163,6 @@ struct GameView: View {
     // MARK: - Top Actions
 
     /// Fila superior de acciones: íconos de línea livianos a la derecha (sin pills).
-    /// El badge de Game Center vive en la esquina izquierda vía `GKAccessPoint`.
     private var topActionsRow: some View {
         HStack(spacing: 4) {
             Spacer()
@@ -199,6 +196,11 @@ struct GameView: View {
                     chooseNewGame()
                 } label: {
                     Label("game.new_classic", systemImage: "plus.circle")
+                }
+                if env.gameCenterService.isAuthenticated {
+                    Button("game.menu.game_center") {
+                        env.gameCenterService.showDashboard()
+                    }
                 }
                 #if DEBUG
                 Button {
