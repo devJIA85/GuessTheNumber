@@ -157,6 +157,14 @@ struct SimpleDigitCell: View {
             .frame(minHeight: 46)
             .background(cellBackground)
             .overlay { cellBorder }
+            .overlay(alignment: .topTrailing) {
+                if let markSymbol {
+                    Image(systemName: markSymbol)
+                        .font(.caption2.weight(.semibold))
+                        .padding(4)
+                        .accessibilityHidden(true)
+                }
+            }
             .scaleEffect(isPressed ? 0.95 : 1.0)
             .animation(.smooth(duration: 0.2), value: mark)
             .animation(.easeInOut(duration: 0.1), value: isPressed)
@@ -219,6 +227,7 @@ struct SimpleDigitCell: View {
             .opacity(isUsed ? 0.4 : 1.0)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenLabel)
+            .accessibilityValue(isInputMode && mark != .unknown ? Text(mark.spokenText) : Text(verbatim: ""))
             .accessibilityHint(spokenHint)
             .accessibilityAddTraits(isUsed ? [] : .isButton)
             .accessibilityIdentifier("game.digit.\(digit)")
@@ -230,6 +239,15 @@ struct SimpleDigitCell: View {
         if !isInputMode { return Text("accessibility.board.marked \(digit) \(mark.spokenText)") }
         if isUsed { return Text("accessibility.board.used \(digit)") }
         return Text("accessibility.board.input \(digit)")
+    }
+
+    private var markSymbol: String? {
+        switch mark {
+        case .unknown: nil
+        case .good: "checkmark"
+        case .fair: "minus"
+        case .poor: "xmark"
+        }
     }
 
     private var spokenHint: Text {

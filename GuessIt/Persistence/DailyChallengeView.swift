@@ -21,6 +21,8 @@ import Combine
 /// - Usa 3 dígitos y **sí** tiene tope de intentos (`dailyChallengeMaxAttempts`).
 @MainActor
 struct DailyChallengeView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
 
     // MARK: - Dependencies
 
@@ -124,11 +126,15 @@ struct DailyChallengeView: View {
 
     // MARK: - Active View
 
-    @ViewBuilder
     private func activeView(challenge: DailyChallengeSnapshot) -> some View {
         ScrollView {
             VStack(spacing: AppTheme.Spacing.medium) {
                 DailyHeaderCard(challenge: challenge, onRollover: { Task { await loadChallenge() } })
+
+                // Con texto grande, el teclado crece dentro del scroll y no tapa el contenido.
+                if dynamicTypeSize.isAccessibilitySize {
+                    inputDock
+                }
 
                 if !challenge.attempts.isEmpty {
                     DailyAttemptsCard(attempts: challenge.attempts, highlightWinner: false)
@@ -138,10 +144,15 @@ struct DailyChallengeView: View {
             .padding(.top, AppTheme.Spacing.small)
         }
         .safeAreaInset(edge: .bottom) {
-            DailyInputDock(guessText: $guessText, onSubmit: submitGuess)
-                .padding(.horizontal, AppTheme.Spacing.large)
-                .padding(.bottom, AppTheme.Spacing.small)
+            if !dynamicTypeSize.isAccessibilitySize {
+                inputDock.padding(.horizontal, AppTheme.Spacing.large)
+            }
         }
+    }
+
+    private var inputDock: some View {
+        DailyInputDock(guessText: $guessText, onSubmit: submitGuess)
+            .padding(.bottom, AppTheme.Spacing.small)
     }
 
     // MARK: - Completed View
@@ -542,6 +553,7 @@ private struct DailyInputDock: View {
                         .background(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous).fill(AppTheme.Focus.subSurface))
                         .overlay(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous).strokeBorder(AppTheme.Focus.subSurfaceStroke, lineWidth: 1))
                 }
+                .accessibilityLabel("accessibility.delete_last")
                 .disabled(guessText.isEmpty)
                 .opacity(guessText.isEmpty ? 0.4 : 1.0)
 
@@ -552,7 +564,8 @@ private struct DailyInputDock: View {
                         .font(.system(.body, design: .rounded, weight: .bold))
                         .foregroundStyle(AppTheme.Focus.actionText)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 54)
+                        .padding(.vertical, 8)
+                        .frame(minHeight: 54)
                         .background(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous).fill(Color.appActionPrimary.opacity(0.14)))
                         .overlay(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button, style: .continuous).strokeBorder(Color.appActionPrimary, lineWidth: 1.5))
                 }
@@ -575,6 +588,7 @@ private struct DailyInputDock: View {
 private struct DailyDigitSlot: View {
     let digit: String?
     let isActive: Bool
+    @ScaledMetric(relativeTo: .title) private var height = 64.0
 
     var body: some View {
         let highlighted = digit != nil || isActive
@@ -598,7 +612,7 @@ private struct DailyDigitSlot: View {
                 .padding(.horizontal, 8)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 64)
+        .frame(height: height)
         .animation(.easeInOut(duration: 0.15), value: isActive)
         .animation(.easeInOut(duration: 0.15), value: digit)
     }
@@ -609,7 +623,11 @@ private struct DailyKeypad: View {
     let usedDigits: Set<Int>
     let onTap: (Int) -> Void
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 9), count: 5)
+    @ScaledMetric(relativeTo: .title2) private var minimumKeySize = 48.0
+
+    private var columns: [GridItem] {
+        [GridItem(.adaptive(minimum: minimumKeySize, maximum: minimumKeySize * 1.4), spacing: 9)]
+    }
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 9) {
@@ -628,7 +646,7 @@ private struct DailyKeypad: View {
                 .font(.system(.title2, design: .rounded, weight: .bold))
                 .foregroundStyle(isUsed ? AppTheme.Focus.textPrimary.opacity(0.35) : AppTheme.Focus.textPrimary)
                 .frame(maxWidth: .infinity)
-                .frame(height: 52)
+                .frame(minHeight: minimumKeySize)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(AppTheme.Focus.card))
                 .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(AppTheme.Focus.textPrimary.opacity(isUsed ? 0.06 : 0.16), lineWidth: 1))
         }
