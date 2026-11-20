@@ -35,6 +35,7 @@ struct GameView: View {
     /// Store observable del flujo principal: dueño del snapshot de partida y del error.
     /// - Why: separa la orquestación (carga/submit/reset/notas) de la vista declarativa.
     @State private var vm = GameViewModel()
+    @State private var navigationPath = NavigationPath()
 
     /// Input del usuario (string crudo).
     @State private var guessText: String = ""
@@ -76,16 +77,12 @@ struct GameView: View {
     /// - Why: permite coordinar presentación + haptic sin persistencia.
     @State private var victorySplash = VictorySplashState()
     
-    /// Controla la presentación del tutorial.
-
-
-
     var body: some View {
         navigationContent
     }
     
     private var navigationContent: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             contentWithOverlay
                 .task {
                     vm.configure(env: env)
@@ -200,7 +197,9 @@ struct GameView: View {
             }
 
             Menu {
-                NavigationLink(value: GameRoute.settings) {
+                Button {
+                    navigationPath.append(GameRoute.settings)
+                } label: {
                     Label("settings.title", systemImage: "gearshape")
                 }
                 Button {
