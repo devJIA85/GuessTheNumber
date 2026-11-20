@@ -209,8 +209,17 @@ struct GameView: View {
                     Label("game.new_classic", systemImage: "plus.circle")
                 }
                 if env.gameCenterService.isAuthenticated {
-                    Button("game.menu.game_center") {
+                    Button {
                         env.gameCenterService.showDashboard()
+                    } label: {
+                        Label {
+                            Text("game.menu.game_center")
+                        } icon: {
+                            Image(decorative: "GameCenterArtwork")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20, height: 20)
+                        }
                     }
                 }
                 #if DEBUG
