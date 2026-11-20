@@ -13,21 +13,14 @@ import SwiftUI
 ///
 /// # Secuencia de animación (~1.2s)
 /// 1. **Fase 1** (0.40s): ícono fade-in + scale 0.92 → 1.0 con spring
-/// 2. **Fase 2** (0.30s): "?" micro-pop scale 1.0 → 1.06 → 1.0 + glass highlight
+/// 2. **Fase 2** (0.30s): pulso del ícono de 1.0 a 1.06 y vuelta a 1.0
 /// 3. **Fase 3** (0.45s): ícono dissolve (blur + fade) mientras contenido principal aparece
 ///
 /// # Accesibilidad
 /// - Si `accessibilityReduceMotion` está habilitado, salta directamente a un fade
 ///   rápido de 0.3s sin spring ni pop.
 ///
-/// # Liquid Glass (iOS 26+)
-/// - Usa `.glassEffect` en el "?" para integración nativa con Liquid Glass.
-/// - Glass highlight overlay en Fase 2 para efecto de "pulso" vidrioso.
-/// - Fallback iOS <26: shadow sutil y overlay blanco.
-///
-/// # Integración
-/// - Montada como overlay en `RootView`, se auto-remueve cuando `isActive = false`.
-/// - `PremiumBackgroundGradient` como fondo para continuidad visual con el launch screen.
+/// Se monta sobre RootView y se retira al terminar la animación.
 struct SplashView: View {
 
     // MARK: - Interface
@@ -41,6 +34,7 @@ struct SplashView: View {
     /// Preferencia de accesibilidad: reduce motion.
     /// - Why: Apple HIG requiere respetar esta preferencia.
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
 
     // MARK: - Animation State
 
@@ -60,12 +54,12 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            // FONDO: replica PremiumBackgroundGradient para evitar flash blanco.
-            // - Why: el static launch screen puede no coincidir exactamente,
-            //   este gradiente asegura continuidad visual desde el primer frame.
-            PremiumBackgroundGradient()
+            LinearGradient(
+                colors: colorScheme == .dark ? SplashStyle.Background.dark : SplashStyle.Background.light,
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
 
-            // ÍCONO ANIMADO: card centrada con gradiente del app icon.
             iconCard
                 .scaleEffect(iconScale * iconPopScale)
                 .opacity(iconOpacity)
