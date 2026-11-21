@@ -66,6 +66,7 @@
       }
     },
     "(2 GOOD, 1 FAIR)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -293,6 +294,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld de %2$lld tentativas"
+          }
+        }
+      }
+    },
+    "%lld digits" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dígitos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dígitos"
           }
         }
       }
@@ -560,6 +577,7 @@
       }
     },
     "1 2 3 4 5" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -571,6 +589,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 2 3 4 5"
+          }
+        }
+      }
+    },
+    "1 is in the right spot." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El 1 está en el lugar correcto."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O 1 está na posição certa."
+          }
+        }
+      }
+    },
+    "2 is in a different spot." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El 2 está en otro lugar."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O 2 está em outra posição."
+          }
+        }
+      }
+    },
+    "4 is not in the secret." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El 4 no está en el secreto."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O 4 não está no segredo."
           }
         }
       }
@@ -1294,6 +1360,38 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Cerrar"
+          }
+        }
+      }
+    },
+    "Check the guess" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probar intento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testar tentativa"
+          }
+        }
+      }
+    },
+    "Choose how many digits to guess." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegí cuántos dígitos querés adivinar."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha quantos dígitos quer adivinhar."
           }
         }
       }
@@ -2329,6 +2427,22 @@
         }
       }
     },
+    "Digits" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígitos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígitos"
+          }
+        }
+      }
+    },
     "Doble toque para agregar al número" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2391,6 +2505,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Erro"
+          }
+        }
+      }
+    },
+    "Example secret" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secreto del ejemplo"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segredo do exemplo"
           }
         }
       }
@@ -2566,6 +2696,7 @@
       }
     },
     "game.classic_digit_count" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3778,6 +3909,22 @@
         }
       }
     },
+    "In a real game, you see only the totals for each clue." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En una partida, solo ves el total de cada tipo de pista."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em uma partida, você só vê o total de cada tipo de pista."
+          }
+        }
+      }
+    },
     "Marcar FAIR" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4807,6 +4954,22 @@
         }
       }
     },
+    "Try a guess" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probá un intento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faça uma tentativa"
+          }
+        }
+      }
+    },
     "tutorial.board.description" : {
       "localizations" : {
         "en" : {
@@ -4918,6 +5081,7 @@
       }
     },
     "tutorial.feedback.example" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4940,6 +5104,7 @@
       }
     },
     "tutorial.feedback.fair" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4962,6 +5127,7 @@
       }
     },
     "tutorial.feedback.good" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4984,6 +5150,7 @@
       }
     },
     "tutorial.feedback.label" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5006,6 +5173,7 @@
       }
     },
     "tutorial.feedback.poor" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5028,6 +5196,7 @@
       }
     },
     "tutorial.feedback.title" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5050,6 +5219,7 @@
       }
     },
     "tutorial.feedback.your_attempt" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5072,6 +5242,7 @@
       }
     },
     "tutorial.how_to_play.step1" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5094,6 +5265,7 @@
       }
     },
     "tutorial.how_to_play.step2" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5116,6 +5288,7 @@
       }
     },
     "tutorial.how_to_play.step3" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5138,6 +5311,7 @@
       }
     },
     "tutorial.how_to_play.title" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5160,7 +5334,6 @@
       }
     },
     "tutorial.next" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5205,7 +5378,6 @@
       }
     },
     "tutorial.start" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5271,6 +5443,22 @@
         }
       }
     },
+    "Use digits from 0 to 9 without repeating any. Each guess gives you clues." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usá dígitos del 0 al 9 sin repetir. Cada intento te da pistas."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use dígitos de 0 a 9 sem repetir. Cada tentativa dá pistas."
+          }
+        }
+      }
+    },
     "Vacío" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5316,6 +5504,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Você atingiu o limite de dicas. Abra o Latet de novo para pedir mais dicas."
+          }
+        }
+      }
+    },
+    "Your guess" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu intento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua tentativa"
           }
         }
       }
