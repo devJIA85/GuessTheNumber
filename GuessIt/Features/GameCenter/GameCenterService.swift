@@ -181,26 +181,28 @@ final class GameCenterService: Sendable {
         }
     }
 
-    /// Reporta múltiples achievements en batch.
-    ///
-    /// # Por qué batch
-    /// - Más eficiente que reportar uno por uno (una sola request a Game Center).
-    /// - Garantiza atomicidad (todos se reportan o ninguno).
-    ///
-    /// - Parameter achievements: lista de achievements con su progreso.
+    /// Filtra el progreso contra el catálogo de Game Center porque los logros se publican por etapas.
     func reportAchievements(_ achievements: [GameCenterAchievements.AchievementProgress]) async {
-        guard isAuthenticated, !achievements.isEmpty else { return }
+        let player = GKLocalPlayer.local
+        guard isAuthenticated, player.isAuthenticated, !achievements.isEmpty else { return }
 
-        let gkAchievements = achievements.map { progress -> GKAchievement in
-            let achievement = GKAchievement(identifier: progress.id)
-            achievement.percentComplete = progress.percentComplete
-            achievement.showsCompletionBanner = true
-            return achievement
-        }
-
+        let playerID = player.gamePlayerID
         do {
-            try await GKAchievement.report(gkAchievements)
-            Self.logger.info("Batch reported \(achievements.count) achievements")
+            let descriptions = try await GKAchievementDescription.loadAchievementDescriptions()
+            // La cuenta puede cambiar mientras se carga el catálogo.
+            guard isAuthenticated, player.isAuthenticated, player.gamePlayerID == playerID else { return }
+            let configuredIDs = Set(descriptions.map(\.identifier))
+            let availableAchievements = achievements.filter { configuredIDs.contains($0.id) }
+            guard !availableAchievements.isEmpty else { return }
+
+            let reports = availableAchievements.map { progress in
+                let achievement = GKAchievement(identifier: progress.id)
+                achievement.percentComplete = progress.percentComplete
+                achievement.showsCompletionBanner = true
+                return achievement
+            }
+            try await GKAchievement.report(reports)
+            Self.logger.info("Batch reported \(reports.count) achievements")
         } catch {
             Self.logger.error("Batch achievement report failed: \(error.localizedDescription)")
         }
