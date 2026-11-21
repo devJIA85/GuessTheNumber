@@ -116,7 +116,11 @@ struct GameView: View {
                 )
                 #endif
                 .sheet(isPresented: $isNewGamePresented) {
-                    newGamePicker
+                    NewClassicGameView(
+                        selectedLength: $selectedLength,
+                        showsAbandonWarning: vm.currentGame.map { $0.state == .inProgress && !$0.attempts.isEmpty } ?? false,
+                        onStart: startNewGame
+                    )
                 }
                 .sheet(isPresented: $isHintPresented, onDismiss: onHintDismiss) {
                     hintSheet
@@ -450,32 +454,6 @@ struct GameView: View {
     // - Principio: cada subvista encapsula su propia lógica visual
 
     // MARK: - Helpers
-
-    private var newGamePicker: some View {
-        NavigationStack {
-            Form {
-                Picker("game.classic_digit_count", selection: $selectedLength) {
-                    ForEach(ClassicGameLength.allCases, id: \.self) { length in
-                        Text(length.rawValue.formatted()).tag(length)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                if let game = vm.currentGame, game.state == .inProgress, !game.attempts.isEmpty {
-                    Text("game.classic_abandon_warning")
-                }
-            }
-            .navigationTitle("game.new_classic")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("game.classic_cancel") { isNewGamePresented = false }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("game.classic_start") { startNewGame(length: selectedLength) }
-                }
-            }
-        }
-    }
 
     private func chooseNewGame() {
         guard !isStartingGame else { return }

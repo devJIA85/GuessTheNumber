@@ -39,9 +39,18 @@ final class GuessItUITests: XCTestCase {
 
         for length in [3, 4, 5] {
             openNewGame(in: app)
-            let option = app.segmentedControls.buttons[String(length)]
+            let option = app.buttons["game.classic.length.\(length)"]
             XCTAssertTrue(option.waitForExistence(timeout: 10))
+            for choice in [3, 4, 5] {
+                XCTAssertTrue(app.buttons["game.classic.length.\(choice)"].isHittable)
+            }
             option.tap()
+            if length == 3 {
+                let attachment = XCTAttachment(screenshot: app.screenshot())
+                attachment.name = "Latet digit selector"
+                attachment.lifetime = .keepAlways
+                add(attachment)
+            }
             app.buttons["Start"].tap()
 
             let input = app.descendants(matching: .any)["game.guess.input"].firstMatch
@@ -60,7 +69,7 @@ final class GuessItUITests: XCTestCase {
         }
 
         openNewGame(in: app)
-        app.segmentedControls.buttons["4"].tap()
+        app.buttons["game.classic.length.4"].tap()
         app.buttons["Start"].tap()
         let input = app.descendants(matching: .any)["game.guess.input"].firstMatch
         expectation(for: NSPredicate(format: "label == %@", "4-digit guess"), evaluatedWith: input)
@@ -78,7 +87,7 @@ final class GuessItUITests: XCTestCase {
         XCTAssertTrue(submit.isEnabled)
 
         openNewGame(in: app)
-        app.segmentedControls.buttons["3"].tap()
+        app.buttons["game.classic.length.3"].tap()
         app.buttons["Cancel"].tap()
         XCTAssertEqual(input.label, "4-digit guess")
         XCTAssertTrue(submit.isEnabled)
