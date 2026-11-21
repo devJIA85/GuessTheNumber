@@ -67,7 +67,7 @@ struct CollapsibleBoardHeader: View {
         .padding(.vertical, verticalPadding)
         .background(.ultraThinMaterial)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Tablero de deducción")
+        .accessibilityLabel("Deduction board")
     }
 
     // MARK: - Header Row

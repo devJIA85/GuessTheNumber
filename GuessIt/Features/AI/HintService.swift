@@ -79,7 +79,10 @@ actor HintService {
 
         let currentEngine = engine
         if currentEngine.isAvailable {
-            let prompt = builder.makePrompt(input: input)
+            // El idioma de la app puede ser distinto al del dispositivo.
+            let locale = Locale.current
+            let language = Locale(identifier: "en").localizedString(forIdentifier: locale.identifier) ?? locale.identifier
+            let prompt = builder.makePrompt(input: input) + "\nRespond in \(language)."
             do {
                 let text = try await withTimeout(seconds: Self.generationTimeoutSeconds) {
                     try await currentEngine.generate(prompt: prompt)
@@ -157,7 +160,7 @@ private protocol HintEngine: Sendable {
 /// Engine que usa Apple Intelligence (Foundation Models) para generar pistas.
 ///
 /// # Disponibilidad
-/// - Solo disponible si SystemLanguageModel.default.isAvailable == true.
+/// - Solo disponible si SystemLanguageModel.default.isAvailable && SystemLanguageModel.default.supportsLocale() == true.
 /// - Si el dispositivo no soporta Apple Intelligence, este engine NO se usa.
 ///
 /// # WWDC25: Guided Generation
@@ -176,7 +179,7 @@ private struct AppleHintEngine: HintEngine {
     private static let logger = Logger(subsystem: "com.antolini.GuessIt", category: "Hints")
 
     var isAvailable: Bool {
-        SystemLanguageModel.default.isAvailable
+        SystemLanguageModel.default.isAvailable && SystemLanguageModel.default.supportsLocale()
     }
 
     func generate(prompt: String) async throws -> String {
@@ -209,11 +212,11 @@ private struct AppleHintEngine: HintEngine {
 
             // Formatear los campos estructurados en texto legible
             let hint = response.content
-            return """
-            - Diagnóstico: \(hint.diagnostico)
-            - Próximo intento: \(hint.proximoIntento)
-            - Por qué: \(hint.porQue)
-            """
+            return [
+                String(localized: "Diagnosis: \(hint.diagnostico)"),
+                String(localized: "Next guess: \(hint.proximoIntento)"),
+                String(localized: "Why: \(hint.porQue)"),
+            ].joined(separator: "\n")
         } catch {
             if error is CancellationError { throw error }
             // Preservamos el error real de FoundationModels en el log antes de mapearlo

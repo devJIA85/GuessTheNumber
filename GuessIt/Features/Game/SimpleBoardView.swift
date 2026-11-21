@@ -188,7 +188,7 @@ struct SimpleDigitCell: View {
                     onSetMark(mark == .good ? .unknown : .good)
                 } label: {
                     Label(
-                        mark == .good ? "✓ GOOD (está en el número)" : "Marcar GOOD",
+                        mark == .good ? "Confirmed match" : "Mark as a match",
                         systemImage: mark == .good ? "checkmark.circle.fill" : "checkmark.circle"
                     )
                 }
@@ -198,7 +198,7 @@ struct SimpleDigitCell: View {
                     onSetMark(mark == .fair ? .unknown : .fair)
                 } label: {
                     Label(
-                        mark == .fair ? "✓ FAIR (posiblemente)" : "Marcar FAIR",
+                        mark == .fair ? "Possible match" : "Mark as possible",
                         systemImage: mark == .fair ? "minus.circle.fill" : "minus.circle"
                     )
                 }
@@ -208,7 +208,7 @@ struct SimpleDigitCell: View {
                     onSetMark(mark == .poor ? .unknown : .poor)
                 } label: {
                     Label(
-                        mark == .poor ? "✓ POOR (NO está)" : "Marcar POOR",
+                        mark == .poor ? "Ruled out" : "Rule out",
                         systemImage: mark == .poor ? "xmark.circle.fill" : "xmark.circle"
                     )
                 }
@@ -220,7 +220,7 @@ struct SimpleDigitCell: View {
                     Button(role: .destructive) {
                         onSetMark(.unknown)
                     } label: {
-                        Label("Borrar marca", systemImage: "trash")
+                        Label("Clear mark", systemImage: "trash")
                     }
                 }
             }

@@ -1,2790 +1,5325 @@
 {
-  "sourceLanguage": "en",
-  "version": "1.0",
-  "strings": {
-    "game.menu.game_center": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Game Center"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : ""
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Game Center"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : ""
           }
         }
       }
     },
-    "settings.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Settings"
+    "—" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "—"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajustes"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "—"
           }
         }
       }
     },
-    "settings.appearance": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appearance"
+    "?" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "?"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aspecto"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "?"
           }
         }
       }
     },
-    "settings.appearance.system": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "System"
+    "·" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "·"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sistema"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "·"
           }
         }
       }
     },
-    "settings.appearance.light": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Light"
+    "(2 GOOD, 1 FAIR)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(2 GOOD, 1 FAIR)"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Claro"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(2 CERTOS, 1 PARCIAL)"
           }
         }
       }
     },
-    "settings.appearance.dark": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dark"
+    "%@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Oscuro"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@"
           }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@ · %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld"
+          }
+        }
+      }
+    },
+    "%@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "%@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
+    },
+    "%@: %@%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@%3$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@%3$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@%3$@"
+          }
+        }
+      }
+    },
+    "%@: %lld Good, %lld Fair" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$lld Good, %3$lld Fair"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$lld Good, %3$lld Fair"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$lld Good, %3$lld Fair"
+          }
+        }
+      }
+    },
+    "%lld" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld"
+          }
+        }
+      }
+    },
+    "%lld %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@"
+          }
+        }
+      }
+    },
+    "%lld attempts: %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld attempts: %2$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld intentos: %2$lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld tentativas: %2$lld"
+          }
+        }
+      }
+    },
+    "%lld de %lld intentos" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld de %2$lld intentos"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld intentos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld tentativas"
+          }
+        }
+      }
+    },
+    "%lld Fair" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Fair"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld parciais"
+          }
+        }
+      }
+    },
+    "%lld Good" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Good"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld certos"
+          }
+        }
+      }
+    },
+    "%lld intentos: %lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld intentos: %2$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld intentos: %2$lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld intentos: %2$lld"
+          }
+        }
+      }
+    },
+    "%lld of %lld attempts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld attempts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld intentos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld tentativas"
+          }
+        }
+      }
+    },
+    "%lld Poor" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Poor"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ausentes"
+          }
+        }
+      }
+    },
+    "%lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld/%2$lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "%lldF" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldF"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldP"
+          }
+        }
+      }
+    },
+    "%lldG" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldG"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldC"
+          }
+        }
+      }
+    },
+    "⏰" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⏰"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⏰"
+          }
+        }
+      }
+    },
+    "✓ FAIR (posiblemente)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✓ FAIR (posiblemente)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✓ FAIR (posiblemente)"
+          }
+        }
+      }
+    },
+    "✓ GOOD (está en el número)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✓ GOOD (está en el número)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✓ GOOD (está en el número)"
+          }
+        }
+      }
+    },
+    "✓ POOR (NO está)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✓ POOR (NO está)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✓ POOR (NO está)"
+          }
+        }
+      }
+    },
+    "🎉" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        }
+      }
+    },
+    "💪" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "💪"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "💪"
+          }
+        }
+      }
+    },
+    "😔" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😔"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😔"
+          }
+        }
+      }
+    },
+    "1 2 3 4 5" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 2 3 4 5"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 2 3 4 5"
+          }
+        }
+      }
+    },
+    "accessibility.attempt_row" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guess: %@, %d good, %d fair"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intento: %@, %d buenos, %d regulares"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentativa %@. No lugar certo: %d. Em outro lugar: %d."
+          }
+        }
+      }
+    },
+    "accessibility.attempt.number %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guess %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intento %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentativa %@"
+          }
+        }
+      }
+    },
+    "accessibility.attempt.repeated" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeated"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetido"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetido"
+          }
+        }
+      }
+    },
+    "accessibility.attempts_list" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attempts, list of %lld items"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intentos, lista de %lld elementos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lista de tentativas. Total: %lld."
+          }
+        }
+      }
+    },
+    "accessibility.board.input %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digit %lld. Available"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito %lld. Disponible"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito %lld. Disponível"
+          }
+        }
+      }
+    },
+    "accessibility.board.input_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double-tap to enter. Touch and hold to mark."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tocá dos veces para ingresar. Mantené presionado para marcar."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque duas vezes para digitar. Mantenha pressionado para marcar."
+          }
+        }
+      }
+    },
+    "accessibility.board.mark_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double-tap to change the mark."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tocá dos veces para cambiar la marca."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque duas vezes para alterar a marca."
+          }
+        }
+      }
+    },
+    "accessibility.board.marked %lld %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digit %lld. Status: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito %lld. Estado: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito %lld. Estado: %@"
+          }
+        }
+      }
+    },
+    "accessibility.board.used %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digit %lld. Already entered"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito %lld. Ya ingresado"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito %lld. Já digitado"
+          }
+        }
+      }
+    },
+    "accessibility.delete_last" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete last digit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar último dígito"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar Último Dígito"
+          }
+        }
+      }
+    },
+    "accessibility.delete_last_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removes the last entered digit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina el último dígito ingresado"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apaga o último dígito digitado."
+          }
+        }
+      }
+    },
+    "accessibility.digit_cell" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digit %d"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito %d"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito %d"
+          }
+        }
+      }
+    },
+    "accessibility.empty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empty"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vacío"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vazio"
+          }
+        }
+      }
+    },
+    "accessibility.final_board" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Final digit board"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tablero final de dígitos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabuleiro final de dígitos"
+          }
+        }
+      }
+    },
+    "accessibility.game_detail_header" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game details, %@, date %@, %lld attempts."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalle de partida, %@, fecha %@, %lld intentos."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhes da partida. %@. Data: %@. Tentativas: %lld."
+          }
+        }
+      }
+    },
+    "accessibility.game.actions" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More actions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más acciones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais Ações"
+          }
+        }
+      }
+    },
+    "accessibility.game.last_attempt %@ %lld %lld %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last guess %1$@. %2$lld Good, %3$lld Fair, %4$lld Poor."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Último intento %1$@. %2$lld Good, %3$lld Fair, %4$lld Poor."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última tentativa: %1$@. No lugar certo: %2$lld. Em outro lugar: %3$lld. Ausentes: %4$lld."
+          }
+        }
+      }
+    },
+    "accessibility.game.won %@ %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You won. Secret: %1$@. Attempts: %2$lld."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganaste. Secreto: %1$@. Intentos: %2$lld."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você venceu. Número secreto: %1$@. Tentativas: %2$lld."
+          }
+        }
+      }
+    },
+    "accessibility.guess_input" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Input field for your guess"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Campo de entrada para tu intento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Campo para digitar a tentativa"
+          }
+        }
+      }
+    },
+    "accessibility.guess_input_5" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5-digit number entry"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingreso de número de 5 dígitos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Número de 5 dígitos"
+          }
+        }
+      }
+    },
+    "accessibility.guess_input_digits %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld-digit guess"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Número de %lld dígitos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Número de %lld dígitos"
+          }
+        }
+      }
+    },
+    "accessibility.keypad_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap the numbers on the board below to enter"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tocá los números del tablero abajo para ingresar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use o tabuleiro abaixo para digitar."
+          }
+        }
+      }
+    },
+    "accessibility.mark.fair" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fair"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fair"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Possível"
+          }
+        }
+      }
+    },
+    "accessibility.mark.good" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmado"
+          }
+        }
+      }
+    },
+    "accessibility.mark.poor" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poor"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poor"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartado"
+          }
+        }
+      }
+    },
+    "accessibility.mark.unknown" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unmarked"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin marca"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem marca"
+          }
+        }
+      }
+    },
+    "accessibility.submit_button" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submit guess"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar intento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar Tentativa"
+          }
+        }
+      }
+    },
+    "accessibility.submit_disabled_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complete the number to enable"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completá el número para habilitar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complete o número para ativar este botão."
+          }
+        }
+      }
+    },
+    "accessibility.submit_enabled_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to check your number"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presioná para verificar tu número"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque para conferir o número."
+          }
+        }
+      }
+    },
+    "accessibility.submit_guess" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submit guess"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probar número"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar Tentativa"
+          }
+        }
+      }
+    },
+    "accessibility.victory_summary" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Victory. %@ Secret: %@. Attempts: %lld."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Victoria. %@ Secreto: %@. Intentos: %lld."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vitória. %@ Número secreto: %@. Tentativas: %lld."
+          }
+        }
+      }
+    },
+    "Borrar marca" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Borrar marca"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Borrar marca"
+          }
+        }
+      }
+    },
+    "Cerrar" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cerrar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cerrar"
+          }
+        }
+      }
+    },
+    "Clear mark" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar marca"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar marcação"
+          }
+        }
+      }
+    },
+    "common.attempts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attempts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intentos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentativas"
+          }
+        }
+      }
+    },
+    "common.cancel" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        }
+      }
+    },
+    "common.close" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar"
+          }
+        }
+      }
+    },
+    "common.delete" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar"
+          }
+        }
+      }
+    },
+    "common.error" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erro"
+          }
+        }
+      }
+    },
+    "common.loading" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cargando..."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carregando…"
+          }
+        }
+      }
+    },
+    "common.ok" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
+    "common.retry" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retry"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reintentar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentar Novamente"
+          }
+        }
+      }
+    },
+    "common.share" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartilhar"
+          }
+        }
+      }
+    },
+    "Confirmed match" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coincidencia confirmada"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correspondência confirmada"
+          }
+        }
+      }
+    },
+    "daily.completed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Challenge Completed!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Desafío completado!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desafio concluído!"
+          }
+        }
+      }
+    },
+    "daily.completed_short" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Completado!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concluído!"
+          }
+        }
+      }
+    },
+    "daily.description" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All players share this challenge"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los jugadores comparten este desafío"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O desafio é o mesmo para todo mundo."
+          }
+        }
+      }
+    },
+    "daily.dont_give_up" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't give up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No te rindas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não desista"
+          }
+        }
+      }
+    },
+    "daily.failed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Challenge Not Completed"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desafío no completado"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desafio não concluído"
+          }
+        }
+      }
+    },
+    "daily.failed_description" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't worry, there's a new challenge tomorrow"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No te preocupes, mañana hay un nuevo desafío"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tudo bem, amanhã tem um novo desafio."
+          }
+        }
+      }
+    },
+    "daily.failed_limit" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You reached the 10-attempt limit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llegaste al límite de 10 intentos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você atingiu o limite de 10 tentativas."
+          }
+        }
+      }
+    },
+    "daily.failed_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You didn't make it"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No lo lograste"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você não conseguiu"
+          }
+        }
+      }
+    },
+    "daily.global_today" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today's global challenge"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desafío global del día"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desafio mundial de hoje"
+          }
+        }
+      }
+    },
+    "daily.global_today_short" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Global · Today"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Global · Hoy"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mundial · Hoje"
+          }
+        }
+      }
+    },
+    "daily.last_attempt" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last attempt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Último intento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última tentativa"
+          }
+        }
+      }
+    },
+    "daily.load_error" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load the challenge."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error al cargar desafío"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível carregar o desafio."
+          }
+        }
+      }
+    },
+    "daily.loading" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading challenge..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cargando desafío..."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carregando desafio…"
+          }
+        }
+      }
+    },
+    "daily.next_in" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next challenge in"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próximo desafío en"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próximo desafio em"
+          }
         }
       }
     },
-    "settings.about": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "About Latet"
+    "daily.next_in_short" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next in"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próximo en"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Acerca de Latet"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próximo em"
           }
         }
       }
     },
-    "settings.developer": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Developer"
+    "daily.secret_was" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The secret was"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El secreto era"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desarrollador"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O número secreto era"
           }
         }
       }
     },
-    "settings.about.subtitle": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A game of numerical deduction"
+    "daily.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily Challenge"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desafío Diario"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un juego de deducción numérica"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desafio Diário"
           }
         }
       }
     },
-    "settings.about.version %@ %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version %1$@ (%2$@)"
+    "daily.try_tomorrow" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again tomorrow"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probá de nuevo mañana"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versión %1$@ (%2$@)"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tente de novo amanhã"
           }
         }
       }
     },
-    "settings.about.description": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Find the secret number using feedback from each guess. Play a classic game or take on the daily challenge."
+    "daily.your_attempt" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your guess"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu intento"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Descubrí el número secreto con las pistas de cada intento. Jugá una partida clásica o probá el desafío diario."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua tentativa"
           }
         }
       }
     },
-    "settings.about.linkedin": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Developer on LinkedIn"
+    "daily.your_attempts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your attempts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tus intentos"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desarrollador en LinkedIn"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suas tentativas"
           }
         }
       }
     },
-    "settings.about.developed_by": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Developed by Juan Ignacio Antolini"
+    "Deduction board" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tablero de deducción"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desarrollado por Juan Ignacio Antolini"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabuleiro de dedução"
           }
         }
       }
     },
-    "hint.fallback.first_guess": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Try a first guess with different digits to learn which ones might belong."
+    "detail.date" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Date"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fecha"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Probá un primer intento con dígitos distintos para descubrir cuáles podrían estar."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data"
           }
         }
       }
     },
-    "hint.fallback.repeated": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You already tried that number. Change a digit or its position to get new information."
+    "detail.final_board" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Final board"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tablero final"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ya probaste ese número. Cambiá un dígito o su posición para obtener información nueva."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabuleiro final"
           }
         }
       }
     },
-    "hint.fallback.none_match": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "None of the digits from your last guess belong. Try digits you left out."
+    "detail.load_error" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load the game."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar la partida."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ningún dígito de tu último intento está en el secreto. Probá con los que dejaste afuera."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível carregar a partida."
           }
         }
       }
     },
-    "hint.fallback.misplaced": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your last guess had at least one correct digit in the wrong place. Try moving some digits while keeping others fixed."
+    "detail.loading" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading details..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cargando detalle..."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En tu último intento hubo al menos un dígito correcto fuera de lugar. Mové algunos dígitos y dejá otros fijos para comparar."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carregando detalhes…"
           }
         }
       }
     },
-    "hint.fallback.exact": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your last guess had correct positions. Keep a few digits fixed and swap some others to narrow down which positions were right."
+    "detail.no_attempts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No attempts recorded."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay intentos registrados."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En tu último intento acertaste posiciones. Dejá algunos dígitos fijos y cambiá otros para acotar cuáles estaban bien."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma tentativa registrada."
           }
         }
       }
     },
-    "game.victory.rank.well_done": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "WELL DONE!"
+    "detail.not_found" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game not found."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se encontró la partida."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡BIEN HECHO!"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível encontrar a partida."
           }
         }
       }
     },
-    "game.victory.rank.excellent": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "EXCELLENT!"
+    "detail.secret" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secret number"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Número secreto"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡EXCELENTE!"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Número secreto"
           }
         }
       }
     },
-    "game.victory.rank.genius": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "GENIUS!"
+    "detail.state" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡GENIO!"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado"
           }
         }
       }
     },
-    "game.victory.rank.impossible": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IMPOSSIBLE!"
+    "detail.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game Details"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalle de partida"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡IMPOSIBLE!"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhes da partida"
           }
         }
       }
     },
-    "accessibility.attempt.repeated": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Repeated"
+    "detail.title_short" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detail"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalle"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Repetido"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhes"
           }
         }
       }
     },
-    "accessibility.attempt.number %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Guess %@"
+    "Diagnosis: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnóstico: %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Intento %@"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnóstico: %@"
           }
         }
       }
     },
-    "accessibility.game.won %@ %lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You won. Secret: %1$@. Attempts: %2$lld."
+    "Digit %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ganaste. Secreto: %1$@. Intentos: %2$lld."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito %@"
           }
         }
       }
     },
-    "accessibility.mark.good": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Good"
+    "Dígito %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dígito %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Good"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dígito %@"
           }
         }
       }
     },
-    "accessibility.mark.fair": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fair"
+    "Dígito %lld, %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dígito %1$lld, %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dígito %1$lld, %2$@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fair"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dígito %1$lld, %2$@"
           }
         }
       }
     },
-    "accessibility.mark.poor": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Poor"
+    "Dígito %lld. Estado %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dígito %1$lld. Estado %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dígito %1$lld. Estado %2$@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Poor"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dígito %1$lld. Estado %2$@"
           }
         }
       }
     },
-    "accessibility.mark.unknown": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unmarked"
+    "Dígito %lld. Tocá para ingresar" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dígito %lld. Tocá para ingresar"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin marca"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dígito %lld. Tocá para ingresar"
           }
         }
       }
     },
-    "accessibility.game.last_attempt %@ %lld %lld %lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Last guess %1$@. %2$lld Good, %3$lld Fair, %4$lld Poor."
+    "Doble toque para agregar al número" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Doble toque para agregar al número"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Último intento %1$@. %2$lld Good, %3$lld Fair, %4$lld Poor."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Doble toque para agregar al número"
           }
         }
       }
     },
-    "accessibility.board.input %lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Digit %lld. Available"
+    "Doble toque para cambiar estado" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Doble toque para cambiar estado"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dígito %lld. Disponible"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Doble toque para cambiar estado"
           }
         }
       }
     },
-    "accessibility.board.input_hint": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Double-tap to enter. Touch and hold to mark."
+    "Empty" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vacío"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tocá dos veces para ingresar. Mantené presionado para marcar."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vazio"
           }
         }
       }
     },
-    "accessibility.board.mark_hint": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Double-tap to change the mark."
+    "Error" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tocá dos veces para cambiar la marca."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erro"
           }
         }
       }
     },
-    "accessibility.board.marked %lld %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Digit %lld. Status: %@"
+    "FAIR" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FAIR"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dígito %lld. Estado: %@"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PARCIAL"
           }
         }
       }
     },
-    "accessibility.board.used %lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Digit %lld. Already entered"
+    "game.attempts_one" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 attempt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 intento"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dígito %lld. Ya ingresado"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 tentativa"
           }
         }
       }
     },
-    "accessibility.game.actions": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "More actions"
+    "game.attempts_other" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld attempts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld intentos"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Más acciones"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld tentativas"
           }
         }
       }
     },
-    "accessibility.guess_input_digits %lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld-digit guess"
+    "game.board.0_9" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Board 0–9"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tablero 0–9"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Número de %lld dígitos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabuleiro 0–9"
           }
         }
       }
     },
-    "game.classic_abandon_warning": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Starting a new game will abandon the current one."
+    "game.board.reset" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset tablero"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Si empezás una partida nueva, vas a abandonar la actual."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar Marcações"
           }
         }
       }
     },
-    "game.classic_cancel": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancel"
+    "game.board.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Board"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tablero"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancelar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabuleiro"
           }
         }
       }
     },
-    "game.classic_digit_count": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Number of digits"
+    "game.classic_abandon_warning" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starting a new game will abandon the current one."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si empezás una partida nueva, vas a abandonar la actual."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cantidad de dígitos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se você iniciar uma nova partida, a atual será abandonada."
           }
         }
       }
     },
-    "game.classic_start": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start"
+    "game.classic_cancel" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Empezar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
           }
         }
       }
     },
-    "game.new_classic": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New game"
+    "game.classic_digit_count" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Number of digits"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cantidad de dígitos"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nueva partida"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quantidade de Dígitos"
           }
         }
       }
     },
-    "accessibility.attempt_row": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Guess: %@, %d good, %d fair"
+    "game.classic_start" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empezar"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Intento: %@, %d buenos, %d regulares"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Começar"
           }
         }
       }
     },
-    "accessibility.attempts_list": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Attempts, list of %lld items"
+    "game.empty.first_guess" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter your first guess to get started"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresá tu primer intento para comenzar"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Intentos, lista de %lld elementos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite a primeira tentativa para começar."
           }
         }
       }
     },
-    "accessibility.delete_last": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete last digit"
+    "game.header.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guess the number"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adiviná el número"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Borrar último dígito"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adivinhe o número"
           }
         }
       }
     },
-    "accessibility.delete_last_hint": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Removes the last entered digit"
+    "game.hint" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hint"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pista"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elimina el último dígito ingresado"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dica"
           }
         }
       }
     },
-    "accessibility.digit_cell": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Digit %d"
+    "game.how_to_play" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How to Play"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cómo jugar"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dígito %d"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como Jogar"
           }
         }
       }
     },
-    "accessibility.empty": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Empty"
+    "game.input.disabled" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The game is over. Start a new one to keep playing."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La partida ya terminó. Creá una nueva para seguir jugando."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vacío"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A partida terminou. Comece uma nova para continuar jogando."
           }
         }
       }
     },
-    "accessibility.final_board": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Final digit board"
+    "game.input.placeholder" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter your number"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresá tu número"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tablero final de dígitos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite um número"
           }
         }
       }
     },
-    "accessibility.game_detail_header": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Game details, %@, date %@, %lld attempts."
+    "game.input.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your guess"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu intento"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Detalle de partida, %@, fecha %@, %lld intentos."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua tentativa"
           }
         }
       }
     },
-    "accessibility.guess_input": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Input field for your guess"
+    "game.last_attempt.hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fewer = better score"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "menos = mejor score"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Campo de entrada para tu intento"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menos tentativas, melhor resultado"
           }
         }
       }
     },
-    "accessibility.guess_input_5": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "5-digit number entry"
+    "game.menu.game_center" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game Center"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game Center"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingreso de número de 5 dígitos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game Center"
           }
         }
       }
     },
-    "accessibility.keypad_hint": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap the numbers on the board below to enter"
+    "game.new_classic" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New game"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva partida"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tocá los números del tablero abajo para ingresar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova Partida"
           }
         }
       }
     },
-    "accessibility.submit_button": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Submit guess"
+    "game.reset" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enviar intento"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar"
           }
         }
       }
     },
-    "accessibility.submit_disabled_hint": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Complete the number to enable"
+    "game.status.abandoned" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abandoned"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abandonada"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Completá el número para habilitar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abandonada"
           }
         }
       }
     },
-    "accessibility.submit_enabled_hint": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap to check your number"
+    "game.status.in_progress" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Progress"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En progreso"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Presioná para verificar tu número"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em andamento"
           }
         }
       }
     },
-    "accessibility.submit_guess": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Submit guess"
+    "game.status.none" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No game"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin partida"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Probar número"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem partida"
           }
         }
       }
     },
-    "accessibility.victory_summary": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Victory. %@ Secret: %@. Attempts: %lld."
+    "game.status.won" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Won"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganada"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Victoria. %@ Secreto: %@. Intentos: %lld."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vencida"
           }
         }
       }
     },
-    "common.attempts": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Attempts"
+    "game.submit" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guess"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probar"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Intentos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar Tentativa"
           }
         }
       }
     },
-    "common.cancel": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancel"
+    "game.submit.attempt" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submit guess"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probar intento"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancelar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar Tentativa"
           }
         }
       }
     },
-    "common.close": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Close"
+    "game.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Latet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Latet"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cerrar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Latet"
           }
         }
       }
     },
-    "common.delete": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete"
+    "game.victory.attempts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attempts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intentos"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Borrar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentativas"
           }
         }
       }
     },
-    "common.error": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Error"
+    "game.victory.new_game" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New game"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva partida"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Error"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova Partida"
           }
         }
       }
     },
-    "common.loading": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loading..."
+    "game.victory.rank.excellent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EXCELLENT!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡EXCELENTE!"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargando..."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EXCELENTE!"
           }
         }
       }
     },
-    "common.ok": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OK"
+    "game.victory.rank.genius" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GENIUS!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡GENIO!"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OK"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BRILHANTE!"
           }
         }
       }
     },
-    "common.retry": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Retry"
+    "game.victory.rank.impossible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IMPOSSIBLE!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡IMPOSIBLE!"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reintentar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "INCRÍVEL!"
           }
         }
       }
     },
-    "common.share": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Share"
+    "game.victory.rank.well_done" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WELL DONE!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡BIEN HECHO!"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Compartir"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MANDOU BEM!"
           }
         }
       }
     },
-    "daily.completed": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Challenge Completed!"
+    "game.victory.secret" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secret"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secreto"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡Desafío completado!"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Número secreto"
           }
         }
       }
     },
-    "daily.completed_short": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Completed!"
+    "game.victory.share" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share result"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir resultado"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡Completado!"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartilhar Resultado"
           }
         }
       }
     },
-    "daily.description": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "All players share this challenge"
+    "game.victory.subtitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You found the number!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Descubriste el número!"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Todos los jugadores comparten este desafío"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você descobriu o número!"
           }
         }
       }
     },
-    "daily.dont_give_up": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Don't give up"
+    "game.victory.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You Won! 🎉"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Ganaste! 🎉"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No te rindas"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você venceu! 🎉"
           }
         }
       }
     },
-    "daily.failed": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Challenge Not Completed"
+    "Generando pista..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generando pista..."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desafío no completado"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generando pista..."
           }
         }
       }
     },
-    "daily.failed_description": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Don't worry, there's a new challenge tomorrow"
+    "GOOD" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GOOD"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No te preocupes, mañana hay un nuevo desafío"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CERTO"
           }
         }
       }
     },
-    "daily.failed_limit": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You reached the 10-attempt limit"
+    "Guess %@. %lld in place, %lld misplaced, %lld absent." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Guess %1$@. %2$lld in place, %3$lld misplaced, %4$lld absent."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intento %1$@. %2$lld en su lugar, %3$lld en otro lugar, %4$lld ausentes."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Llegaste al límite de 10 intentos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentativa %1$@. %2$lld no lugar certo, %3$lld em outro lugar, %4$lld ausentes."
           }
         }
       }
     },
-    "daily.failed_title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You didn't make it"
+    "Hint at %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pista a las %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No lo lograste"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dica às %@"
           }
         }
       }
     },
-    "daily.global_today": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Today's global challenge"
+    "Hint: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pista: %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desafío global del día"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dica: %@"
           }
         }
       }
     },
-    "daily.global_today_short": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Global · Today"
+    "hint.error" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not generate a hint at this time. Please try again later."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo generar una pista en este momento. Intentá de nuevo más tarde."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Global · Hoy"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível gerar uma dica agora. Tente novamente mais tarde."
           }
         }
       }
     },
-    "daily.last_attempt": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Last attempt"
+    "hint.fallback.exact" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your last guess had correct positions. Keep a few digits fixed and swap some others to narrow down which positions were right."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En tu último intento acertaste posiciones. Dejá algunos dígitos fijos y cambiá otros para acotar cuáles estaban bien."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Último intento"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na última tentativa, você acertou a posição de alguns dígitos. Mantenha alguns no lugar e troque os outros para descobrir quais posições estavam certas."
           }
         }
       }
     },
-    "daily.load_error": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't load the challenge."
+    "hint.fallback.first_guess" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try a first guess with different digits to learn which ones might belong."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probá un primer intento con dígitos distintos para descubrir cuáles podrían estar."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Error al cargar desafío"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faça uma primeira tentativa com dígitos diferentes para descobrir quais podem fazer parte do número secreto."
           }
         }
       }
     },
-    "daily.loading": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loading challenge..."
+    "hint.fallback.misplaced" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your last guess had at least one correct digit in the wrong place. Try moving some digits while keeping others fixed."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En tu último intento hubo al menos un dígito correcto fuera de lugar. Mové algunos dígitos y dejá otros fijos para comparar."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargando desafío..."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na última tentativa, pelo menos um dígito estava em outro lugar. Mude a posição de alguns dígitos e mantenha os outros no lugar para comparar."
           }
         }
       }
     },
-    "daily.next_in": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Next challenge in"
+    "hint.fallback.none_match" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None of the digits from your last guess belong. Try digits you left out."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ningún dígito de tu último intento está en el secreto. Probá con los que dejaste afuera."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Próximo desafío en"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum dígito da última tentativa está no número secreto. Experimente os dígitos que ficaram de fora."
           }
         }
       }
     },
-    "daily.next_in_short": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Next in"
+    "hint.fallback.repeated" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You already tried that number. Change a digit or its position to get new information."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya probaste ese número. Cambiá un dígito o su posición para obtener información nueva."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Próximo en"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você já tentou esse número. Troque um dígito ou mude a posição dele para descobrir algo novo."
           }
         }
       }
     },
-    "daily.secret_was": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The secret was"
+    "hint.generating" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generating hint..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generando pista..."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El secreto era"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerando dica…"
           }
         }
       }
     },
-    "daily.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Daily Challenge"
+    "hint.previous" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous hints"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pistas anteriores"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desafío Diario"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dicas anteriores"
           }
         }
       }
     },
-    "daily.try_tomorrow": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Try again tomorrow"
+    "hint.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Hint"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pista Inteligente"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Probá de nuevo mañana"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dica Inteligente"
           }
         }
       }
     },
-    "daily.your_attempt": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your guess"
+    "hint.unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hints are not available on this device. Apple Intelligence is required."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las pistas no están disponibles en este dispositivo. Se requiere Apple Intelligence."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tu intento"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As dicas não estão disponíveis neste dispositivo. É necessário usar o Apple Intelligence."
           }
         }
       }
     },
-    "daily.your_attempts": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your attempts"
+    "Hints are unavailable right now." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las pistas no están disponibles en este momento."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tus intentos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As dicas não estão disponíveis no momento."
           }
         }
       }
     },
-    "detail.date": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Date"
+    "history.attempt" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "attempt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "intento"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fecha"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tentativa"
           }
         }
       }
     },
-    "detail.final_board": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Final board"
+    "history.attempts" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "attempts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "intentos"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tablero final"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tentativas"
           }
         }
       }
     },
-    "detail.load_error": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't load the game."
+    "history.best" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "best"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mejor"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudo cargar la partida."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "recorde"
           }
         }
       }
     },
-    "detail.loading": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loading details..."
+    "history.empty" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No games"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin partidas"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargando detalle..."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem partidas"
           }
         }
       }
     },
-    "detail.no_attempts": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No attempts recorded."
+    "history.empty.description" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your past games will appear here"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tus partidas anteriores aparecerán aquí"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay intentos registrados."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As partidas anteriores aparecem aqui"
           }
         }
       }
     },
-    "detail.not_found": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Game not found."
+    "history.empty.finished" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No finished games yet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todavía no hay partidas terminadas."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se encontró la partida."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda não há partidas concluídas."
           }
         }
       }
     },
-    "detail.secret": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Secret number"
+    "history.empty.finished_description" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play a game to see it in your history."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jugá una partida para que aparezca en el historial."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Número secreto"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jogue uma partida para vê-la no histórico."
           }
         }
       }
     },
-    "detail.state": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Status"
+    "history.load_error" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load history."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar el historial."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Estado"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível carregar o histórico."
           }
         }
       }
     },
-    "detail.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Game Details"
+    "history.loading" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading history..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cargando historial..."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Detalle de partida"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carregando histórico…"
           }
         }
       }
     },
-    "detail.title_short": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Detail"
+    "history.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "History"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historial"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Detalle"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Histórico"
           }
         }
       }
     },
-    "game.attempts_one": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 attempt"
+    "Marcar FAIR" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Marcar FAIR"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 intento"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Marcar FAIR"
           }
         }
       }
     },
-    "game.attempts_other": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld attempts"
+    "Marcar GOOD" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Marcar GOOD"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld intentos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Marcar GOOD"
           }
         }
       }
     },
-    "game.board.0_9": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Board 0–9"
+    "Marcar POOR" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Marcar POOR"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tablero 0–9"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Marcar POOR"
           }
         }
       }
     },
-    "game.board.reset": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reset"
+    "Mark as a match" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcar como confirmado"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reset tablero"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcar como confirmado"
           }
         }
       }
     },
-    "game.board.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Board"
+    "Mark as possible" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcar como posible"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tablero"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcar como possível"
           }
         }
       }
     },
-    "game.empty.first_guess": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter your first guess to get started"
+    "Mirá tu racha actual y estadísticas" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mirá tu racha actual y estadísticas"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingresá tu primer intento para comenzar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mirá tu racha actual y estadísticas"
           }
         }
       }
     },
-    "game.header.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Guess the number"
+    "Next challenge in %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próximo desafío en %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adiviná el número"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próximo desafio em %@"
           }
         }
       }
     },
-    "game.hint": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hint"
+    "Next guess: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próximo intento: %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pista"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima tentativa: %@"
           }
         }
       }
     },
-    "game.how_to_play": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "How to Play"
+    "OK" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cómo jugar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         }
       }
     },
-    "game.input.disabled": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The game is over. Start a new one to keep playing."
+    "Page %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Page %1$lld of %2$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Página %1$lld de %2$lld"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La partida ya terminó. Creá una nueva para seguir jugando."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Página %1$lld de %2$lld"
           }
         }
       }
     },
-    "game.input.placeholder": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter your number"
+    "Página %lld de %lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Página %1$lld de %2$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Página %1$lld de %2$lld"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingresá tu número"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Página %1$lld de %2$lld"
           }
         }
       }
     },
-    "game.input.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your guess"
+    "Pista anterior: %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pista anterior: %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tu intento"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pista anterior: %@"
           }
         }
       }
     },
-    "game.last_attempt.hint": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "fewer = better score"
+    "Pista Inteligente" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pista Inteligente"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "menos = mejor score"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pista Inteligente"
           }
         }
       }
     },
-    "game.reset": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reset"
+    "Pista: %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pista: %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reiniciar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pista: %@"
           }
         }
       }
     },
-    "game.status.abandoned": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Abandoned"
+    "POOR" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "POOR"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Abandonada"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AUSENTE"
           }
         }
       }
     },
-    "game.status.in_progress": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "In Progress"
+    "Posición %lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Posición %lld"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En progreso"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Posición %lld"
           }
         }
       }
     },
-    "game.status.none": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No game"
+    "Position %lld" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posición %lld"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin partida"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posição %lld"
           }
         }
       }
     },
-    "game.status.won": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Won"
+    "Possible match" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coincidencia posible"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ganada"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correspondência possível"
           }
         }
       }
     },
-    "game.submit": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Guess"
+    "Previous hint: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pista anterior: %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Probar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dica anterior: %@"
           }
         }
       }
     },
-    "game.submit.attempt": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Submit guess"
+    "Próximo desafío en %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Próximo desafío en %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Probar intento"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Próximo desafío en %@"
           }
         }
       }
     },
-    "game.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Latet"
+    "Racha actual" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Racha actual"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Latet"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Racha actual"
           }
         }
       }
     },
-    "game.victory.attempts": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Attempts"
+    "Repetido" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Repetido"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Intentos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Repetido"
           }
         }
       }
     },
-    "game.victory.new_game": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New game"
+    "Rule out" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nueva partida"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar"
           }
         }
       }
     },
-    "game.victory.secret": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Secret"
+    "Ruled out" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartado"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Secreto"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartado"
           }
         }
       }
     },
-    "game.victory.share": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Share result"
+    "settings.about" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About Latet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acerca de Latet"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Compartir resultado"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sobre o Latet"
           }
         }
       }
     },
-    "game.victory.subtitle": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You found the number!"
+    "settings.about.description" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find the secret number using feedback from each guess. Play a classic game or take on the daily challenge."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descubrí el número secreto con las pistas de cada intento. Jugá una partida clásica o probá el desafío diario."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡Descubriste el número!"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descubra o número secreto com as pistas de cada tentativa. Jogue uma partida clássica ou encare o desafio diário."
           }
         }
       }
     },
-    "game.victory.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You Won! 🎉"
+    "settings.about.developed_by" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Developed by Juan Ignacio Antolini"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desarrollado por Juan Ignacio Antolini"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡Ganaste! 🎉"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desenvolvido por Juan Ignacio Antolini"
           }
         }
       }
     },
-    "hint.error": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Could not generate a hint at this time. Please try again later."
+    "settings.about.linkedin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Developer on LinkedIn"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desarrollador en LinkedIn"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudo generar una pista en este momento. Intentá de nuevo más tarde."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desenvolvedor no LinkedIn"
           }
         }
       }
     },
-    "hint.generating": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Generating hint..."
+    "settings.about.subtitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A game of numerical deduction"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un juego de deducción numérica"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Generando pista..."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um jogo de dedução numérica"
           }
         }
       }
     },
-    "hint.previous": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Previous hints"
+    "settings.about.version %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %1$@ (%2$@)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión %1$@ (%2$@)"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pistas anteriores"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versão %1$@ (%2$@)"
           }
         }
       }
     },
-    "hint.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Smart Hint"
+    "settings.appearance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appearance"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aspecto"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pista Inteligente"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aparência"
           }
         }
       }
     },
-    "hint.unavailable": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hints are not available on this device. Apple Intelligence is required."
+    "settings.appearance.dark" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oscuro"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las pistas no están disponibles en este dispositivo. Se requiere Apple Intelligence."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escura"
           }
         }
       }
     },
-    "history.attempt": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "attempt"
+    "settings.appearance.light" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claro"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "intento"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clara"
           }
         }
       }
     },
-    "history.attempts": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "attempts"
+    "settings.appearance.system" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistema"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "intentos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistema"
           }
         }
       }
     },
-    "history.best": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "best"
+    "settings.developer" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Developer"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desarrollador"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "mejor"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desenvolvedor"
           }
         }
       }
     },
-    "history.empty": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No games"
+    "settings.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin partidas"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurações"
           }
         }
       }
     },
-    "history.empty.description": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your past games will appear here"
+    "stats.average" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promedio"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tus partidas anteriores aparecerán aquí"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Média"
           }
         }
       }
     },
-    "history.empty.finished": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No finished games yet."
+    "stats.best_streak" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best Streak"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mejor racha"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Todavía no hay partidas terminadas."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melhor sequência"
           }
         }
       }
     },
-    "history.empty.finished_description": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play a game to see it in your history."
+    "stats.current_streak" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current Streak"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Racha actual"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Jugá una partida para que aparezca en el historial."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sequência atual"
           }
         }
       }
     },
-    "history.load_error": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't load history."
+    "stats.distribution" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attempts distribution"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distribución por intentos"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudo cargar el historial."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distribuição por tentativas"
           }
         }
       }
     },
-    "history.loading": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loading history..."
+    "stats.empty.description" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play your first game to see your stats"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jugá tu primera partida para ver tus estadísticas"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargando historial..."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jogue sua primeira partida para ver as estatísticas"
           }
         }
       }
     },
-    "history.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "History"
+    "stats.empty.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No statistics"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin estadísticas"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Historial"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem estatísticas"
           }
         }
       }
     },
-    "stats.average": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Average"
+    "stats.games" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Games"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partidas"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Promedio"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partidas"
           }
         }
       }
     },
-    "stats.best_streak": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Best Streak"
+    "stats.load_error" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load statistics."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error al cargar estadísticas"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mejor racha"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível carregar as estatísticas."
           }
         }
       }
     },
-    "stats.current_streak": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Current Streak"
+    "stats.loading" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading statistics..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cargando estadísticas..."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Racha actual"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carregando estatísticas…"
           }
         }
       }
     },
-    "stats.distribution": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Attempts distribution"
+    "stats.streaks" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streaks"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rachas"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Distribución por intentos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sequências"
           }
         }
       }
     },
-    "stats.empty.description": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play your first game to see your stats"
+    "stats.summary" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Summary"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resumen"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Jugá tu primera partida para ver tus estadísticas"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resumo"
           }
         }
       }
     },
-    "stats.empty.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No statistics"
+    "stats.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statistics"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estadísticas"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin estadísticas"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estatísticas"
           }
         }
       }
     },
-    "stats.games": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Games"
+    "stats.win_rate" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Win rate"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Éxito"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Partidas"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taxa de vitórias"
           }
         }
       }
     },
-    "stats.load_error": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't load statistics."
+    "stats.wins" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wins"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Victorias"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Error al cargar estadísticas"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vitórias"
           }
         }
       }
     },
-    "stats.loading": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loading statistics..."
+    "Tablero de deducción" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tablero de deducción"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargando estadísticas..."
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tablero de deducción"
           }
         }
       }
     },
-    "stats.streaks": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Streaks"
+    "That hint couldn’t be used. Try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo usar esa pista. Intentá de nuevo."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rachas"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível usar essa dica. Tente de novo."
           }
         }
       }
     },
-    "stats.summary": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Summary"
+    "The hint took too long. Try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La pista tardó demasiado. Intentá de nuevo."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Resumen"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A dica demorou demais. Tente de novo."
           }
         }
       }
     },
-    "stats.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Statistics"
+    "tutorial.board.description" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use the top board to mark digits you've ruled out or confirmed"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usá el tablero superior para marcar dígitos que descartaste o confirmaste"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Estadísticas"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use o quadro acima para marcar os dígitos que você descartou ou confirmou"
           }
         }
       }
     },
-    "stats.win_rate": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Win rate"
+    "tutorial.board.legend.confirmed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmed (correct position)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmado (posición correcta)"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Éxito"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmado (no lugar certo)"
           }
         }
       }
     },
-    "stats.wins": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wins"
+    "tutorial.board.legend.discard" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruled out (not in the secret)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartado (no está en el secreto)"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Victorias"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartado (ausente no número secreto)"
           }
         }
       }
     },
-    "tutorial.board.description": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Use the top board to mark digits you've ruled out or confirmed"
+    "tutorial.board.legend.in_secret" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In the secret (wrong position)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En el secreto (posición incorrecta)"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usá el tablero superior para marcar dígitos que descartaste o confirmaste"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No número secreto (em outro lugar)"
           }
         }
       }
     },
-    "tutorial.board.legend.confirmed": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Confirmed (correct position)"
+    "tutorial.board.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deduction Board"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tablero de deducción"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Confirmado (posición correcta)"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quadro de dedução"
           }
         }
       }
     },
-    "tutorial.board.legend.discard": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ruled out (not in the secret)"
+    "tutorial.feedback.example" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Example:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejemplo:"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Descartado (no está en el secreto)"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemplo:"
           }
         }
       }
     },
-    "tutorial.board.legend.in_secret": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "In the secret (wrong position)"
+    "tutorial.feedback.fair" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correct digit in wrong position"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito correcto en posición incorrecta"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En el secreto (posición incorrecta)"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O dígito está no número secreto, em outro lugar"
           }
         }
       }
     },
-    "tutorial.board.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deduction Board"
+    "tutorial.feedback.good" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correct digit in correct position"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito correcto en posición correcta"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tablero de deducción"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O dígito está no lugar certo"
           }
         }
       }
     },
-    "tutorial.feedback.example": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Example:"
+    "tutorial.feedback.label" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback:"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ejemplo:"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pistas:"
           }
         }
       }
     },
-    "tutorial.feedback.fair": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Correct digit in wrong position"
+    "tutorial.feedback.poor" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No digit is in the secret"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ningún dígito está en el secreto"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dígito correcto en posición incorrecta"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O dígito não está no número secreto"
           }
         }
       }
     },
-    "tutorial.feedback.good": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Correct digit in correct position"
+    "tutorial.feedback.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback System"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistema de feedback"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dígito correcto en posición correcta"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entenda as pistas"
           }
         }
       }
     },
-    "tutorial.feedback.label": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Feedback:"
+    "tutorial.feedback.your_attempt" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your guess:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu intento:"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Feedback:"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua tentativa:"
           }
         }
       }
     },
-    "tutorial.feedback.poor": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No digit is in the secret"
+    "tutorial.how_to_play.step1" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a number with the chosen length and no repeated digits"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresá un número del largo elegido, sin repetir dígitos"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ningún dígito está en el secreto"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite um número com a quantidade escolhida de dígitos, sem repetições"
           }
         }
       }
     },
-    "tutorial.feedback.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Feedback System"
+    "tutorial.how_to_play.step2" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get feedback on your guess"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recibís feedback sobre tu intento"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sistema de feedback"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veja as pistas da sua tentativa"
           }
         }
       }
     },
-    "tutorial.feedback.your_attempt": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your guess:"
+    "tutorial.how_to_play.step3" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use clues to deduce the secret"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usá las pistas para deducir el secreto"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tu intento:"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use as pistas para descobrir o número secreto"
           }
         }
       }
     },
-    "tutorial.how_to_play.step1": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter a number with the chosen length and no repeated digits"
+    "tutorial.how_to_play.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How to Play?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Cómo jugar?"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingresá un número del largo elegido, sin repetir dígitos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como jogar"
           }
         }
       }
     },
-    "tutorial.how_to_play.step2": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Get feedback on your guess"
+    "tutorial.next" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siguiente"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recibís feedback sobre tu intento"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar"
           }
         }
       }
     },
-    "tutorial.how_to_play.step3": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Use clues to deduce the secret"
+    "tutorial.skip" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saltar"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usá las pistas para deducir el secreto"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pular"
           }
         }
       }
     },
-    "tutorial.how_to_play.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "How to Play?"
+    "tutorial.start" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Playing!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Comenzar a jugar!"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿Cómo jugar?"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Começar a Jogar"
           }
         }
       }
     },
-    "tutorial.next": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Next"
+    "tutorial.welcome.description" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guess a secret number of 3, 4, or 5 digits"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adiviná un número secreto de 3, 4 o 5 dígitos"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Siguiente"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adivinhe um número secreto de 3, 4 ou 5 dígitos"
           }
         }
       }
     },
-    "tutorial.skip": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skip"
+    "tutorial.welcome.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome to\nLatet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bienvenido a\nLatet"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saltar"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boas-vindas ao\nLatet"
           }
         }
       }
     },
-    "tutorial.start": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start Playing!"
+    "Vacío" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Vacío"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡Comenzar a jugar!"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Vacío"
           }
         }
       }
     },
-    "tutorial.welcome.description": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Guess a secret number of 3, 4, or 5 digits"
+    "Why: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por qué: %@"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adiviná un número secreto de 3, 4 o 5 dígitos"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por quê: %@"
           }
         }
       }
     },
-    "tutorial.welcome.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Welcome to\nLatet"
+    "You’ve reached the hint limit. Reopen Latet for more hints." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alcanzaste el límite de pistas. Volvé a abrir Latet para pedir más."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bienvenido a\nLatet"
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você atingiu o limite de dicas. Abra o Latet de novo para pedir mais dicas."
           }
         }
       }
     }
-  }
+  },
+  "version" : "1.0"
 }

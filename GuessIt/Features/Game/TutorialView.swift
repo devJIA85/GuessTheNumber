@@ -120,7 +120,7 @@ struct TutorialView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Página \(currentPage + 1) de \(totalPages)")
+        .accessibilityLabel("Page \(currentPage + 1) of \(totalPages)")
     }
     
     // MARK: - Helpers
@@ -391,7 +391,7 @@ struct InstructionRow: View {
 struct FeedbackExample: View {
     let color: Color
     let icon: String
-    let label: String
+    let label: LocalizedStringKey
     let description: String
 
     var body: some View {

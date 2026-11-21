@@ -107,7 +107,7 @@ struct AttemptRowView: View {
     private var repeatedBadge: some View {
         Group {
             if data.isRepeated {
-                Text("Repetido")
+                Text("accessibility.attempt.repeated")
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
                     .foregroundStyle(AppTheme.Focus.textSecondary)
                     .padding(.horizontal, 8)
@@ -125,20 +125,10 @@ struct AttemptRowView: View {
     /// Texto accesible para VoiceOver.
     /// - Why: evita que el usuario tenga que interpretar etiquetas visuales.
     private var accessibilityLabel: String {
-        var parts: [String] = []
-        parts.append(String(localized: "accessibility.attempt.number \(data.guess)"))
-        parts.append("GOOD \(data.good)")
-        parts.append("FAIR \(data.fair)")
-
-        if data.isPoor {
-            parts.append("POOR \(poorCount)")
-        }
-
-        if data.isRepeated {
-            parts.append(String(localized: "accessibility.attempt.repeated"))
-        }
-
-        return parts.joined(separator: ", ")
+        let feedback = String(localized: "Guess \(data.guess). \(data.good) in place, \(data.fair) misplaced, \(poorCount) absent.")
+        guard data.isRepeated else { return feedback }
+        let repeated = String(localized: "accessibility.attempt.repeated")
+        return String(localized: "\(feedback), \(repeated)")
     }
 }
 

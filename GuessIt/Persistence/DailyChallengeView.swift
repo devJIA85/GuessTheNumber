@@ -392,7 +392,7 @@ private struct DailyProgressBar: View {
                 .foregroundStyle(AppTheme.Focus.textSecondary)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(count) de \(max) intentos")
+        .accessibilityLabel("\(count) of \(max) attempts")
     }
 }
 
@@ -463,7 +463,7 @@ private struct DailyAttemptRow: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(attempt.guess): \(attempt.good) Good, \(attempt.fair) Fair")
+        .accessibilityLabel("Guess \(attempt.guess). \(attempt.good) in place, \(attempt.fair) misplaced, \(max(0, attempt.guess.count - attempt.good - attempt.fair)) absent.")
     }
 }
 
@@ -676,7 +676,7 @@ struct CountdownText: View {
             .foregroundStyle(AppTheme.Focus.actionText)
             .onReceive(timer) { _ in update() }
             .onAppear { update() }
-            .accessibilityLabel("Próximo desafío en \(timeRemaining)")
+            .accessibilityLabel("Next challenge in \(timeRemaining)")
     }
 
     private func update() {
