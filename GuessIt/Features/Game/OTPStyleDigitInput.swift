@@ -51,8 +51,8 @@ struct OTPStyleDigitInput: View {
         HStack(spacing: 8) {
             ForEach(0..<digitCount, id: \.self) { index in
                 digitCell(at: index)
-                    .accessibilityLabel("Posición \(index + 1)")
-                    .accessibilityValue(digitAt(index: index).map { "Dígito \(String($0))" } ?? "Vacío")
+                    .accessibilityLabel("Position \(index + 1)")
+                    .accessibilityValue(digitAt(index: index).map { String(localized: "Digit \(String($0))") } ?? String(localized: "Empty"))
                     .accessibilityAddTraits(.updatesFrequently)
             }
         }

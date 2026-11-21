@@ -379,7 +379,7 @@ private struct DistributionBar: View {
             .frame(height: 22)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(attempts) intentos: \(count)")
+        .accessibilityLabel("\(attempts) attempts: \(count)")
     }
 }
 

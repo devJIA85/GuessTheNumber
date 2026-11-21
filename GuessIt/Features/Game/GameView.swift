@@ -568,7 +568,7 @@ struct GameView: View {
                 Group {
                     switch hintState {
                     case .loading:
-                        AppCard(title: "Pista inteligente") {
+                        AppCard(title: String(localized: "hint.title")) {
                             VStack(spacing: AppTheme.Spacing.medium) {
                                 // Spinner diferido: evita parpadeos si la pista responde rápido
                                 // Por qué 300ms: balance entre evitar flicker y no hacer esperar al usuario
@@ -579,7 +579,7 @@ struct GameView: View {
                                 )
                                 .frame(height: 60)
                                 
-                                Text("Generando pista...")
+                                Text("hint.generating")
                                     .foregroundStyle(Color.appTextSecondary)
                             }
                             .frame(maxWidth: .infinity)
@@ -590,15 +590,15 @@ struct GameView: View {
                     case .loaded(let output):
                         ScrollView {
                             VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-                                AppCard(title: "Pista inteligente") {
+                                AppCard(title: String(localized: "hint.title")) {
                                     Text(output.text)
                                         .font(.body)
                                         .foregroundStyle(Color.appTextPrimary)
-                                        .accessibilityLabel("Pista: \(output.text)")
+                                        .accessibilityLabel("Hint: \(output.text)")
                                 }
                                 
                                 if hintHistory.count > 1 {
-                                    AppCard(title: "Pistas anteriores") {
+                                    AppCard(title: String(localized: "hint.previous")) {
                                         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                                             // Mostramos las pistas previas en orden descendente (mas recientes primero).
                                             ForEach(hintHistory.dropLast().reversed()) { entry in
@@ -610,7 +610,7 @@ struct GameView: View {
                                                         .foregroundStyle(Color.appTextPrimary)
                                                 }
                                                 .accessibilityElement(children: .combine)
-                                                .accessibilityLabel("Pista anterior: \(entry.text)")
+                                                .accessibilityLabel("Previous hint: \(entry.text)")
                                             }
                                         }
                                     }
@@ -630,7 +630,7 @@ struct GameView: View {
                         }
                         
                     case .failure(let error):
-                        AppCard(title: "Pista inteligente") {
+                        AppCard(title: String(localized: "hint.title")) {
                             VStack(spacing: AppTheme.Spacing.medium) {
                                 Image(systemName: "exclamationmark.triangle")
                                     .font(.largeTitle)
@@ -654,11 +654,11 @@ struct GameView: View {
                     }
                 }
             }
-            .navigationTitle("Pista Inteligente")
+            .navigationTitle("hint.title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cerrar") {
+                    Button("common.close") {
                         isHintPresented = false
                     }
                 }
@@ -759,7 +759,7 @@ struct GameView: View {
 
         var title: String {
             // Mostramos una etiqueta simple para darle contexto temporal sin persistencia.
-            "Pista \(formattedTime)"
+            String(localized: "Hint at \(formattedTime)")
         }
 
         private static let timeFormatter: DateFormatter = {
@@ -814,18 +814,18 @@ struct GameView: View {
         if let hintError = error as? HintError {
             switch hintError {
             case .unavailable:
-                return "Las pistas no están disponibles en este dispositivo. Se requiere Apple Intelligence."
+                return String(localized: "Hints are unavailable right now.")
             case .generationFailed:
-                return "No se pudo generar una pista en este momento. Intentá de nuevo más tarde."
+                return String(localized: "hint.error")
             case .unsafeOutput:
-                return "La pista generada no cumplió con las reglas de seguridad. Intentá de nuevo."
+                return String(localized: "That hint couldn’t be used. Try again.")
             case .timedOut:
-                return "La generación de la pista tardó demasiado. Intentá de nuevo."
+                return String(localized: "The hint took too long. Try again.")
             case .rateLimited:
-                return "Alcanzaste el límite de pistas por sesión. Reiniciá la app para más pistas."
+                return String(localized: "You’ve reached the hint limit. Reopen Latet for more hints.")
             }
         }
-        return "Ocurrió un error inesperado al generar la pista."
+        return String(localized: "hint.error")
     }
     
     // MARK: - Debug UI (solo DEBUG)
@@ -1051,7 +1051,7 @@ private struct LastAttemptCard: View {
 
             FeedbackBar(good: good, fair: fair, poor: poor)
 
-            legend
+            FeedbackLegend(good: good, fair: fair, poor: poor)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .focusCard()
@@ -1059,22 +1059,41 @@ private struct LastAttemptCard: View {
         .accessibilityLabel("accessibility.game.last_attempt \(attempt.guess) \(good) \(fair) \(poor)")
     }
 
-    private var legend: some View {
-        HStack(spacing: AppTheme.Spacing.medium) {
-            legendItem(color: .appMarkGood, count: good, term: "Good")
-            legendItem(color: .appMarkFair, count: fair, term: "Fair")
-            legendItem(color: AppTheme.Focus.textPrimary.opacity(0.30), count: poor, term: "Poor")
+}
+
+private struct FeedbackLegend: View {
+    let good: Int
+    let fair: Int
+    let poor: Int
+
+    var body: some View {
+        let items = Group {
+            FeedbackLegendItem(color: .appMarkGood, label: "\(good) Good")
+            FeedbackLegendItem(color: .appMarkFair, label: "\(fair) Fair")
+            FeedbackLegendItem(color: AppTheme.Focus.textPrimary.opacity(0.30), label: "\(poor) Poor")
+        }
+
+        // En una pantalla angosta, los términos traducidos necesitan poder usar más de una fila.
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: AppTheme.Spacing.medium) { items }
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.small) { items }
         }
     }
+}
 
-    private func legendItem(color: Color, count: Int, term: String) -> some View {
+private struct FeedbackLegendItem: View {
+    let color: Color
+    let label: LocalizedStringKey
+
+    var body: some View {
         HStack(spacing: 6) {
             Circle()
                 .fill(color)
                 .frame(width: 9, height: 9)
-            Text("\(count) \(term)")
+            Text(label)
                 .font(.system(.subheadline, design: .rounded, weight: .semibold))
                 .foregroundStyle(AppTheme.Focus.textPrimary)
+                .fixedSize(horizontal: true, vertical: false)
         }
     }
 }

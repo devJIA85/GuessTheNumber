@@ -67,7 +67,7 @@ private struct FocusBoardCell: View {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(mark == .unknown ? Color.white.opacity(0.10) : markColor.opacity(0.6), lineWidth: 1)
             )
-            .accessibilityLabel("Dígito \(digit), \(mark.spokenText)")
+            .accessibilityLabel("accessibility.board.marked \(digit) \(mark.spokenText)")
     }
 
     private var markColor: Color {

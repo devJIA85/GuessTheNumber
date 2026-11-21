@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import GuessIt
 
@@ -16,6 +17,17 @@ struct FallbackHintEngineTests {
         )
         let older = HintAttempt(guess: "12349", good: 0, fair: 1, isPoor: false, isRepeated: false)
         #expect(FallbackHintEngine.strategy(for: [latest, older]) == expected)
+    }
+
+    @Test func rejectsAHintWithAFieldInTheWrongLanguage() {
+        let locale = Locale(identifier: "pt-BR")
+        let diagnosis = "Alguns dígitos da última tentativa estão no lugar certo."
+        let nextGuess = "Mantenha alguns dígitos no lugar e troque os outros."
+        let reason = "Assim você pode descobrir quais posições estavam certas."
+        let reasonInSpanish = "Así podrás descubrir cuáles posiciones estaban bien."
+
+        #expect(HintService.responseMatchesLanguage([diagnosis, nextGuess, reason], locale: locale))
+        #expect(!HintService.responseMatchesLanguage([diagnosis, nextGuess, reasonInSpanish], locale: locale))
     }
 
     @Test func givesAnOpeningTipWithNoAttempts() {

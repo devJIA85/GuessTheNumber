@@ -82,8 +82,8 @@ struct DigitNoteCell: View {
             onTap()
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Dígito \(digit). Estado \(mark.spokenText)")
-        .accessibilityHint("Doble toque para cambiar estado")
+        .accessibilityLabel("accessibility.board.marked \(digit) \(mark.spokenText)")
+        .accessibilityHint("accessibility.board.mark_hint")
         .accessibilityAddTraits(.isButton)
     }
 
@@ -98,7 +98,7 @@ struct DigitNoteCell: View {
         }
     }
 
-    private var markShortText: String {
+    private var markShortText: LocalizedStringKey {
         switch mark {
         case .unknown: return "—"
         case .poor:    return "POOR"
