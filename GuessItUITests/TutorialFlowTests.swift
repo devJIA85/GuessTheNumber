@@ -6,18 +6,24 @@ import XCUIAutomation
 
 @MainActor
 struct TutorialFlowTests {
-    @Test(arguments: [
+    @Test(.serialized, arguments: [
         ("en", "Check the guess", "1 is in the right spot."),
         ("es", "Probar intento", "El 1 está en el lugar correcto."),
         ("pt-BR", "Testar tentativa", "O 1 está na posição certa.")
     ])
-    func practiceGuess(language: String, action: String, explanation: String) throws {
+    func practiceGuess(language: String, action: String, explanation: String) async throws {
         let app = XCUIApplication()
         app.launchArguments = ["-hasCompletedTutorial", "NO", "-AppleLanguages", "(\(language))"]
         app.launch()
+        defer { app.terminate() }
 
         let next = app.buttons["tutorial.continue"]
-        try #require(next.waitForExistence(timeout: 20))
+        // La cubierta se presenta después del splash; tras relanzar, el primer AX snapshot puede estar vacío.
+        let deadline = ContinuousClock.now + .seconds(20)
+        while !next.exists && ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(250))
+        }
+        try #require(next.exists)
         next.tap()
 
         let check = app.buttons["tutorial.example.reveal"]
