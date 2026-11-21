@@ -7,6 +7,7 @@
 
 import Foundation
 import FoundationModels
+import NaturalLanguage
 import OSLog
 
 /// Servicio de generación de pistas usando Apple Intelligence (Foundation Models).
@@ -79,10 +80,7 @@ actor HintService {
 
         let currentEngine = engine
         if currentEngine.isAvailable {
-            // El idioma de la app puede ser distinto al del dispositivo.
-            let locale = Locale.current
-            let language = Locale(identifier: "en").localizedString(forIdentifier: locale.identifier) ?? locale.identifier
-            let prompt = builder.makePrompt(input: input) + "\nRespond in \(language)."
+            let prompt = builder.makePrompt(input: input)
             do {
                 let text = try await withTimeout(seconds: Self.generationTimeoutSeconds) {
                     try await currentEngine.generate(prompt: prompt)
@@ -103,6 +101,14 @@ actor HintService {
         lastEngineUsed = "fallback"
         lastErrorDescription = nil
         return HintOutput(text: String(localized: FallbackHintEngine.strategy(for: input.attempts).message))
+    }
+
+    static func responseMatchesLanguage(_ fields: [String], locale: Locale) -> Bool {
+        guard let language = locale.language.languageCode?.identifier, !fields.isEmpty else {
+            return false
+        }
+        // Evaluamos cada campo por separado para detectar una pista que mezcla idiomas.
+        return fields.allSatisfy { NLLanguageRecognizer.dominantLanguage(for: $0)?.rawValue == language }
     }
 
     // MARK: - Debug API
@@ -200,23 +206,18 @@ private struct AppleHintEngine: HintEngine {
     ///   integradas en el schema (ej: "No revelar dígitos concretos").
     @available(iOS 26.0, *)
     private func generateStructured(prompt: String) async throws -> String {
-        let session = LanguageModelSession()
+        let locale = Locale.current
+        let language = Locale(identifier: "en").localizedString(forIdentifier: locale.identifier) ?? locale.identifier
+        let session = LanguageModelSession {
+            "Write every field in \(language)."
+        }
 
+        let hint: HintResponse
         do {
-            let response = try await session.respond(
+            hint = try await session.respond(
                 to: prompt,
                 generating: HintResponse.self
-            )
-
-            try Task.checkCancellation()
-
-            // Formatear los campos estructurados en texto legible
-            let hint = response.content
-            return [
-                String(localized: "Diagnosis: \(hint.diagnostico)"),
-                String(localized: "Next guess: \(hint.proximoIntento)"),
-                String(localized: "Why: \(hint.porQue)"),
-            ].joined(separator: "\n")
+            ).content
         } catch {
             if error is CancellationError { throw error }
             // Preservamos el error real de FoundationModels en el log antes de mapearlo
@@ -224,6 +225,20 @@ private struct AppleHintEngine: HintEngine {
             Self.logger.error("FoundationModels generation failed: \(error.localizedDescription, privacy: .public)")
             throw HintError.generationFailed
         }
+
+        try Task.checkCancellation()
+        guard HintService.responseMatchesLanguage(
+            [hint.diagnostico, hint.proximoIntento, hint.porQue],
+            locale: locale
+        ) else {
+            throw HintError.unsafeOutput
+        }
+
+        return [
+            String(localized: "Diagnosis: \(hint.diagnostico)"),
+            String(localized: "Next guess: \(hint.proximoIntento)"),
+            String(localized: "Why: \(hint.porQue)"),
+        ].joined(separator: "\n")
     }
 }
 
